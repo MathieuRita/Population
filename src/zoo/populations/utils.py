@@ -15,6 +15,7 @@ def parse_json(json_file):
 # json generator
 
 def generate_json(experiments_dir: str,
+                  logs_dir : str,
                   experiment_name: str = "",
                   default_population_json: str = "",
                   default_agents_json: str = "",
@@ -46,10 +47,12 @@ def generate_json(experiments_dir: str,
 
     if not os.path.exists(f"{experiments_dir}/{experiment_name}"):
         os.mkdir(f"{experiments_dir}/{experiment_name}")
-        os.mkdir(f"{experiments_dir}/{experiment_name}/logs")
         os.mkdir(f"{experiments_dir}/{experiment_name}/metrics")
         os.mkdir(f"{experiments_dir}/{experiment_name}/json")
         os.mkdir(f"{experiments_dir}/{experiment_name}/models")
+    if not os.path.exists(logs_dir):
+        os.mkdir(logs_dir)
+    os.mkdir(f"{logs_dir}/{experiment_name}")
 
     # Agents
     if len(default_agents_json):
@@ -144,6 +147,8 @@ def generate_json(experiments_dir: str,
 
     with open(f"{experiments_dir}/{experiment_name}/json/training.json", 'w') as outfile:
         json.dump(training_json, outfile)
+
+
 
 
 # For experiments

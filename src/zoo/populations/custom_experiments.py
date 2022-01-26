@@ -1,4 +1,5 @@
 from .utils import generate_json
+import argparse
 
 def get_params(params):
 
@@ -12,6 +13,7 @@ def get_params(params):
 
     # Directory for tensorboard logs
     parser.add_argument('--experiments_dir', type=str, default = "", help="Directory where experiments info are saved")
+    parser.add_argument('--logs_dir', type=str, default="", help="Directory logs are saved")
     parser.add_argument('--base_experiment_name', type=str, default="", help="Main name for the experiments")
 
     args = parser.parse_args(params)
@@ -24,11 +26,14 @@ def prepare_experiments(params):
 
     # Sweep over p_steps
 
-    n_expe = 10
     list_p_step_sender = [1,1,1,1,1,1,1,0.5,0.2,0.1,0.01,0.001,0.0000001]
     list_p_step_receiver = [1,0.5,0.2,0.1,0.01,0.001,0.0000001,1,1,1,1,1,1]
 
-    for expe_i in range(len(n_expe)):
+    assert len(list_p_step_sender)==len(list_p_step_receiver), "list_p_sender does not same size as list_p_receiver"
+
+    n_expe = len([1,1,1,1,1,1,1,0.5,0.2,0.1,0.01,0.001,0.0000001])
+
+    for expe_i in range(n_expe):
 
         p_step_sender = list_p_step_sender[expe_i]
         p_step_receiver = list_p_step_receiver[expe_i]
@@ -65,23 +70,21 @@ def prepare_experiments(params):
 
 
         new_population = {"param_changes":{"list_agents": ["sender_A","receiver_B","sender_A_0",
-                                                           "receiver_A_0","sender_B_0","receiver_B_0"]
+                                                           "receiver_A_0","sender_B_0","receiver_B_0"],
                                            "is_trained": [1,1,0,0,0,0],
                                            "is_sender": [1,0,1,0,1,0],
-                                           "is_receiver":[0,1,0,1,0,1]}
+                                           "is_receiver":[0,1,0,1,0,1]}}
 
 
-    generate_json(experiments_dir=opts.experiments_dir,
-                  experiment_name = experiment_name,
-                  default_agents_json=opts.default_agents_json,
-                  default_population_json=opts.default_population_json,
-                  default_game_json=opts.default_game_json,
-                  default_training_json=opts.default_training_json,
-                  new_agents = new_agents,
-                  new_population=new_population,
-                  )
-
-
+        generate_json(experiments_dir=opts.experiments_dir,
+                      logs_dir = opts.logs_dir,
+                      experiment_name = experiment_name,
+                      default_agents_json=opts.default_agents_json,
+                      default_population_json=opts.default_population_json,
+                      default_game_json=opts.default_game_json,
+                      default_training_json=opts.default_training_json,
+                      new_agents = new_agents,
+                      new_population=new_population)
 
 if __name__ == "__main__":
     import sys
