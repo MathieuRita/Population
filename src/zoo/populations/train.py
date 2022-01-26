@@ -3,9 +3,11 @@
 
 import argparse
 import os
+from torch.utils.tensorboard import SummaryWriter
 from src.core.games import build_game
 from src.core.trainers import build_trainer
 from src.core.population import build_population
+from src.core.evaluators import build_evaluator
 from .datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
 from .utils import parse_json
 
@@ -98,35 +100,40 @@ def main(params):
     game = build_game(game_params = game_params,
                       population = population)
 
-    # Build Trainer
+    # Build logger
+    logger = SummaryWriter(opts.log_dir) if opts.log_dir else None
+
+    # Build Trainer & evaluator
+
+    evaluator = build_evaluator(metrics_to_measure = training_params["metrics_to_measure"],
+                                game=game,
+                                device=training_params["device"],
+                                logger=logger,
+                                dump_batch=(full_dataset,
+                                            population.agent_names[0],
+                                            population.agent_names[1]))
+
     trainer = build_trainer(game = game,
+                            evaluator = evaluator,
                             train_loader = train_loader,
                             val_loader = val_loader,
                             device = training_params["device"],
                             compute_metrics = True,
-                            log_dir = opts.log_dir)
+                            logger = logger)
 
 
     # Train
-    trainer.init_metrics(dump_batch = (full_dataset,
-                                        population.agent_names[0],
-                                        population.agent_names[1]))
+    evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
                   validation_freq=training_params["validation_freq"],
-                  MI_freq =1,
-                  dump_freq = 1000,
-                  l_analysis_freq=1000,
-                  div_analysis_freq=1,
-                  dump_batch = (full_dataset,
-                                population.agent_names[0],
-                                population.agent_names[1]))
+                  evaluator_freq = training_params["evaluator_freq"])
 
     if opts.model_save_dir:
         population.save_models(save_dir=opts.model_save_dir)
 
     if opts.metrics_save_dir:
-        trainer.save_metrics(opts.metrics_save_dir)
+        evaluator.save_metrics(opts.metrics_save_dir)
 
 
 
