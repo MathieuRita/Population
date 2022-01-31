@@ -70,10 +70,11 @@ def main(params):
         print(f"Interaction probs are : ", population.pairs_prob)
 
     # Build datasets and dataloaders
-    full_dataset = build_one_hot_dataset(object_params = game_params["objects"])
+    full_dataset = build_one_hot_dataset(object_params = game_params["objects"],
+                                         n_elements = game_params["dataset"]["n_elements"])
 
     population_split = split_data_into_population(dataset_size=full_dataset.size(0),
-                                                  n_elements = full_dataset.size(0),
+                                                  n_elements = game_params["dataset"]["n_elements"],
                                                   split_proportion=training_params["split_train_val"],
                                                   agent_names = population.agent_names,
                                                   population_dataset_type=population_params['dataset_type'],
@@ -86,6 +87,15 @@ def main(params):
                                             population_probs = population.pairs_prob,
                                             training_params = training_params,
                                             mode="train",)
+
+    # Faire ici chaque paire / chaque data
+    mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                          dataset=full_dataset,
+                                          agent_names=population.agent_names,
+                                          population_split=population_split,
+                                          population_probs=population.pairs_prob,
+                                          training_params=training_params,
+                                          mode="MI")
 
     # Faire ici chaque paire / chaque data
     val_loader = build_one_hot_dataloader(  game_type=game_params["game_type"],
@@ -116,6 +126,7 @@ def main(params):
     trainer = build_trainer(game = game,
                             evaluator = evaluator,
                             train_loader = train_loader,
+                            mi_loader = mi_loader,
                             val_loader = val_loader,
                             device = training_params["device"],
                             compute_metrics = True,
@@ -126,6 +137,7 @@ def main(params):
     evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
+                  mi_freq=training_params["mi_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq = training_params["evaluator_freq"])
 
@@ -134,6 +146,7 @@ def main(params):
 
     if opts.metrics_save_dir:
         evaluator.save_metrics(opts.metrics_save_dir)
+        evaluator.save_messages(opts.metrics_save_dir)
 
 
 

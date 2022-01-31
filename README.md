@@ -24,7 +24,8 @@ python -m src.zoo.populations.train --population_json PATH_POP_JSON \
                                     --game_json PATH_GAME_JSON \
                                     --training_json PATH_TRAINING_JSON \
                                     --log_dir PATH_LOG_DIR \
-                                    --save_dir PATH_SAVE_DIR
+                                    --model_save_dir PATH_SAVE_DIR \
+                                    --metrics_save_dir PATH_SAVE_DIR \
 ```
 
 ## 🗂️ Directory structure
@@ -49,6 +50,7 @@ python -m src.zoo.populations.train --population_json PATH_POP_JSON \
 
 - [ ] Change `dump_batch` en `DataLoader` pour `evaluators`
 - [ ] Complete generate_json
+- [ ] Change th.tile by .repeat
 
 
 ## ✍️ Associated research papers 

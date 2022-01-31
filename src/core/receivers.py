@@ -72,7 +72,7 @@ class RecurrentProcessor(nn.Module):
             message_lengths = find_lengths(message)
 
         packed = nn.utils.rnn.pack_padded_sequence(
-            emb, message_lengths, batch_first=True, enforce_sorted=False)
+            emb, message_lengths.cpu(), batch_first=True, enforce_sorted=False)
         _, rnn_hidden = self.receiver_cell(packed)
 
         if isinstance(self.receiver_cell, nn.LSTM):

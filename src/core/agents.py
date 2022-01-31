@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CosineSimilarity
 
+from .utils import find_lengths, move_to
 from src.core.senders import build_sender
 from src.core.receivers import build_receiver
 from src.core.object_encoders import build_encoder, build_decoder
@@ -92,6 +93,44 @@ class Agent(object):
                                            sender_log_prob=sender_log_prob,
                                            sender_entropy=sender_entropy,
                                            receiver_output=receiver_output)
+
+    def compute_mutual_information(self,inputs):
+
+        inputs_embeddings = self.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = self.send(inputs_embeddings)
+
+        batch_size = messages.size(0)
+
+        id_sampled_messages = np.arange(batch_size)
+        sampled_messages = messages[id_sampled_messages]
+        sampled_messages = sampled_messages.unsqueeze(0)
+        sampled_messages = sampled_messages.repeat(batch_size, 1, 1)
+        sampled_messages = sampled_messages.permute(1, 0, 2)
+        sampled_messages = sampled_messages.reshape([batch_size * batch_size, sampled_messages.size(-1)])
+        sampled_x = inputs.repeat(batch_size, 1, 1, 1)
+        sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[2:]])
+
+        sampled_x = move_to(sampled_x, self.device)
+        sampled_messages = move_to(sampled_messages, self.device)
+        log_probs = self.get_log_prob_m_given_x(sampled_x,sampled_messages)
+
+        # log_probs -> pm1_x1,...,pm1_xn ; pm2_x1,...,pm2_xn,.....
+        message_lengths = find_lengths(sampled_messages)
+        max_len = sampled_messages.size(1)
+        mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
+                                           num_classes=max_len + 1), dim=1)[:, :-1]
+        log_probs = (log_probs * mask_eos).sum(dim=1)
+
+        log_pi_m_x = log_probs.reshape([batch_size, batch_size])
+        pi_m_x = th.exp(log_pi_m_x)
+        p_x = th.ones(batch_size) / batch_size  # Here we set p(x)=1/batch_size
+        p_x = p_x.to(pi_m_x.device)  # Fix device issue
+
+        log_pi_m = th.log((pi_m_x * p_x).sum(1))
+
+        mutual_information = (th.log(pi_m_x.diagonal(0)) - log_pi_m)
+
+        return mutual_information
 
     def compute_sender_imitation_loss(self,sender_log_prob,target_messages):
 

@@ -11,6 +11,7 @@ class Trainer:
                  evaluator,
                  train_loader: th.utils.data.DataLoader,
                  val_loader: th.utils.data.DataLoader = None,
+                 mi_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  device: str = "cpu") -> None:
 
@@ -18,6 +19,7 @@ class Trainer:
         self.population = game.population
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.mi_loader = mi_loader
         self.evaluator = evaluator
         self.start_epoch = 1
         self.device = th.device(device)
@@ -26,6 +28,7 @@ class Trainer:
     def train(self,
               n_epochs,
               validation_freq: int = 1000,
+              mi_freq : int = 1000,
               evaluator_freq: int = 1000,
               print_evolution: bool = True):
 
@@ -33,9 +36,17 @@ class Trainer:
 
             if print_evolution: print(f"Epoch {epoch}")
 
+            # Train
             train_loss_senders, train_loss_receivers, train_metrics = \
                 self.train_epoch(compute_metrics=True)  # dict,dict, dict
 
+            # Mutual information
+            if self.mi_loader is not None and epoch % mi_freq == 0:
+                mi_loss_senders = self.train_mutual_information()
+            else:
+                mi_loss_senders = None
+
+            # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
                 val_loss_senders, val_loss_receivers, val_metrics = self.eval(compute_metrics=True)
             else:
@@ -45,6 +56,7 @@ class Trainer:
                 self.log_metrics(epoch=epoch,
                                  train_loss_senders=train_loss_senders,
                                  train_loss_receivers=train_loss_receivers,
+                                 mi_loss_senders = mi_loss_senders,
                                  train_metrics=train_metrics,
                                  val_loss_senders=val_loss_senders,
                                  val_loss_receivers=val_loss_receivers,
@@ -117,6 +129,38 @@ class Trainer:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
+    def train_mutual_information(self):
+
+        mean_mi_senders = {}
+        n_batches = {}
+
+        self.game.train()
+
+        for batch in self.mi_loader:
+
+            inputs, sender_id = batch[0], batch[1]
+
+            if sender_id not in mean_mi_senders:
+                mean_mi_senders[sender_id] = 0.
+                n_batches[sender_id] = 0
+
+            agent = self.population[sender_id]
+
+            mutual_information = agent.compute_mutual_information(inputs)
+            loss_m_i = -1*mutual_information
+
+            self.population.agents[sender_id].sender_optimizer.zero_grad()
+            loss_m_i.backward()
+            self.population.agents[sender_id].sender_optimizer.step()
+
+            # Store losses
+            mean_mi_senders[sender_id] += loss_m_i
+            n_batches[sender_id] += 1
+
+        mean_mi_senders = _div_dict(mean_mi_senders, n_batches)
+
+        return mean_mi_senders
+
     def eval(self, compute_metrics: bool = False):
 
         mean_loss_senders = {}
@@ -171,6 +215,7 @@ class Trainer:
                     epoch: int,
                     train_loss_senders: dict,
                     train_loss_receivers: dict,
+                    mi_loss_senders : dict,
                     train_metrics: dict,
                     val_loss_senders: dict,
                     val_loss_receivers: dict,
@@ -199,6 +244,11 @@ class Trainer:
             self.writer.add_scalar(f'{receiver}/accuracy (train)',
                                    train_metrics[receiver]['accuracy'],
                                    epoch)
+
+        # MI
+        if mi_loss_senders is not None:
+            for sender, l in mi_loss_senders.items():
+                self.writer.add_scalar(f'{sender}/Loss Mutual information', l.item(), epoch)
 
         # Val
         if val_loss_senders is not None:

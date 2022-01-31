@@ -88,7 +88,11 @@ class _ReconstructionIterator():
 
         self.batches_generated += 1
 
-        return batch_data, sender_id, receiver_id
+        if self.mode!="MI":
+            return batch_data, sender_id, receiver_id
+        else:
+            return batch_data, sender_id
+
 
 
 class ReferentialDataLoader(th.utils.data.DataLoader):
@@ -268,13 +272,27 @@ class _UnidirectionalIterator():
         return batch_data, target_messages
 
 
-def build_one_hot_dataset(object_params : dict) -> th.Tensor :
+def build_one_hot_dataset(object_params : dict, n_elements : int) -> th.Tensor :
 
     n_attributes = object_params["n_attributes"]
     n_values = object_params["n_values"]
 
-    dataset = th.Tensor(list(itertools.product(th.arange(n_values), repeat=n_attributes))).to(th.int64)
-    dataset = th.nn.functional.one_hot(dataset, num_classes=n_values)
+    if object_params["n_attributes"]**object_params["n_values"]==n_elements:
+
+        dataset = th.Tensor(list(itertools.product(th.arange(n_values), repeat=n_attributes))).to(th.int64)
+        dataset = th.nn.functional.one_hot(dataset, num_classes=n_values)
+
+    else:
+        dataset = []
+
+        for _ in range(n_elements):
+            el = [np.random.choice(n_values) for _ in range(n_attributes)]
+            if el not in dataset:
+                dataset.append(el)
+
+        dataset = th.stack([th.Tensor(data) for data in dataset]).to(th.int64)
+
+        dataset = th.nn.functional.one_hot(dataset, num_classes=n_values)
 
     return dataset
 
@@ -306,6 +324,7 @@ def split_data_into_population( dataset_size : int,
             data_split[agent_name] = {}
             data_split[agent_name]["train_split"] = train_split
             data_split[agent_name]["val_split"] = val_split
+            data_split[agent_name]["MI_split"] = random_permut
 
     else:
         raise "Specify a known population dataset type"

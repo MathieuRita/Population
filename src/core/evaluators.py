@@ -72,15 +72,31 @@ class Evaluator:
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def dump(self):
+    def save_messages(self,save_dir):
 
         self.game.eval()
 
         with th.no_grad():
-            batch = move_to(self.dump_batch, self.device)
-            _, _, metrics = self.game(batch, compute_metrics=True)
-            for m in metrics["messages"]:
-                print(m)
+
+            messages_per_agents = []
+            entropy_per_agents = []
+
+            inputs = self.dump_batch[0]
+            inputs = move_to(inputs, device=self.device)
+            for agent_id in self.population.sender_names:
+                inputs_embedding = self.population.agents[agent_id].encode_object(inputs)
+                messages, _, entropy_sender = self.population.agents[agent_id].send(inputs_embedding)
+                messages_per_agents.append(messages.cpu().numpy())
+                entropy_per_agents.append(entropy_sender.cpu().numpy())
+                
+            for agent_id in self.population.untrained_sender_names:
+                inputs_embedding = self.population.agents[agent_id].encode_object(inputs)
+                messages, _, entropy_sender = self.population.agents[agent_id].send(inputs_embedding)
+                messages_per_agents.append(messages.cpu().numpy())
+                entropy_per_agents.append(entropy_sender.cpu().numpy())
+            
+            np.save(f"{save_dir}/messages.npy",np.stack(messages_per_agents))
+            np.save(f"{save_dir}/entropy_messages.npy",np.stack(entropy_per_agents))
 
     def reward_decomposition(self):
 
@@ -92,15 +108,15 @@ class Evaluator:
             batch = move_to(self.dump_batch, self.device)
             _, loss_receiver, metrics = self.game(batch, compute_metrics=True)
 
-            id_sampled_messages = np.arange(256)
-            n_m = 256
+            id_sampled_messages = np.arange(n_x)
+            n_m = n_x
             # id_sampled_messages = np.random.choice(metrics["messages"].size(0), n_m)
             sampled_messages = metrics["messages"][id_sampled_messages]
             sampled_messages = sampled_messages.unsqueeze(0)
-            sampled_messages = th.tile(sampled_messages, (n_x, 1, 1))
+            sampled_messages = sampled_messages.repeat(n_x, 1, 1)
             sampled_messages = sampled_messages.permute(1, 0, 2)
             sampled_messages = sampled_messages.reshape([n_x * n_m, sampled_messages.size(-1)])
-            sampled_x = th.tile(batch[0], (n_m, 1, 1, 1))
+            sampled_x = batch[0].repeat(n_m, 1, 1, 1)
             sampled_x = sampled_x.reshape([n_m * n_x, n_att, n_val])
 
             sampled_x = move_to(sampled_x, self.device)
@@ -118,6 +134,7 @@ class Evaluator:
             log_pi_m_x = log_probs.reshape([n_m, n_x])
             pi_m_x = th.exp(log_pi_m_x)
             p_x = th.ones(n_x) / n_x  # Here we set p(x)=1/batch_size
+            p_x = p_x.to(pi_m_x.device) # Fix device issue
 
             log_pi_m = th.log((pi_m_x * p_x).sum(1))
 
@@ -143,7 +160,7 @@ class Evaluator:
             message_lengths_per_agents = []
 
             inputs = self.dump_batch[0]
-            inputs = th.tile(inputs, [n_samples] + [1] * (len(inputs.size()) - 1))
+            inputs = inputs.repeat([n_samples] + [1] * (len(inputs.size()) - 1))
             inputs = move_to(inputs, device=self.device)
             for agent_id in self.population.sender_names:
                 inputs_embedding = self.population.agents[agent_id].encode_object(inputs)
@@ -178,7 +195,7 @@ class Evaluator:
         with th.no_grad():
 
             inputs = self.dump_batch[0]
-            inputs = th.tile(inputs, [n_samples] + [1] * (len(inputs.size()) - 1))
+            inputs = inputs.repeat([n_samples] + [1] * (len(inputs.size()) - 1))
             inputs = move_to(inputs, device=self.device)
 
             if self.init_languages is None:
@@ -221,7 +238,7 @@ class Evaluator:
 
         with th.no_grad():
             inputs = self.dump_batch[0]
-            inputs = th.tile(inputs, [n_samples] + [1] * (len(inputs.size()) - 1))
+            inputs = inputs.repeat([n_samples] + [1] * (len(inputs.size()) - 1))
             inputs = move_to(inputs, device=self.device)
 
             divergence_matrix = np.zeros((len(self.population.sender_names),
@@ -256,7 +273,7 @@ class Evaluator:
 
         with th.no_grad():
             inputs = self.dump_batch[0]
-            inputs = th.tile(inputs, [n_samples] + [1] * (len(inputs.size()) - 1))
+            inputs = inputs.repeat([n_samples] + [1] * (len(inputs.size()) - 1))
             inputs = move_to(inputs, device=self.device)
 
             for i, receiver_id in enumerate(self.population.receiver_names):
@@ -276,7 +293,7 @@ class Evaluator:
 
         with th.no_grad():
             inputs = self.dump_batch[0]
-            inputs = th.tile(inputs, [n_samples] + [1] * (len(inputs.size()) - 1))
+            inputs = inputs.repeat([n_samples] + [1] * (len(inputs.size()) - 1))
             inputs = move_to(inputs, device=self.device)
 
             for i, sender_id in enumerate(self.population.sender_names):
@@ -366,6 +383,9 @@ class Evaluator:
         if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
             np.save(f"{save_dir}/accuracy_with_untrained_listeners.npy",
                     np.stack(self.stored_metrics["accuracy_with_untrained_listeners"]))
+        if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
+            np.save(f"{save_dir}/accuracy_with_untrained_speakers.npy",
+                    np.stack(self.stored_metrics["accuracy_with_untrained_speakers"]))
 
 
 def build_evaluator(metrics_to_measure,

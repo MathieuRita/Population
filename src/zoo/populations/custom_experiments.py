@@ -31,7 +31,7 @@ def prepare_experiments(params):
 
     assert len(list_p_step_sender)==len(list_p_step_receiver), "list_p_sender does not same size as list_p_receiver"
 
-    n_expe = len([1,1,1,1,1,1,1,0.5,0.2,0.1,0.01,0.001,0.0000001])
+    n_expe = len(list_p_step_sender)
 
     for expe_i in range(n_expe):
 
