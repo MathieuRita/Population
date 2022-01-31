@@ -113,6 +113,7 @@ class Agent(object):
 
         sampled_x = move_to(sampled_x, self.device)
         sampled_messages = move_to(sampled_messages, self.device)
+
         log_probs = self.get_log_prob_m_given_x(sampled_x,sampled_messages)
 
         # log_probs -> pm1_x1,...,pm1_xn ; pm2_x1,...,pm2_xn,.....
