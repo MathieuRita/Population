@@ -37,15 +37,17 @@ class Trainer:
             if print_evolution: print(f"Epoch {epoch}")
 
             # Mutual information
-            for _ in range(10):
-                if self.mi_loader is not None and epoch % mi_freq == 0:
-                    mi_loss_senders = self.train_mutual_information()
-                else:
-                    mi_loss_senders = None
+            if self.mi_loader is not None and epoch % mi_freq == 0:
+                mi_loss_senders = self.train_mutual_information()
+            else:
+                mi_loss_senders = None
 
             # Train
-            train_loss_senders, train_loss_receivers, train_metrics = \
-                self.train_epoch(compute_metrics=True)  # dict,dict, dict
+            if epoch % train_freq ==0:
+                train_loss_senders, train_loss_receivers, train_metrics = \
+                    self.train_epoch(compute_metrics=True)  # dict,dict, dict
+            else:
+                train_loss_senders, train_loss_receivers, train_metrics = None, None, None
 
             # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
@@ -224,28 +226,29 @@ class Trainer:
                     val_metrics: dict) -> None:
 
         # Train
-        for sender, l in train_loss_senders.items():
-            self.writer.add_scalar(f'{sender}/Loss train', l.item(), epoch)
+        if train_loss_senders is not None:
+            for sender, l in train_loss_senders.items():
+                self.writer.add_scalar(f'{sender}/Loss train', l.item(), epoch)
 
-            self.writer.add_scalar(f'{sender}/accuracy (train)',
-                                   train_metrics[sender]['accuracy'],
-                                   epoch)
-            self.writer.add_scalar(f'{sender}/Language entropy (train)',
-                                   train_metrics[sender]['sender_entropy'],
-                                   epoch)
-            self.writer.add_scalar(f'{sender}/Sender log prob',
-                                   train_metrics[sender]['sender_log_prob'],
-                                   epoch)
-            self.writer.add_scalar(f'{sender}/Messages length (train)',
-                                   train_metrics[sender]['message_length'],
-                                   epoch)
+                self.writer.add_scalar(f'{sender}/accuracy (train)',
+                                       train_metrics[sender]['accuracy'],
+                                       epoch)
+                self.writer.add_scalar(f'{sender}/Language entropy (train)',
+                                       train_metrics[sender]['sender_entropy'],
+                                       epoch)
+                self.writer.add_scalar(f'{sender}/Sender log prob',
+                                       train_metrics[sender]['sender_log_prob'],
+                                       epoch)
+                self.writer.add_scalar(f'{sender}/Messages length (train)',
+                                       train_metrics[sender]['message_length'],
+                                       epoch)
 
-        for receiver, l in train_loss_receivers.items():
-            self.writer.add_scalar(f'{receiver}/Loss train ', l.item(), epoch)
+            for receiver, l in train_loss_receivers.items():
+                self.writer.add_scalar(f'{receiver}/Loss train ', l.item(), epoch)
 
-            self.writer.add_scalar(f'{receiver}/accuracy (train)',
-                                   train_metrics[receiver]['accuracy'],
-                                   epoch)
+                self.writer.add_scalar(f'{receiver}/accuracy (train)',
+                                       train_metrics[receiver]['accuracy'],
+                                       epoch)
 
         # MI
         if mi_loss_senders is not None:

@@ -8,7 +8,7 @@ from src.core.games import build_game
 from src.core.trainers import build_trainer
 from src.core.population import build_population
 from src.core.evaluators import build_evaluator
-from .datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
+from src.core.datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
 from .utils import parse_json
 
 def get_params(params):
@@ -139,6 +139,7 @@ def main(params):
     evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
+                  train_freq = training_params["train_freq"],
                   mi_freq=training_params["mi_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq = training_params["evaluator_freq"])
