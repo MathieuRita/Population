@@ -109,7 +109,7 @@ class Agent(object):
         sampled_messages = sampled_messages.permute(1, 0, 2)
         sampled_messages = sampled_messages.reshape([batch_size * batch_size, sampled_messages.size(-1)])
         sampled_x = inputs.repeat(batch_size, 1, 1, 1)
-        sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[2:]])
+        sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[1:]])
 
         sampled_x = move_to(sampled_x, self.device)
         sampled_messages = move_to(sampled_messages, self.device)
