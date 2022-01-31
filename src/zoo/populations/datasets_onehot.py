@@ -345,7 +345,7 @@ def build_one_hot_dataloader(game_type : str,
 
     if game_type=="reconstruction":
 
-        if mode!="MI":
+        if mode=="MI":
             loader = ReconstructionDataLoader(data = dataset,
                                               agent_names = agent_names,
                                               population_split = population_split,
