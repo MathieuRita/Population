@@ -1,0 +1,9 @@
+{
+        "n_epochs":70,	
+	"device":"cpu",
+	"split_train_val":0.99,
+	"batch_size":1024,
+	"batches_per_epoch":10,
+	"seed":19,
+	"validation_freq":10
+}

@@ -1,0 +1,1 @@
+{"population_type": "Unidirectional", "communication_graph": "fully_connected", "n_agents": 6, "list_agents": ["sender_A", "receiver_B", "sender_A_0", "receiver_A_0", "sender_B_0", "receiver_B_0"], "is_trained": [1, 1, 0, 0, 0, 0], "is_sender": [1, 0, 1, 0, 1, 0], "is_receiver": [0, 1, 0, 1, 0, 1], "dataset_type": "unique"}

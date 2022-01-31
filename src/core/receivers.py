@@ -1,6 +1,6 @@
 import torch as th
 import torch.nn as nn
-from src.zoo.populations.utils import find_lengths
+from .utils import find_lengths
 
 cell_types = {'rnn': nn.RNN, 'gru': nn.GRU, 'LSTM': nn.LSTM}
 

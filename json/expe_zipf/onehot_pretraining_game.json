@@ -1,0 +1,19 @@
+{
+"game_name": "one_hot_compositionality_pretraining",
+"game_type" : "speaker_pretraining",
+"dataset" : {"name":"one_hot_compositionality",
+	     "n_elements":256,
+	     "split_proportion":1},
+"objects":
+		{
+		"object_type":"one_hot",
+		"n_attributes":4,
+		"n_values":4
+		},
+"channel":
+		{
+		"voc_size":20,
+		"max_len":10
+		},
+"target_messages": "null"
+}

@@ -5,10 +5,10 @@ from torch.nn import CosineSimilarity
 import numpy as np
 
 from .utils import find_lengths, move_to
-from src.core.senders import build_sender
-from src.core.receivers import build_receiver
-from src.core.object_encoders import build_encoder, build_decoder
-from src.core.losses import ReinforceLoss, CrossEntropyLoss, ReferentialLoss, SpeakerImitation
+from .senders import build_sender
+from .receivers import build_receiver
+from .object_encoders import build_encoder, build_decoder
+from .losses import ReinforceLoss, CrossEntropyLoss, ReferentialLoss, SpeakerImitation
 
 
 class Agent(object):
@@ -128,7 +128,7 @@ class Agent(object):
 
         log_pi_m = th.log((pi_m_x * p_x).sum(1))
 
-        mutual_information = pi_m_x.diagonal(0)*(th.log(pi_m_x.diagonal(0)) + th.log(p_x) - log_pi_m)
+        mutual_information = (th.log(pi_m_x.diagonal(0)) + th.log(p_x) - log_pi_m)
 
         return mutual_information.sum()
 

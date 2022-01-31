@@ -2,7 +2,6 @@ from typing import Dict
 import numpy as np
 import torch as th
 import editdistance #pip install editdistance==0.3.1
-from time import time
 
 def compute_language_similarity(messages_1 : th.Tensor,
                                 messages_2 : th.Tensor,
