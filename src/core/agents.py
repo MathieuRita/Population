@@ -2,6 +2,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CosineSimilarity
+import numpy as np
 
 from .utils import find_lengths, move_to
 from src.core.senders import build_sender
