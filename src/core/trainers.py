@@ -145,7 +145,7 @@ class Trainer:
                 mean_mi_senders[sender_id] = 0.
                 n_batches[sender_id] = 0
 
-            agent = self.population[sender_id]
+            agent = self.population.agents[sender_id]
 
             mutual_information = agent.compute_mutual_information(inputs)
             loss_m_i = -1*mutual_information
