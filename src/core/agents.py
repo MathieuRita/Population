@@ -246,7 +246,8 @@ def build_agent(agent_name: str,
                   p_step = p_step,
                   sender_loss_fn = sender_loss_fn,
                   receiver_loss_fn = receiver_loss_fn,
-                  sender_imitation_loss_fn=sender_imitation_loss_fn)
+                  sender_imitation_loss_fn=sender_imitation_loss_fn,
+                  device = device)
 
     return agent
 
