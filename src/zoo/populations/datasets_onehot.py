@@ -285,10 +285,12 @@ def build_one_hot_dataset(object_params : dict, n_elements : int) -> th.Tensor :
     else:
         dataset = []
 
-        for _ in range(n_elements):
+        count=0
+        while count<n_elements:
             el = [np.random.choice(n_values) for _ in range(n_attributes)]
             if el not in dataset:
                 dataset.append(el)
+                count+=1
 
         dataset = th.stack([th.Tensor(data) for data in dataset]).to(th.int64)
 

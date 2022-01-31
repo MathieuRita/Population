@@ -36,15 +36,16 @@ class Trainer:
 
             if print_evolution: print(f"Epoch {epoch}")
 
+            # Mutual information
+            for _ in range(10):
+                if self.mi_loader is not None and epoch % mi_freq == 0:
+                    mi_loss_senders = self.train_mutual_information()
+                else:
+                    mi_loss_senders = None
+
             # Train
             train_loss_senders, train_loss_receivers, train_metrics = \
                 self.train_epoch(compute_metrics=True)  # dict,dict, dict
-
-            # Mutual information
-            if self.mi_loader is not None and epoch % mi_freq == 0:
-                mi_loss_senders = self.train_mutual_information()
-            else:
-                mi_loss_senders = None
 
             # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
@@ -347,7 +348,8 @@ class PretrainingTrainer:
 def build_trainer(game,
                   evaluator,
                   train_loader: th.utils.data.DataLoader,
-                  val_loader: th.utils.data.DataLoader,
+                  mi_loader: th.utils.data.DataLoader = None,
+                  val_loader: th.utils.data.DataLoader = None,
                   logger: th.utils.tensorboard.SummaryWriter = None,
                   compute_metrics: bool = False,
                   pretraining: bool = False,
@@ -356,6 +358,7 @@ def build_trainer(game,
         trainer = Trainer(game=game,
                           evaluator=evaluator,
                           train_loader=train_loader,
+                          mi_loader=mi_loader,
                           val_loader=val_loader,
                           logger=logger,
                           device=device)

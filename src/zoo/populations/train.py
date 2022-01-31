@@ -106,6 +106,8 @@ def main(params):
                                             training_params=training_params,
                                             mode="val")
 
+    if opts.print_info_population: print(f"✅ Successfully built loaders")
+
     # Build Game
     game = build_game(game_params = game_params,
                       population = population)
