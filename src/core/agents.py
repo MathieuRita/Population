@@ -99,7 +99,6 @@ class Agent(object):
 
         inputs_embeddings = self.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = self.send(inputs_embeddings)
-
         batch_size = messages.size(0)
 
         id_sampled_messages = np.arange(batch_size)
@@ -129,9 +128,9 @@ class Agent(object):
 
         log_pi_m = th.log((pi_m_x * p_x).sum(1))
 
-        mutual_information = (th.log(pi_m_x.diagonal(0)) - log_pi_m)
+        mutual_information = pi_m_x.diagonal(0)*(th.log(pi_m_x.diagonal(0)) + th.log(p_x) - log_pi_m)
 
-        return mutual_information.mean()
+        return mutual_information.sum()
 
     def compute_sender_imitation_loss(self,sender_log_prob,target_messages):
 
