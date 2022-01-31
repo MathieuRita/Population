@@ -27,7 +27,8 @@ class Trainer:
 
     def train(self,
               n_epochs,
-              validation_freq: int = 1000,
+              train_freq : int = 1,
+              validation_freq: int = 1,
               mi_freq : int = 1000,
               evaluator_freq: int = 1000,
               print_evolution: bool = True):
