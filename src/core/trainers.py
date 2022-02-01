@@ -230,54 +230,59 @@ class Trainer:
         # Train
         if train_loss_senders is not None:
             for sender, l in train_loss_senders.items():
-                self.writer.add_scalar(f'{sender}/Loss train', l.item(), epoch)
+                self.writer.add_scalar(f'{sender}/Loss train', l.item(),
+                                       int(self.population.agents[sender].p_step*epoch))
 
                 self.writer.add_scalar(f'{sender}/accuracy (train)',
                                        train_metrics[sender]['accuracy'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
                 self.writer.add_scalar(f'{sender}/Language entropy (train)',
                                        train_metrics[sender]['sender_entropy'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
                 self.writer.add_scalar(f'{sender}/Sender log prob',
                                        train_metrics[sender]['sender_log_prob'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
                 self.writer.add_scalar(f'{sender}/Messages length (train)',
                                        train_metrics[sender]['message_length'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
 
             for receiver, l in train_loss_receivers.items():
-                self.writer.add_scalar(f'{receiver}/Loss train ', l.item(), epoch)
+                self.writer.add_scalar(f'{receiver}/Loss train ', l.item(),
+                                       int(self.population.agents[receiver].p_step*epoch))
 
                 self.writer.add_scalar(f'{receiver}/accuracy (train)',
                                        train_metrics[receiver]['accuracy'],
-                                       epoch)
+                                       int(self.population.agents[receiver].p_step*epoch))
 
         # MI
         if mi_loss_senders is not None:
             for sender, l in mi_loss_senders.items():
-                self.writer.add_scalar(f'{sender}/Loss Mutual information', l.item(), epoch)
+                self.writer.add_scalar(f'{sender}/Loss Mutual information', l.item(),
+                                       int(self.population.agents[sender].p_step*epoch))
 
         # Val
         if val_loss_senders is not None:
             for sender, l in val_loss_senders.items():
-                self.writer.add_scalar(f'{sender}/Loss val', l.item(), epoch)
+                self.writer.add_scalar(f'{sender}/Loss val', l.item(),
+                                       int(self.population.agents[sender].p_step*epoch))
 
                 self.writer.add_scalar(f'{sender}/accuracy (val)',
                                        val_metrics[sender]['accuracy'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
                 self.writer.add_scalar(f'{sender}/Language entropy (val)',
                                        val_metrics[sender]['sender_entropy'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
                 self.writer.add_scalar(f'{sender}/Messages length (val)',
                                        val_metrics[sender]['message_length'],
-                                       epoch)
+                                       int(self.population.agents[sender].p_step*epoch))
 
             for receiver, l in val_loss_receivers.items():
-                self.writer.add_scalar(f'{receiver}/Loss val', l.item(), epoch)
+                self.writer.add_scalar(f'{receiver}/Loss val', l.item(),
+                                       int(self.population.agents[receiver].p_step*epoch))
 
                 self.writer.add_scalar(f'{receiver}/accuracy (val)',
                                        val_metrics[receiver]['accuracy'],
-                                       epoch)
+                                       int(self.population.agents[receiver].p_step*epoch))
 
 
 class PretrainingTrainer:
