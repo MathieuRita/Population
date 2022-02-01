@@ -115,6 +115,8 @@ class UnidirectionalFullyConnectedPopulation(Population):
                     receiver_names.append(agent_names[i])
                 else:
                     untrained_receiver_names.append(agent_names[i])
+        else:
+            population_graph = th.Tensor(population_graph)
 
         super().__init__(n_agents = n_agents,
                          agent_names = agent_names,
