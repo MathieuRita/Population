@@ -80,7 +80,7 @@ class Trainer:
 
         for batch in self.train_loader:
 
-            sender_id, receiver_id = batch[-2], batch[-1]
+            sender_id, receiver_id = batch.sender_id, batch.receiver_id
 
             if sender_id not in mean_loss_senders:
                 mean_loss_senders[sender_id] = 0.
@@ -90,6 +90,7 @@ class Trainer:
                 n_batches[receiver_id] = 0
 
             batch = move_to(batch, self.device)
+
             loss_sender, loss_receiver, metrics = self.game(batch, compute_metrics=compute_metrics)
 
             if th.rand(1)[0] < self.population.agents[sender_id].p_step:

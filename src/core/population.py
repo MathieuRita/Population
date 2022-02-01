@@ -157,6 +157,7 @@ def build_population(population_params : dict,
     assert len(is_sender)==len(is_receiver)==n_agents, "is_sender should be equal to is_receiver = n_agents"
 
     if population_type=="Unidirectional" and communication_graph == "fully_connected":
+
         population = UnidirectionalFullyConnectedPopulation(n_agents = n_agents,
                                                             agent_names = agent_names,
                                                             agent_repertory = agent_repertory,

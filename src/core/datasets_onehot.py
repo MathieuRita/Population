@@ -1,6 +1,9 @@
 import torch as th
 import numpy as np
 import itertools
+import collections
+
+Batch = collections.namedtuple("Batch",["batch","sender_id","receiver_id"])
 
 
 class ReconstructionDataLoader(th.utils.data.DataLoader):
@@ -69,14 +72,14 @@ class _ReconstructionIterator():
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Batch:
 
         if self.batches_generated >= self.n_batches_per_epoch:
             raise StopIteration()
 
         # Sample pair sender_id, receiver_id
         sampled_pair_id = th.multinomial(self.population_probs,1)
-        sender_id,receiver_id = self.grid_names[sampled_pair_id]
+        sender_id, receiver_id = self.grid_names[sampled_pair_id]
 
         # Sample batch from sender_id's split
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]
@@ -88,10 +91,11 @@ class _ReconstructionIterator():
 
         self.batches_generated += 1
 
-        if self.mode!="MI":
-            return batch_data, sender_id, receiver_id
-        else:
-            return batch_data, sender_id
+        batch = Batch(batch=batch_data,
+                      sender_id=sender_id,
+                      receiver_id=receiver_id)
+
+        return batch
 
 
 
