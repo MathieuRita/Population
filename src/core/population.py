@@ -84,23 +84,27 @@ class UnidirectionalFullyConnectedPopulation(Population):
                  agent_names : list,
                  agent_repertory : dict,
                  game_params : dict,
+                 population_graph : th.Tensor,
                  is_sender : list,
                  is_receiver : list,
                  is_trained: list,
                  device : str = "cpu"
                  ) -> None:
 
-        # Agents are not talking to themselves
-        pairs_prob = 1-th.eye(n_agents)  # type: th.Tensor
+        if population_graph is None:
+            # Agents are not talking to themselves
+            population_graph = 1-th.eye(n_agents)  # type: th.Tensor
 
-        # Ensure that senders do not receive messages and receivers do not send message
+            # Ensure that senders do not receive messages and receivers do not send message
+            for i in range(n_agents):
+                if not is_sender[i] or not is_trained[i]:
+                    population_graph[i,:]*=0
+                if not is_receiver[i] or not is_trained[i]:
+                    population_graph[:,i]*=0
+
+
         sender_names, receiver_names, untrained_sender_names, untrained_receiver_names = [], [], [], []
         for i in range(n_agents):
-            if not is_sender[i] or not is_trained[i]:
-                pairs_prob[i,:]*=0
-            if not is_receiver[i] or not is_trained[i]:
-                pairs_prob[:,i]*=0
-
             if is_sender[i]:
                 if is_trained[i]:
                     sender_names.append(agent_names[i])
@@ -120,7 +124,7 @@ class UnidirectionalFullyConnectedPopulation(Population):
                          untrained_receiver_names=untrained_receiver_names,
                          game_params = game_params,
                          agent_repertory = agent_repertory,
-                         pairs_prob = pairs_prob,
+                         pairs_prob = population_graph,
                          device = device)
 
 
@@ -143,6 +147,11 @@ def build_population(population_params : dict,
     population_type = population_params["population_type"]
     communication_graph = population_params["communication_graph"]
 
+    if "population_graph" in population_params:
+        population_graph = population_params["population_graph"]
+    else:
+        population_graph = None
+
     if population_type =="Unidirectional":
         is_sender = population_params["is_sender"]
         is_receiver = population_params["is_receiver"]
@@ -161,6 +170,7 @@ def build_population(population_params : dict,
         population = UnidirectionalFullyConnectedPopulation(n_agents = n_agents,
                                                             agent_names = agent_names,
                                                             agent_repertory = agent_repertory,
+                                                            population_graph=population_graph,
                                                             game_params = game_params,
                                                             is_sender = is_sender,
                                                             is_receiver = is_receiver,

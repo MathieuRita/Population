@@ -3,7 +3,7 @@ import numpy as np
 import itertools
 import collections
 
-Batch = collections.namedtuple("Batch",["batch","sender_id","receiver_id"])
+Batch = collections.namedtuple("Batch",["data","sender_id","receiver_id"])
 
 
 class ReconstructionDataLoader(th.utils.data.DataLoader):
@@ -91,7 +91,7 @@ class _ReconstructionIterator():
 
         self.batches_generated += 1
 
-        batch = Batch(batch=batch_data,
+        batch = Batch(data=batch_data,
                       sender_id=sender_id,
                       receiver_id=receiver_id)
 
