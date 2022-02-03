@@ -152,8 +152,7 @@ class Trainer:
 
             agent = self.population.agents[sender_id]
 
-            mutual_information = agent.compute_mutual_information(inputs)
-            loss_m_i = -1*mutual_information
+            loss_m_i = agent.compute_mutual_information(inputs)
 
             self.population.agents[sender_id].sender_optimizer.zero_grad()
             loss_m_i.backward()

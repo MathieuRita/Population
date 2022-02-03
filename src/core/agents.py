@@ -126,11 +126,15 @@ class Agent(object):
         p_x = th.ones(batch_size) / batch_size  # Here we set p(x)=1/batch_size
         p_x = p_x.to(pi_m_x.device)  # Fix device issue
 
+        log_p_x = th.log(p_x)
         log_pi_m = th.log((pi_m_x * p_x).sum(1))
+        log_pi_m_x = th.log(pi_m_x.diagonal(0)
 
-        mutual_information = (th.log(pi_m_x.diagonal(0)) + th.log(p_x) - log_pi_m)
+        mutual_information = log_pi_m_x + log_p_x - log_pi_m
 
-        return mutual_information.sum()
+        loss_mi = log_pi_m_x * mutual_information.detach()
+
+        return - loss_mi.sum()
 
     def compute_sender_imitation_loss(self,sender_log_prob,target_messages):
 
