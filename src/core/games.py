@@ -86,11 +86,11 @@ class ReconstructionGame(nn.Module):
         losses={}
 
         for sender_id in self.population.sender_names:
-            
+
             agent_sender = self.population.agents[sender_id]
             inputs_encoded = agent_sender.encode_object(inputs)
 
-            messages, _, log_prob_sender, entropy_sender = self.agent.send(inputs_encoded, return_whole_log_probs=True)
+            messages, _, log_prob_sender, entropy_sender = agent_sender.send(inputs_encoded, return_whole_log_probs=True)
 
             loss_sender = agent_sender.compute_sender_imitation_loss(sender_log_prob=log_prob_sender,
                                                                     target_messages=target_messages)  # [batch_size]
