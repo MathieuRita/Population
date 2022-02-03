@@ -128,7 +128,7 @@ class Agent(object):
 
         log_p_x = th.log(p_x)
         log_pi_m = th.log((pi_m_x * p_x).sum(1))
-        log_pi_m_x = th.log(pi_m_x.diagonal(0)
+        log_pi_m_x = th.log(pi_m_x.diagonal(0))
 
         mutual_information = log_pi_m_x + log_p_x - log_pi_m
 
