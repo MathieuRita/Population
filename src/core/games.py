@@ -68,6 +68,36 @@ class ReconstructionGame(nn.Module):
 
         return loss_sender,loss_receiver, metrics
 
+    def imitation_instance(self,
+                           inputs: th.Tensor,
+                           N_samples:int):
+
+        target_messages=[]
+
+        for sender_id in self.population.sender_names:
+            agent_sender = self.population.agents[sender_id]
+            inputs_embedding = agent_sender.encode_object(inputs)
+            for _ in range(N_samples):
+                messages, _, _ = agent_sender.send(inputs_embedding)
+                target_messages.append(messages)
+
+        target_messages = th.stack(target_messages).unsqueeze(0)
+
+        losses={}
+
+        for sender_id in self.population.sender_names:
+            agent_sender = self.population.agents[sender_id]
+
+            inputs_encoded = self.agent.encode_object(inputs)
+            messages, _, log_prob_sender, entropy_sender = self.agent.send(inputs_encoded, return_whole_log_probs=True)
+
+            loss_sender = agent_sender.compute_sender_imitation_loss(sender_log_prob=log_prob_sender,
+                                                                    target_messages=target_messages)  # [batch_size]
+
+            losses[sender_id] = loss_sender.mean()
+
+        return losses
+
 
 class ReferentialGame(nn.Module):
 
@@ -217,12 +247,20 @@ class ImitationReconstructionGame(nn.Module):
 
         target_messages = th.stack(target_messages).unsqueeze(0)
 
+        losses={}
+
         for sender_id in self.population.sender_names:
             agent_sender = self.population.agents[sender_id]
-            loss_sender = self.agent_sender.compute_sender_imitation_loss(sender_log_prob=log_prob_sender,
-                                                                        target_messages=target_messages)  # [batch_size]
 
+            inputs_encoded = self.agent.encode_object(inputs)
+            messages, _, log_prob_sender, entropy_sender = self.agent.send(inputs_encoded, return_whole_log_probs=True)
 
+            loss_sender = agent_sender.compute_sender_imitation_loss(sender_log_prob=log_prob_sender,
+                                                                    target_messages=target_messages)  # [batch_size]
+
+            losses[sender_id] = loss_sender.mean()
+
+        return losses
 
     def forward(self,batch, compute_metrics:bool=False):
 

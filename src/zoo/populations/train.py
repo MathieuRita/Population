@@ -141,6 +141,7 @@ def main(params):
     trainer.train(n_epochs=training_params["n_epochs"],
                   train_freq = training_params["train_freq"],
                   mi_freq=training_params["mi_freq"],
+                  imitation_freq = training_params["imitation_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq = training_params["evaluator_freq"])
 
