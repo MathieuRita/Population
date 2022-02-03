@@ -132,9 +132,9 @@ class Agent(object):
 
         mutual_information = log_pi_m_x + log_p_x - log_pi_m
 
-        loss_mi = log_pi_m_x * mutual_information.detach()
+        loss_mi = mutual_information
 
-        return - loss_mi.sum()
+        return - loss_mi.mean()
 
     def compute_sender_imitation_loss(self,sender_log_prob,target_messages):
 

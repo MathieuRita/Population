@@ -144,7 +144,7 @@ class Trainer:
         for batch in self.mi_loader:
 
             batch = move_to(batch, self.device)
-            inputs, sender_id = batch[0], batch[1]
+            inputs, sender_id = batch.data, batch.sender_id
 
             if sender_id not in mean_mi_senders:
                 mean_mi_senders[sender_id] = 0.
