@@ -133,7 +133,7 @@ class Agent(object):
         mutual_information = log_pi_m_x + log_p_x - log_pi_m
 
         reward = mutual_information.detach()
-        reward = reward - reward.mean()
+        reward = (reward - reward.mean()) / reward.std()
 
         loss_mi = - log_pi_m_x * reward
 
