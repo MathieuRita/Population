@@ -83,6 +83,7 @@ class ReconstructionGame(nn.Module):
 
         target_messages = th.stack(target_messages).unsqueeze(0)
 
+        inputs = inputs.repeat(len(self.population.sender_names)*N_samples,1,1)
         losses={}
 
         for sender_id in self.population.sender_names:
