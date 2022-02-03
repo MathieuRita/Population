@@ -194,8 +194,8 @@ def build_agent(agent_name: str,
 
         # Losses
         sender_loss_fn = build_agent_loss_fn(optim_params=agent_params["sender_optim_params"])
-        if game_params["game_type"]=="speaker_pretraining":
-            sender_imitation_loss_fn = build_agent_loss_fn(optim_params=agent_params["sender_optim_pretraining_params"])
+        if game_params["game_type"]=="speaker_pretraining" or len(agent_params["sender_optim_params"]["imitation_loss"]):
+            sender_imitation_loss_fn = build_agent_loss_fn(optim_params={"loss":"speaker_imitation"})
         else:
             sender_imitation_loss_fn = None
         receiver_loss_fn = None
