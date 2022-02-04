@@ -81,7 +81,9 @@ class ReconstructionGame(nn.Module):
                 messages, _, _ = agent_sender.send(inputs_embedding)
                 target_messages.append(messages)
 
-        target_messages = th.stack(target_messages).unsqueeze(0)
+        target_messages = th.stack(target_messages)
+        target_messages = target_messages.reshape(target_messages.size(0)*target_messages.size(1),
+                                                  target_messages.size(2))
 
         inputs = inputs.repeat(len(self.population.sender_names)*N_samples,1,1)
         losses={}
