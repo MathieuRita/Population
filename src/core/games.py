@@ -1,3 +1,4 @@
+import collections
 import torch as th
 import torch.nn as nn
 from .losses import accuracy, find_lengths
@@ -182,10 +183,7 @@ class ReconstructionImitationGame(nn.Module):
         self.population = population
 
     def game_instance(self,
-                      inputs: th.Tensor,
-                      sender_id: th.Tensor,
-                      imitator_id: th.Tensor,
-                      receiver_id: th.Tensor,
+                      batch: collections.namedtuple,
                       compute_metrics: bool = False):
         """
         :param compute_metrics:
@@ -197,12 +195,12 @@ class ReconstructionImitationGame(nn.Module):
         :return: (loss_sender,loss_receiver) [batch_size,batch_size]
         """
 
-        agent_sender = self.population.agents[sender_id]
-        agent_receiver = self.population.agents[receiver_id]
-        agent_imitator = self.population.agents[imitator_id]
+        agent_sender = self.population.agents[batch.sender_id]
+        agent_receiver = self.population.agents[batch.receiver_id]
+        agent_imitator = self.population.agents[batch.imitator_id]
 
         # Agent Sender sends message based on input
-        inputs_embedding = agent_sender.encode_object(inputs)
+        inputs_embedding = agent_sender.encode_object(batch.inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Agent receiver encodes message and predict the reconstructed object
@@ -245,7 +243,7 @@ class ReconstructionImitationGame(nn.Module):
         return loss_sender.mean(), loss_receiver.mean(), loss_imitator.mean(), metrics
 
     def forward(self, batch, compute_metrics: bool = False):
-        loss_sender, loss_receiver, loss_imitator, metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
+        loss_sender, loss_receiver, loss_imitator, metrics = self.game_instance(batch, compute_metrics=compute_metrics)
 
         return loss_sender, loss_receiver, loss_imitator, metrics
 
