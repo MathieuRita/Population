@@ -249,11 +249,10 @@ class ReconstructionImitationGame(nn.Module):
             return loss_sender.mean(), loss_receiver.mean(), metrics
 
     def forward(self, batch, compute_metrics: bool = False,return_imitation_loss:bool=True):
-        loss_sender, loss_receiver, loss_imitator, metrics = self.game_instance(*batch,
-                                                                                compute_metrics=compute_metrics,
-                                                                                return_imitation_loss=return_imitation_loss)
 
-        return loss_sender, loss_receiver, loss_imitator, metrics
+        return self.game_instance(*batch,
+                                compute_metrics=compute_metrics,
+                                return_imitation_loss=return_imitation_loss)
 
 
 class PretrainingGame(nn.Module):
