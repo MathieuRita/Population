@@ -168,7 +168,7 @@ class SpeakerImitation:
         batch_size,max_len,vocab_size = sender_log_prob.size(0), sender_log_prob.size(1), sender_log_prob.size(2)
 
         message_lengths = find_lengths(target_messages)
-        
+
         sender_log_prob = sender_log_prob.reshape((batch_size*max_len,vocab_size)) # [batch_size*max_len,vocab_size]
         target_messages = target_messages.reshape((batch_size*max_len)) # [batch_size*max_len]
 
