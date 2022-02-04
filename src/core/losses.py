@@ -173,6 +173,11 @@ class SpeakerImitation:
         loss = F.cross_entropy(sender_log_prob, target_messages, reduction="none")
         loss = loss.reshape((batch_size, max_len))
 
+        message_lengths = find_lengths(target_messages)
+        mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
+                                           num_classes=max_len + 1), dim=1)[:, :-1]  # eg. [1,1,0] if length=2 and ml=3
+        loss = (loss * mask_eos)  # [batch_size,max_len]
+
         if self.reduce:
             loss = loss.sum(dim=1)
 
