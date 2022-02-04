@@ -104,19 +104,27 @@ class Evaluator:
 
         with th.no_grad():
             n_x, n_att, n_val = self.dump_batch[0].size(0), self.dump_batch[0].size(1), self.dump_batch[0].size(2)
-            id_sender = self.dump_batch[1]
-            batch = move_to(self.dump_batch, self.device)
-            _, loss_receiver, metrics = self.game(batch, compute_metrics=True)
+            id_sender, id_receiver = self.dump_batch[1], self.dump_batch[2]
+
+            inputs = move_to(self.dump_batch[0], self.device)
+            inputs_embedding = self.game.population.agents[id_sender].encode_object(inputs)
+            messages, _, _ = self.game.population.agents[id_sender].send(inputs_embedding)
+
+            agent_receiver = self.game.population.agents[id_receiver]
+            message_embedding = agent_receiver.receive(messages)
+            output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+            loss_receiver = agent_receiver.compute_receiver_loss(inputs=inputs,
+                                                                 output_receiver=output_receiver)
 
             id_sampled_messages = np.arange(n_x)
             n_m = n_x
             # id_sampled_messages = np.random.choice(metrics["messages"].size(0), n_m)
-            sampled_messages = metrics["messages"][id_sampled_messages]
+            sampled_messages = messages[id_sampled_messages]
             sampled_messages = sampled_messages.unsqueeze(0)
             sampled_messages = sampled_messages.repeat(n_x, 1, 1)
             sampled_messages = sampled_messages.permute(1, 0, 2)
             sampled_messages = sampled_messages.reshape([n_x * n_m, sampled_messages.size(-1)])
-            sampled_x = batch[0].repeat(n_m, 1, 1, 1)
+            sampled_x = inputs.repeat(n_m, 1, 1, 1)
             sampled_x = sampled_x.reshape([n_m * n_x, n_att, n_val])
 
             sampled_x = move_to(sampled_x, self.device)

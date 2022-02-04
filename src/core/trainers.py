@@ -163,8 +163,6 @@ class Trainer:
 
         for batch in self.train_loader:
 
-            print(batch)
-
             sender_id, receiver_id, imitator_id = batch.sender_id, batch.receiver_id, batch.imitator_id
 
             if sender_id not in mean_loss_senders:
