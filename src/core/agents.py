@@ -188,8 +188,6 @@ def build_agent(agent_name: str,
         object_encoder.to(device)
 
         # Optimizer
-        #sender_optimizer = build_agent_optimizer(model_parameters=list(sender.parameters()),
-        #                                         optim_params=agent_params["sender_optim_params"])
         sender_optimizer = build_agent_optimizer(model_parameters=list(object_encoder.parameters()) \
                                                                   +list(sender.parameters()),
                                                  optim_params=agent_params["sender_optim_params"])
