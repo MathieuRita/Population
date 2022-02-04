@@ -307,7 +307,7 @@ class Trainer:
 
             for batch in self.val_loader:
 
-                sender_id, receiver_id = batch[-2], batch[-1]
+                sender_id, receiver_id = batch.sender_id,batch.receiver_id
 
                 if sender_id not in mean_loss_senders:
                     mean_loss_senders[sender_id] = 0.

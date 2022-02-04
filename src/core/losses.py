@@ -89,7 +89,7 @@ class ReinforceLoss:
             self.reward_fn = lambda inputs, receiver_output,log_prob_imit : get_log_prob_given_index(receiver_output)
         elif reward_type =="reco+imitation":
             self.reward_fn = lambda inputs, receiver_output,neg_log_imit : \
-                -1*cross_entropy(inputs, receiver_output) - neg_log_imit
+                -1*cross_entropy(inputs, receiver_output) - 0.1*neg_log_imit
         else:
             raise "Set a known reward type"
 
