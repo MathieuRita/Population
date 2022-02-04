@@ -183,9 +183,9 @@ class ReconstructionImitationGame(nn.Module):
 
     def game_instance(self,
                       inputs:th.Tensor,
-                      sender_id,
-                      receiver_id,
-                      imitator_id,
+                      sender_id:str,
+                      receiver_id:str,
+                      imitator_id:str,
                       compute_metrics: bool = False):
         """
         :param compute_metrics:
