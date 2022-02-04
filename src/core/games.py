@@ -242,7 +242,10 @@ class ReconstructionImitationGame(nn.Module):
             # Output receiver
             # metrics["receiver_output"] = output_receiver.detach()
 
-        return loss_sender.mean(), loss_receiver.mean(), loss_imitator.mean(), metrics
+        if self.training:
+            return loss_sender.mean(), loss_receiver.mean(), loss_imitator.mean(), metrics
+        else:
+            return loss_sender.mean(), loss_receiver.mean(), metrics
 
     def forward(self, batch, compute_metrics: bool = False):
         loss_sender, loss_receiver, loss_imitator, metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
