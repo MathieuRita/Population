@@ -359,14 +359,18 @@ def build_one_hot_dataloader(game_type : str,
                                               mode=mode,
                                               seed = training_params["seed"])
         else:
-            loader = ReconstructionDataLoader(data=dataset,
-                                              agent_names=agent_names,
-                                              population_split=population_split,
-                                              population_probs=population_probs,
-                                              batch_size=training_params["batch_size"],
-                                              batches_per_epoch=training_params["batches_per_epoch"],
-                                              mode=mode,
-                                              seed=training_params["seed"])
+
+            if mode=="val" and training_params["split_train_val"]==1:
+                loader=None
+            else:
+                loader = ReconstructionDataLoader(data=dataset,
+                                                  agent_names=agent_names,
+                                                  population_split=population_split,
+                                                  population_probs=population_probs,
+                                                  batch_size=training_params["batch_size"],
+                                                  batches_per_epoch=training_params["batches_per_epoch"],
+                                                  mode=mode,
+                                                  seed=training_params["seed"])
 
 
     elif game_type=="referential":
