@@ -16,6 +16,7 @@ class Population(object):
                  agent_repertory : dict,
                  game_params : dict,
                  pairs_prob : th.Tensor = None,
+                 imitation_probs : th.Tensor = None,
                  device : str = "cpu") -> None:
 
         """
@@ -44,6 +45,7 @@ class Population(object):
 
         # Communication graph
         self.pairs_prob = pairs_prob/pairs_prob.sum()
+        self.imitation_probs = imitation_probs/imitation_probs.sum()
 
     def save_models(self,
                     save_dir:str="/models",
@@ -87,13 +89,15 @@ class UnidirectionalFullyConnectedPopulation(Population):
                  population_graph : th.Tensor,
                  is_sender : list,
                  is_receiver : list,
+                 is_imitator : list,
                  is_trained: list,
                  device : str = "cpu"
                  ) -> None:
 
         if population_graph is None:
             # Agents are not talking to themselves
-            population_graph = 1-th.eye(n_agents)  # type: th.Tensor
+            population_graph = 1-th.eye(n_agents)
+            imitation_probs = th.zeros(n_agents)
 
             # Ensure that senders do not receive messages and receivers do not send message
             for i in range(n_agents):
@@ -101,9 +105,14 @@ class UnidirectionalFullyConnectedPopulation(Population):
                     population_graph[i,:]*=0
                 if not is_receiver[i] or not is_trained[i]:
                     population_graph[:,i]*=0
+                if is_imitator[i]:
+                    imitation_probs[i]=1
+        else:
+            population_graph = th.Tensor(population_graph)
 
 
         sender_names, receiver_names, untrained_sender_names, untrained_receiver_names = [], [], [], []
+        imitator_names = []
         for i in range(n_agents):
             if is_sender[i]:
                 if is_trained[i]:
@@ -115,8 +124,9 @@ class UnidirectionalFullyConnectedPopulation(Population):
                     receiver_names.append(agent_names[i])
                 else:
                     untrained_receiver_names.append(agent_names[i])
-        else:
-            population_graph = th.Tensor(population_graph)
+            if is_imitator[i]:
+                imitator_names.append(agent_names[i])
+
 
         super().__init__(n_agents = n_agents,
                          agent_names = agent_names,
@@ -127,6 +137,7 @@ class UnidirectionalFullyConnectedPopulation(Population):
                          game_params = game_params,
                          agent_repertory = agent_repertory,
                          pairs_prob = population_graph,
+                         imitation_probs=imitation_probs,
                          device = device)
 
 
@@ -163,6 +174,11 @@ def build_population(population_params : dict,
     else:
         is_trained = [1]*n_agents
 
+    if "is_imitator" in population_params:
+        is_imitator = population_params["is_imitator"]
+    else:
+        is_imitator = [0]*n_agents
+
     assert n_agents > 0 and len(agent_names) > 0, "Population should have population size > 0"
     assert n_agents==len(agent_names), "Population size should equal length of agent names"
     assert len(is_sender)==len(is_receiver)==n_agents, "is_sender should be equal to is_receiver = n_agents"
@@ -177,6 +193,7 @@ def build_population(population_params : dict,
                                                             is_sender = is_sender,
                                                             is_receiver = is_receiver,
                                                             is_trained = is_trained,
+                                                            is_imitator=is_imitator,
                                                             device=device)
     else:
         population = FullyConnectedPopulation(n_agents = n_agents,

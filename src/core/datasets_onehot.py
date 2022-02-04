@@ -3,7 +3,7 @@ import numpy as np
 import itertools
 import collections
 
-Batch = collections.namedtuple("Batch",["data","sender_id","receiver_id"])
+Batch = collections.namedtuple("Batch",["data","sender_id","receiver_id","imitator_id"])
 
 
 class ReconstructionDataLoader(th.utils.data.DataLoader):
@@ -15,12 +15,14 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                  population_split:dict,
                  batches_per_epoch: int,
                  batch_size: int,
+                 imitation_probs: th.Tensor = None,
                  mode : str = "train",
                  seed: int = None):
 
         self.data = data
         self.agent_names = agent_names
         self.population_probs = population_probs
+        self.imitation_probs = imitation_probs
         self.population_split = population_split
         self.batches_per_epoch = batches_per_epoch
         self.batch_size = batch_size
@@ -38,6 +40,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
         return _ReconstructionIterator(data=self.data,
                                        agent_names = self.agent_names,
                                        population_probs=self.population_probs,
+                                       imitation_probs=self.imitation_probs,
                                        population_split = self.population_split,
                                        n_batches_per_epoch=self.batches_per_epoch,
                                        batch_size=self.batch_size,
@@ -53,6 +56,7 @@ class _ReconstructionIterator():
                  population_split,
                  n_batches_per_epoch,
                  batch_size,
+                 imitation_probs:th.Tensor=None,
                  mode:str="train",
                  seed:int = 10):
 
@@ -61,6 +65,7 @@ class _ReconstructionIterator():
         self.grid_names = [(agent_names[i],agent_names[j]) for i in range(len(agent_names)) \
                            for j in range(len(agent_names))]
         self.population_probs = population_probs.flatten()
+        self.imitation_probs=imitation_probs
         self.population_split = population_split
         self.n_batches_per_epoch = n_batches_per_epoch
         self.batch_size = batch_size
@@ -80,6 +85,7 @@ class _ReconstructionIterator():
         # Sample pair sender_id, receiver_id
         sampled_pair_id = th.multinomial(self.population_probs,1)
         sender_id, receiver_id = self.grid_names[sampled_pair_id]
+        imitator_id = th.multinomial(self.population_probs, 1)[0]
 
         # Sample batch from sender_id's split
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]
@@ -93,7 +99,8 @@ class _ReconstructionIterator():
 
         batch = Batch(data=batch_data,
                       sender_id=sender_id,
-                      receiver_id=receiver_id)
+                      receiver_id=receiver_id,
+                      imitator_id=imitator_id)
 
         return batch
 
@@ -343,6 +350,7 @@ def build_one_hot_dataloader(game_type : str,
                              agent_names : list = None,
                              population_split:dict = None,
                              population_probs = None,
+                             imitation_probs = None,
                              mode : str = "train",
                              target_messages : th.Tensor = None, # If pretraining mode
                              ) -> th.utils.data.DataLoader:
@@ -367,6 +375,7 @@ def build_one_hot_dataloader(game_type : str,
                                                   agent_names=agent_names,
                                                   population_split=population_split,
                                                   population_probs=population_probs,
+                                                  imitation_probs = imitation_probs,
                                                   batch_size=training_params["batch_size"],
                                                   batches_per_epoch=training_params["batches_per_epoch"],
                                                   mode=mode,

@@ -51,12 +51,12 @@ class Agent(object):
 
         return self.sender(x,context,return_whole_log_probs)
 
-    def get_log_prob_m_given_x(self,x,m):
+    def get_log_prob_m_given_x(self,x,m,return_whole_log_probs=False):
 
         embedding = self.object_encoder(x)
-        log_prob = self.sender.get_log_prob_m_given_x(embedding,m)
 
-        return log_prob
+        return self.sender.get_log_prob_m_given_x(embedding,m,return_whole_log_probs=return_whole_log_probs)
+
 
     def receive(self,
                 message,
@@ -87,13 +87,14 @@ class Agent(object):
 
         return output
 
-    def compute_sender_loss(self,inputs,sender_log_prob,sender_entropy,messages,receiver_output):
+    def compute_sender_loss(self,inputs,sender_log_prob,sender_entropy,messages,receiver_output,neg_log_imit=None):
 
         return self.sender_loss_fn.compute(inputs=inputs,
                                            message=messages,
                                            sender_log_prob=sender_log_prob,
                                            sender_entropy=sender_entropy,
-                                           receiver_output=receiver_output)
+                                           receiver_output=receiver_output,
+                                           neg_log_imit=neg_log_imit)
 
     def compute_mutual_information(self,inputs):
 
