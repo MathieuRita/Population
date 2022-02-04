@@ -194,7 +194,7 @@ class ReconstructionImitationGame(nn.Module):
         :param x: tuple (sender_id,receiver_id,batch)
         :return: (loss_sender,loss_receiver) [batch_size,batch_size]
         """
-
+        print(batch)
         agent_sender = self.population.agents[batch.sender_id]
         agent_receiver = self.population.agents[batch.receiver_id]
         agent_imitator = self.population.agents[batch.imitator_id]
