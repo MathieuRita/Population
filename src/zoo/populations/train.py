@@ -126,7 +126,8 @@ def main(params):
                                 logger=logger,
                                 dump_batch=(full_dataset,
                                             population.agent_names[0],
-                                            population.agent_names[1]))
+                                            population.agent_names[1],
+                                            population.agent_names[2]))
 
     trainer = build_trainer(game = game,
                             evaluator = evaluator,
