@@ -176,7 +176,6 @@ class Trainer:
                 n_batches[imitator_id] = 0
 
             batch = move_to(batch, self.device)
-            print(batch)
 
             loss_sender, loss_receiver, loss_imitator, metrics = self.game(batch, compute_metrics=compute_metrics)
 
