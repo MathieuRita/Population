@@ -85,6 +85,7 @@ def main(params):
                                             agent_names = population.agent_names,
                                             population_split = population_split,
                                             population_probs = population.pairs_prob,
+                                            imitation_probs = population.imitation_probs,
                                             training_params = training_params,
                                             mode="train",)
 
@@ -103,6 +104,7 @@ def main(params):
                                             agent_names=population.agent_names,
                                             population_split=population_split,
                                             population_probs=population.pairs_prob,
+                                            imitation_probs=population.imitation_probs,
                                             training_params=training_params,
                                             mode="val")
 
@@ -140,6 +142,7 @@ def main(params):
 
     trainer.train(n_epochs=training_params["n_epochs"],
                   train_freq = training_params["train_freq"],
+                  train_imitate_freq=training_params["train_imitate_freq"],
                   mi_freq=training_params["mi_freq"],
                   imitation_freq = training_params["imitation_freq"],
                   validation_freq=training_params["validation_freq"],

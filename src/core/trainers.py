@@ -29,9 +29,10 @@ class Trainer:
               n_epochs,
               train_freq : int = 1,
               validation_freq: int = 1,
-              imitation_freq : int = 1000,
-              mi_freq : int = 1000,
-              evaluator_freq: int = 1000,
+              imitation_freq : int = 100000,
+              mi_freq : int = 100000,
+              evaluator_freq: int = 1000000,
+              train_imitate_freq:int = 100000,
               print_evolution: bool = True):
 
         for epoch in range(self.start_epoch, n_epochs):
@@ -51,6 +52,13 @@ class Trainer:
             else:
                 train_loss_senders, train_loss_receivers, train_metrics = None, None, None
 
+            # Train/imitate
+            if epoch % train_imitate_freq == 0:
+                train_loss_senders, train_loss_receivers, train_loss_imitators, train_metrics = \
+                    self.train_imitate_epoch(compute_metrics=True)  # dict,dict, dict
+            else:
+                train_loss_senders, train_loss_receivers, train_loss_imitators, train_metrics = None, None, None, None
+
             # Train imitation
             if epoch % imitation_freq ==0:
                 imitation_loss_senders = self.train_imitation()  # dict
@@ -67,6 +75,7 @@ class Trainer:
                 self.log_metrics(epoch=epoch,
                                  train_loss_senders=train_loss_senders,
                                  train_loss_receivers=train_loss_receivers,
+                                 train_loss_imitators=train_loss_imitators,
                                  mi_loss_senders = mi_loss_senders,
                                  imitation_loss_senders = imitation_loss_senders,
                                  train_metrics=train_metrics,
@@ -141,6 +150,83 @@ class Trainer:
                 mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt])
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
+
+    def train_imitate_epoch(self, compute_metrics: bool = False):
+
+        mean_loss_senders = {}
+        mean_loss_imitators = {}
+        mean_loss_receivers = {}
+        n_batches = {}
+        mean_metrics = {}
+
+        self.game.train()
+
+        for batch in self.train_loader:
+
+            sender_id, receiver_id, imitator_id = batch.sender_id, batch.receiver_id, batch.imitator_id
+
+            if sender_id not in mean_loss_senders:
+                mean_loss_senders[sender_id] = 0.
+                n_batches[sender_id] = 0
+            if receiver_id not in mean_loss_receivers:
+                mean_loss_receivers[receiver_id] = 0.
+                n_batches[receiver_id] = 0
+            if imitator_id not in mean_loss_imitators:
+                mean_loss_imitators[imitator_id] = 0.
+                n_batches[imitator_id] = 0
+
+            batch = move_to(batch, self.device)
+
+            loss_sender, loss_receiver, loss_imitator, metrics = self.game(batch, compute_metrics=compute_metrics)
+
+            if th.rand(1)[0] < self.population.agents[sender_id].p_step:
+                self.population.agents[sender_id].sender_optimizer.zero_grad()
+                loss_sender.backward()
+                self.population.agents[sender_id].sender_optimizer.step()
+
+            if th.rand(1)[0] < self.population.agents[receiver_id].p_step:
+                self.population.agents[receiver_id].receiver_optimizer.zero_grad()
+                loss_receiver.backward()
+                self.population.agents[receiver_id].receiver_optimizer.step()
+
+            if th.rand(1)[0] < self.population.agents[imitator_id].p_step:
+                self.population.agents[imitator_id].sender_optimizer.zero_grad()
+                loss_imitator.backward()
+                self.population.agents[imitator_id].sender_optimizer.step()
+
+            # Store losses
+            mean_loss_senders[sender_id] += loss_sender
+            n_batches[sender_id] += 1
+            mean_loss_receivers[receiver_id] += loss_receiver
+            n_batches[receiver_id] += 1
+            mean_loss_imitators[imitator_id] += loss_imitator
+            n_batches[imitator_id] += 1
+
+            if compute_metrics:
+                # Store metrics
+                if sender_id not in mean_metrics:
+                    mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "sender_entropy": 0.,
+                                               "sender_log_prob": 0.,
+                                               "message_length": 0.}
+                if receiver_id not in mean_metrics:
+                    mean_metrics[receiver_id] = {"accuracy": 0.}
+
+                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
+                mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
+                mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
+                mean_metrics[sender_id]["message_length"] += metrics["message_length"]
+                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
+
+        mean_loss_senders = _div_dict(mean_loss_senders, n_batches)
+        mean_loss_receivers = _div_dict(mean_loss_receivers, n_batches)
+        mean_loss_imitators = _div_dict(mean_loss_imitators, n_batches)
+
+        if compute_metrics:
+            for agt in mean_metrics:
+                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt])
+
+        return mean_loss_senders, mean_loss_receivers, mean_loss_imitators, mean_metrics
 
     def train_mutual_information(self):
 
@@ -260,6 +346,7 @@ class Trainer:
                     epoch: int,
                     train_loss_senders: dict,
                     train_loss_receivers: dict,
+                    train_loss_imitators:dict,
                     imitation_loss_senders : dict,
                     mi_loss_senders : dict,
                     train_metrics: dict,
@@ -293,6 +380,12 @@ class Trainer:
                 self.writer.add_scalar(f'{receiver}/accuracy (train)',
                                        train_metrics[receiver]['accuracy'],
                                        int(self.population.agents[receiver].p_step*epoch))
+
+        # Train/imitate loss
+        if train_loss_imitators is not None:
+            for sender, l in train_loss_imitators.items():
+                self.writer.add_scalar(f'{sender}/Loss train', l.item(),
+                                       int(self.population.agents[sender].p_step * epoch))
 
         # MI
         if mi_loss_senders is not None:

@@ -82,11 +82,14 @@ class ReinforceLoss:
         self.length_reg_coef = length_reg_coef
 
         if reward_type =="log":
-            self.reward_fn = lambda inputs, receiver_output : -1*cross_entropy(inputs, receiver_output)
+            self.reward_fn = lambda inputs, receiver_output,log_prob_imit : -1*cross_entropy(inputs, receiver_output)
         elif reward_type=="accuracy":
-            self.reward_fn = lambda inputs, receiver_output : accuracy(inputs,receiver_output)
+            self.reward_fn = lambda inputs, receiver_output,log_prob_imit : accuracy(inputs,receiver_output)
         elif reward_type=="referential_log":
-            self.reward_fn = lambda inputs, receiver_output : get_log_prob_given_index(receiver_output)
+            self.reward_fn = lambda inputs, receiver_output,log_prob_imit : get_log_prob_given_index(receiver_output)
+        elif reward_type =="reco+imitation":
+            self.reward_fn = lambda inputs, receiver_output,neg_log_imit : \
+                -1*cross_entropy(inputs, receiver_output) - neg_log_imit
         else:
             raise "Set a known reward type"
 
@@ -100,7 +103,8 @@ class ReinforceLoss:
                 sender_log_prob: th.Tensor,
                 sender_entropy: th.Tensor,
                 message: th.Tensor,
-                receiver_output : th.Tensor):
+                receiver_output : th.Tensor,
+                neg_log_imit :th.Tensor = None):
 
         """
         TO DO :
@@ -125,7 +129,9 @@ class ReinforceLoss:
 
 
         # Policy gradient loss
-        reward = self.reward_fn(inputs=inputs, receiver_output=receiver_output).detach()
+        reward = self.reward_fn(inputs=inputs,
+                                receiver_output=receiver_output,
+                                neg_log_imit=neg_log_imit).detach()
         reward = self.baseline_fn(reward=reward)
         policy_loss = - (reward * sender_log_prob) # [batch_size]
 
