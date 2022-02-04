@@ -177,7 +177,9 @@ class Trainer:
 
             batch = move_to(batch, self.device)
 
-            loss_sender, loss_receiver, loss_imitator, metrics = self.game(batch, compute_metrics=compute_metrics)
+            loss_sender, loss_receiver, loss_imitator, metrics = self.game(batch,
+                                                                           compute_metrics=compute_metrics,
+                                                                           return_imitation_loss=True)
 
             if th.rand(1)[0] < self.population.agents[sender_id].p_step:
                 self.population.agents[sender_id].sender_optimizer.zero_grad()

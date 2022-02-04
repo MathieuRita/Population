@@ -186,7 +186,8 @@ class ReconstructionImitationGame(nn.Module):
                       sender_id:str,
                       receiver_id:str,
                       imitator_id:str,
-                      compute_metrics: bool = False):
+                      compute_metrics: bool = False,
+                      return_imitation_loss:bool = True):
         """
         :param compute_metrics:
         :param receiver_id:
@@ -242,7 +243,7 @@ class ReconstructionImitationGame(nn.Module):
             # Output receiver
             # metrics["receiver_output"] = output_receiver.detach()
 
-        if self.training:
+        if return_imitation_loss:
             return loss_sender.mean(), loss_receiver.mean(), loss_imitator.mean(), metrics
         else:
             return loss_sender.mean(), loss_receiver.mean(), metrics
