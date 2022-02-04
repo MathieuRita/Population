@@ -68,6 +68,7 @@ def main(params):
         print(f"✅ Successfully built {population_params['population_type']} {population_params['communication_graph']}"+
               f" population with {population_params['n_agents']} agents")
         print(f"Interaction probs are : ", population.pairs_prob)
+        print(f"Imitation probs are : ", population.imitation_probs)
 
     # Build datasets and dataloaders
     full_dataset = build_one_hot_dataset(object_params = game_params["objects"],
