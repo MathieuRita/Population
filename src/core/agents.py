@@ -87,7 +87,7 @@ class Agent(object):
 
         return output
 
-    def compute_sender_loss(self,inputs,sender_log_prob,sender_entropy,messages,receiver_output,log_prob_imit=None):
+    def compute_sender_loss(self,inputs,sender_log_prob,sender_entropy,messages,receiver_output,neg_log_imit=None):
 
         return self.sender_loss_fn.compute(inputs=inputs,
                                            message=messages,
