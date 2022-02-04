@@ -212,8 +212,8 @@ class ReconstructionImitationGame(nn.Module):
         # Imitator tries to imitate messages
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs, messages, return_whole_log_probs=True)
 
-        loss_imitator = self.agent.compute_sender_imitation_loss(sender_log_prob=log_probs_imitation,
-                                                                 target_messages=messages)  # [batch_size]
+        loss_imitator = agent_imitator.compute_sender_imitation_loss(sender_log_prob=log_probs_imitation,
+                                                                    target_messages=messages)  # [batch_size]
 
         loss_sender = agent_sender.compute_sender_loss(inputs=inputs,
                                                        sender_log_prob=log_prob_sender,
