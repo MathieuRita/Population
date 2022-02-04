@@ -187,7 +187,7 @@ class ReconstructionImitationGame(nn.Module):
                       receiver_id:str,
                       imitator_id:str,
                       compute_metrics: bool = False,
-                      return_imitation_loss:bool = True):
+                      return_imitation_loss:bool = False):
         """
         :param compute_metrics:
         :param receiver_id:
@@ -248,7 +248,7 @@ class ReconstructionImitationGame(nn.Module):
         else:
             return loss_sender.mean(), loss_receiver.mean(), metrics
 
-    def forward(self, batch, compute_metrics: bool = False,return_imitation_loss:bool=True):
+    def forward(self, batch, compute_metrics: bool = False,return_imitation_loss:bool=False):
 
         return self.game_instance(*batch,
                                 compute_metrics=compute_metrics,
