@@ -197,9 +197,7 @@ class Trainer:
                 task="communication"
                 if task not in mean_loss_senders[sender_id]:
                     mean_loss_senders[sender_id]=0.
-                if task not in mean_loss_receivers[sender_id]:
-                    mean_loss_senders[sender_id]=0.
-                if task not in mean_loss_imitators[sender_id]:
+                if task not in mean_loss_receivers[receiver_id]:
                     mean_loss_senders[sender_id]=0.
 
                 #Sender
@@ -225,10 +223,8 @@ class Trainer:
                 task = "imitation"
                 if task not in mean_loss_senders[sender_id]:
                     mean_loss_senders[sender_id]=0.
-                if task not in mean_loss_receivers[sender_id]:
-                    mean_loss_senders[sender_id]=0.
-                if task not in mean_loss_imitators[sender_id]:
-                    mean_loss_senders[sender_id]=0.
+                if task not in mean_loss_imitators[imitator_id]:
+                    mean_loss_imitators[sender_id]=0.
 
                 # Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
