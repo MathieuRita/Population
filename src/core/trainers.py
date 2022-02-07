@@ -99,10 +99,10 @@ class Trainer:
 
             if sender_id not in mean_loss_senders:
                 mean_loss_senders[sender_id] = {task:0.}
-                n_batches[sender_id] = {task:{0}}
+                n_batches[sender_id] = {task:0}
             if receiver_id not in mean_loss_receivers:
                 mean_loss_receivers[receiver_id] = {task:0.}
-                n_batches[receiver_id] = {task:{0}}
+                n_batches[receiver_id] = {task:0}
 
             batch = move_to(batch, self.device)
 
