@@ -350,7 +350,7 @@ class Trainer:
         while continue_optimal_listener_training:
 
             batch = next(iter(self.mi_loader))
-            inputs, sender_id = batch.inputs, batch.sender_id
+            inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener_id
             optimal_listener = self.population.agents[optimal_listener_id]
