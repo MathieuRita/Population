@@ -102,10 +102,10 @@ class Trainer:
             agent_receiver = self.population.agents[receiver_id]
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {}
+                mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
                 n_batches[sender_id] = 0
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {}
+                mean_loss_receivers[receiver_id] = {task:0. for task in agent_sender.tasks}
                 n_batches[receiver_id] = 0
 
             batch = move_to(batch, self.device)
@@ -181,13 +181,13 @@ class Trainer:
             metrics = self.game(batch, compute_metrics=compute_metrics)
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {}
+                mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
                 n_batches[sender_id] = 0
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {}
+                mean_loss_receivers[receiver_id] = {task:0. for task in agent_receiver.tasks}
                 n_batches[receiver_id] = 0
             if imitator_id not in mean_loss_imitators:
-                mean_loss_imitators[imitator_id] = {}
+                mean_loss_imitators[imitator_id] = {task:0. for task in agent_imitator.tasks}
                 n_batches[imitator_id] = 0
 
             # Sender
@@ -329,10 +329,10 @@ class Trainer:
                 agent_sender, agent_receiver = self.population.agents[sender_id], self.population.agents[receiver_id]
 
                 if sender_id not in mean_loss_senders:
-                    mean_loss_senders[sender_id] = {}
+                    mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
                     n_batches[sender_id] = 0
                 if receiver_id not in mean_loss_receivers:
-                    mean_loss_receivers[receiver_id] = {}
+                    mean_loss_receivers[receiver_id] = {task:0. for task in agent_receiver.tasks}
                     n_batches[receiver_id] = 0
 
                 batch = move_to(batch, self.device)
