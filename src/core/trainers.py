@@ -485,7 +485,7 @@ class Trainer:
                         self.writer.add_scalar(f'{sender}/Messages length (train)',
                                                train_metrics[sender]['message_length'], epoch)
 
-            for receiver, l in train_loss_receivers.items():
+            for receiver, tasks in train_loss_receivers.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{receiver}/{task}_train', l, epoch)
 
