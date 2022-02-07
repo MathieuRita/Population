@@ -98,10 +98,10 @@ class Trainer:
             task = "communication"
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {task:{0.}}
+                mean_loss_senders[sender_id] = {task:0.}
                 n_batches[sender_id] = {task:{0}}
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {task:{0.}}
+                mean_loss_receivers[receiver_id] = {task:0.}
                 n_batches[receiver_id] = {task:{0}}
 
             batch = move_to(batch, self.device)
@@ -114,7 +114,7 @@ class Trainer:
                 agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
                 agent_sender.tasks[task]["optimizer"].step()
 
-            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
+            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
             n_batches[sender_id][task] += 1
 
             # Receiver
@@ -123,7 +123,7 @@ class Trainer:
                 agent_receiver.tasks[task]["loss_value"].backward()
                 agent_receiver.tasks[task]["optimizer"].step()
 
-            mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
+            mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
             n_batches[receiver_id][task] += 1
 
             if compute_metrics:
@@ -190,7 +190,7 @@ class Trainer:
                 agent_sender.tasks[task]["loss_value"].backward()
                 agent_sender.tasks[task]["optimizer"].step()
 
-                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
+                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
                 n_batches[sender_id][task] += 1
 
             # Imitator
@@ -204,7 +204,7 @@ class Trainer:
                 agent_imitator.tasks[task]["loss_value"].backward()
                 agent_imitator.tasks[task]["optimizer"].step()
 
-                mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
+                mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"].item()
                 n_batches[imitator_id][task] += 1
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
