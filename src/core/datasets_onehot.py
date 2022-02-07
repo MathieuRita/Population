@@ -3,7 +3,9 @@ import numpy as np
 import itertools
 import collections
 
-Batch = collections.namedtuple("Batch", ["data", "sender_id", "receiver_id", "imitator_id"])
+CommunicationBatch = collections.namedtuple("CommunicationBatch", ["data", "sender_id", "receiver_id"])
+ImitationBatch = collections.namedtuple("ImitationBatch", ["data", "sender_id", "imitator_id"])
+MIBatch = collections.namedtuple("MIBatch", ["data", "sender_id"])
 
 
 class ReconstructionDataLoader(th.utils.data.DataLoader):
@@ -81,7 +83,7 @@ class _ReconstructionIterator():
     def __iter__(self):
         return self
 
-    def __next__(self) -> Batch:
+    def __next__(self):
 
         if self.batches_generated >= self.n_batches_per_epoch:
             raise StopIteration()
@@ -102,16 +104,16 @@ class _ReconstructionIterator():
         self.batches_generated += 1
 
         if self.task == "communication":
-            batch = Batch(data=batch_data,
-                          sender_id=sender_id,
-                          receiver_id=receiver_id)
+            batch = CommunicationBatch(data=batch_data,
+                                       sender_id=sender_id,
+                                       receiver_id=receiver_id)
         elif self.task == "imitation":
-            batch = Batch(data=batch_data,
-                          sender_id=sender_id,
-                          imitator_id=imitator_id)
+            batch = ImitationBatch(data=batch_data,
+                                   sender_id=sender_id,
+                                   imitator_id=imitator_id)
         elif self.task == "MI":
-            batch = Batch(data=batch_data,
-                          sender_id=sender_id)
+            batch = MIBatch(data=batch_data,
+                            sender_id=sender_id)
 
         return batch
 
