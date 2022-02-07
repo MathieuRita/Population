@@ -367,9 +367,9 @@ class Trainer:
                 metrics = self.game(batch, compute_metrics=compute_metrics)
 
                 task = "communication"
-                mean_loss_senders[sender_id] += agent_sender.tasks[task]["loss_value"]
+                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
                 n_batches[sender_id][task] += 1
-                mean_loss_receivers[receiver_id] += agent_receiver.tasks[task]["loss_value"]
+                mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
                 n_batches[receiver_id][task] += 1
 
                 if compute_metrics:
