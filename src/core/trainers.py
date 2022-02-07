@@ -357,11 +357,11 @@ class Trainer:
                 agent_sender, agent_receiver = self.population.agents[sender_id], self.population.agents[receiver_id]
 
                 if sender_id not in mean_loss_senders:
-                    mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
-                    n_batches[sender_id] = {task:0 for task in agent_sender.tasks}
+                    mean_loss_senders[sender_id] = {"communication":0.}
+                    n_batches[sender_id] = {"communication":0}
                 if receiver_id not in mean_loss_receivers:
-                    mean_loss_receivers[receiver_id] = {task:0. for task in agent_receiver.tasks}
-                    n_batches[receiver_id] = {task:0 for task in agent_sender.tasks}
+                    mean_loss_receivers[receiver_id] = {"communication":0.}
+                    n_batches[receiver_id] = {"communication":0}
 
                 batch = move_to(batch, self.device)
                 metrics = self.game(batch, compute_metrics=compute_metrics)
