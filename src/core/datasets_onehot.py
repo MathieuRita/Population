@@ -91,7 +91,10 @@ class _ReconstructionIterator():
         # Sample pair sender_id, receiver_id
         sampled_pair_id = th.multinomial(self.population_probs, 1)
         sender_id, receiver_id = self.grid_names[sampled_pair_id]
-        imitator_id = self.agent_names[th.multinomial(self.imitation_probs, 1)[0]]
+        if self.imitation_probs is not None:
+            imitator_id = self.agent_names[th.multinomial(self.imitation_probs, 1)[0]]
+        else:
+            imitator_id = None
 
         # Sample batch from sender_id's split
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]

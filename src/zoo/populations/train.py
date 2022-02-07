@@ -118,6 +118,7 @@ def main(params):
                                                 agent_names=population.agent_names,
                                                 population_split=population_split,
                                                 population_probs=population.pairs_prob,
+                                                imitation_probs=population.imitation_probs,
                                                 training_params=training_params,
                                                 task="imitation",
                                                 mode="train")
