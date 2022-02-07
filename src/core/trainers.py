@@ -399,7 +399,6 @@ class Trainer:
                     train_loss_senders: dict,
                     train_loss_receivers: dict,
                     train_loss_imitators: dict,
-                    imitation_loss_senders: dict,
                     mi_loss_senders: dict,
                     train_metrics: dict,
                     val_loss_senders: dict,
@@ -408,7 +407,7 @@ class Trainer:
 
         # Train
         if train_loss_senders is not None:
-            for sender, tasks in train_loss_imitators.items():
+            for sender, tasks in train_loss_senders.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{sender}/{task}_train', l.item(), epoch)
 
