@@ -199,7 +199,7 @@ class Trainer:
                     mean_loss_senders[sender_id][task]=0.
                     n_batches[sender_id][task]=0
                 if task not in mean_loss_receivers[receiver_id]:
-                    mean_loss_senders[receiver_id][task]=0.
+                    mean_loss_receivers[receiver_id][task]=0.
                     n_batches[receiver_id][task] = 0
 
                 #Sender
