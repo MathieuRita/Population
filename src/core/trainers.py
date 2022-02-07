@@ -129,7 +129,7 @@ class Trainer:
                     agent_receiver.tasks[task]["loss_value"].backward()
                     agent_receiver.tasks[task]["optimizer"].step()
 
-                mean_loss_senders[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
+                mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
             n_batches[receiver_id] += 1
 
             if compute_metrics:
@@ -207,7 +207,7 @@ class Trainer:
                     agent_receiver.tasks[task]["loss_value"].backward()
                     agent_receiver.tasks[task]["optimizer"].step()
 
-                mean_loss_senders[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
+                mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
             n_batches[receiver_id] += 1
 
             # Imitator
@@ -217,7 +217,7 @@ class Trainer:
                     agent_imitator.tasks[task]["loss_value"].backward()
                     agent_imitator.tasks[task]["optimizer"].step()
 
-                mean_loss_senders[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
+                mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
             n_batches[imitator_id] += 1
 
             if compute_metrics:
