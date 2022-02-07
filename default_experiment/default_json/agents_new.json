@@ -36,6 +36,7 @@
 		  				"lr":0.0005,
 						"annexe_agent":"default_receiver"
 						},
+			}
 
 		  "optimization":"multi-optimizer",
 
