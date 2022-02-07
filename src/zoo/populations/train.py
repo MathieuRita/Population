@@ -11,8 +11,8 @@ from src.core.evaluators import build_evaluator
 from src.core.datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
 from .utils import parse_json
 
-def get_params(params):
 
+def get_params(params):
     parser = argparse.ArgumentParser()
 
     # Population parameters
@@ -29,7 +29,7 @@ def get_params(params):
     parser.add_argument('--training_json', type=str, help="Path to training parameters")
 
     # Directory for tensorboard logs
-    parser.add_argument('--log_dir', type=str, default = "", help="Directory to save tensorboard vals")
+    parser.add_argument('--log_dir', type=str, default="", help="Directory to save tensorboard vals")
 
     # Save Directory
     parser.add_argument('--model_save_dir', type=str, default="", help="Directory to save models")
@@ -41,7 +41,6 @@ def get_params(params):
 
 
 def main(params):
-
     # Params
     opts = get_params(params)
     game_params = parse_json(opts.game_json)
@@ -59,68 +58,82 @@ def main(params):
 
     # Build population
 
-    population = build_population(population_params = population_params,
-                                  agent_repertory= agent_repertory,
-                                  game_params = game_params,
-                                  device = training_params["device"])
+    population = build_population(population_params=population_params,
+                                  agent_repertory=agent_repertory,
+                                  game_params=game_params,
+                                  device=training_params["device"])
 
     if opts.print_info_population:
-        print(f"✅ Successfully built {population_params['population_type']} {population_params['communication_graph']}"+
-              f" population with {population_params['n_agents']} agents")
+        print(
+            f"✅ Successfully built {population_params['population_type']} {population_params['communication_graph']}" +
+            f" population with {population_params['n_agents']} agents")
         print(f"Interaction probs are : ", population.pairs_prob)
         print(f"Imitation probs are : ", population.imitation_probs)
 
     # Build datasets and dataloaders
-    full_dataset = build_one_hot_dataset(object_params = game_params["objects"],
-                                         n_elements = game_params["dataset"]["n_elements"])
+    full_dataset = build_one_hot_dataset(object_params=game_params["objects"],
+                                         n_elements=game_params["dataset"]["n_elements"])
 
     population_split = split_data_into_population(dataset_size=full_dataset.size(0),
-                                                  n_elements = game_params["dataset"]["n_elements"],
+                                                  n_elements=game_params["dataset"]["n_elements"],
                                                   split_proportion=training_params["split_train_val"],
-                                                  agent_names = population.agent_names,
+                                                  agent_names=population.agent_names,
                                                   population_dataset_type=population_params['dataset_type'],
-                                                  seed = training_params["seed"])
+                                                  seed=training_params["seed"])
 
-    train_loader = build_one_hot_dataloader(game_type = game_params["game_type"],
-                                            dataset = full_dataset,
-                                            agent_names = population.agent_names,
-                                            population_split = population_split,
-                                            population_probs = population.pairs_prob,
-                                            imitation_probs = population.imitation_probs,
-                                            training_params = training_params,
-                                            mode="train",)
+    # Communication task
 
-    # Faire ici chaque paire / chaque data
-    mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
-                                          dataset=full_dataset,
-                                          agent_names=population.agent_names,
-                                          population_split=population_split,
-                                          population_probs=population.pairs_prob,
-                                          training_params=training_params,
-                                          mode="MI")
-
-    # Faire ici chaque paire / chaque data
-    val_loader = build_one_hot_dataloader(  game_type=game_params["game_type"],
+    train_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
                                             dataset=full_dataset,
                                             agent_names=population.agent_names,
                                             population_split=population_split,
                                             population_probs=population.pairs_prob,
                                             imitation_probs=population.imitation_probs,
                                             training_params=training_params,
-                                            mode="val")
+                                            task="communication",
+                                            mode="train", )
+
+    val_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                          dataset=full_dataset,
+                                          agent_names=population.agent_names,
+                                          population_split=population_split,
+                                          population_probs=population.pairs_prob,
+                                          imitation_probs=population.imitation_probs,
+                                          training_params=training_params,
+                                          mode="val")
+
+    # Mutual information task
+    mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                         dataset=full_dataset,
+                                         agent_names=population.agent_names,
+                                         population_split=population_split,
+                                         population_probs=population.pairs_prob,
+                                         training_params=training_params,
+                                         task="MI",
+                                         mode="train")
+
+    # Imitation loaders
+    imitation_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                                dataset=full_dataset,
+                                                agent_names=population.agent_names,
+                                                population_split=population_split,
+                                                population_probs=population.pairs_prob,
+                                                training_params=training_params,
+                                                task="imitation",
+                                                mode="train")
 
     if opts.print_info_population: print(f"✅ Successfully built loaders")
 
     # Build Game
-    game = build_game(game_params = game_params,
-                      population = population)
+    game = build_game(game_params=game_params,
+                      population=population)
 
     # Build logger
     logger = SummaryWriter(opts.log_dir) if opts.log_dir else None
 
     # Build Trainer & evaluator
 
-    evaluator = build_evaluator(metrics_to_measure = training_params["metrics_to_measure"],
+    evaluator = build_evaluator(metrics_to_measure=training_params["metrics_to_measure"],
                                 game=game,
                                 device=training_params["device"],
                                 logger=logger,
@@ -128,26 +141,25 @@ def main(params):
                                             population.agent_names[0],
                                             population.agent_names[1]))
 
-    trainer = build_trainer(game = game,
-                            evaluator = evaluator,
-                            train_loader = train_loader,
-                            mi_loader = mi_loader,
-                            val_loader = val_loader,
-                            device = training_params["device"],
-                            compute_metrics = True,
-                            logger = logger)
-
+    trainer = build_trainer(game=game,
+                            evaluator=evaluator,
+                            train_loader=train_loader,
+                            mi_loader=mi_loader,
+                            val_loader=val_loader,
+                            imitation_loader=imitation_loader,
+                            device=training_params["device"],
+                            compute_metrics=True,
+                            logger=logger)
 
     # Train
     evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
-                  train_freq = training_params["train_freq"],
-                  train_imitate_freq=training_params["train_imitate_freq"],
-                  mi_freq=training_params["mi_freq"],
-                  imitation_freq = training_params["imitation_freq"],
+                  train_communication_freq=training_params["train_communication_freq"],
+                  train_imitation_freq=training_params["train_imitation_freq"],
+                  train_mi_freq=training_params["train_mi_freq"],
                   validation_freq=training_params["validation_freq"],
-                  evaluator_freq = training_params["evaluator_freq"])
+                  evaluator_freq=training_params["evaluator_freq"])
 
     if opts.model_save_dir:
         population.save_models(save_dir=opts.model_save_dir)
@@ -157,7 +169,7 @@ def main(params):
         evaluator.save_messages(opts.metrics_save_dir)
 
 
-
 if __name__ == "__main__":
     import sys
+
     main(sys.argv[1:])

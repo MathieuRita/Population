@@ -11,11 +11,11 @@ class ReconstructionGame(nn.Module):
         super(ReconstructionGame, self).__init__()
         self.population = population
 
-    def game_instance(self,
-                      inputs: th.Tensor,
-                      sender_id: th.Tensor,
-                      receiver_id: th.Tensor,
-                      compute_metrics: bool = False):
+    def communication_instance(self,
+                              inputs: th.Tensor,
+                              sender_id: th.Tensor,
+                              receiver_id: th.Tensor,
+                              compute_metrics: bool = False):
 
         """
         :param compute_metrics:
@@ -37,21 +37,21 @@ class ReconstructionGame(nn.Module):
         message_embedding = agent_receiver.receive(messages)
         output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
 
-        for task in agent_sender.tasks:
-            reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
-                                                                receiver_output=output_receiver).detach()
-            loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                             sender_log_prob=log_prob_sender,
-                                                             sender_entropy=entropy_sender,
-                                                             message=messages
-                                                             )
-            agent_sender.tasks[task]["loss_value"] = loss.mean()
+        task = "communication"
 
-        for task in agent_receiver.tasks:
-            loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
-                                                              receiver_output=output_receiver)
+        reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
+                                                            receiver_output=output_receiver).detach()
+        loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                         sender_log_prob=log_prob_sender,
+                                                         sender_entropy=entropy_sender,
+                                                         message=messages
+                                                         )
+        agent_sender.tasks[task]["loss_value"] = loss.mean()
 
-            agent_receiver.tasks[task]["loss_value"] = loss.mean()
+        loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
+                                                          receiver_output=output_receiver)
+
+        agent_receiver.tasks[task]["loss_value"] = loss.mean()
 
         # Compute additional metrics
         metrics = {}
@@ -74,43 +74,46 @@ class ReconstructionGame(nn.Module):
 
     def forward(self, batch, compute_metrics: bool = False):
 
-        loss_sender, loss_receiver, metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
+        loss_sender, loss_receiver, metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
 
         return loss_sender, loss_receiver, metrics
 
     def imitation_instance(self,
-                           inputs: th.Tensor,
-                           N_samples: int):
+                           inputs : th.Tensor,
+                           sender_id: str,
+                           imitator_id: str):
 
-        target_messages = []
+        agent_sender = self.population.agents[sender_id]
+        agent_imitator = self.population.agents[imitator_id]
 
-        for sender_id in self.population.sender_names:
-            agent_sender = self.population.agents[sender_id]
-            inputs_embedding = agent_sender.encode_object(inputs)
-            for _ in range(N_samples):
-                messages, _, _ = agent_sender.send(inputs_embedding)
-                target_messages.append(messages)
+        # Agent Sender sends message based on input
+        inputs_embedding = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
-        target_messages = th.stack(target_messages)
-        target_messages = target_messages.reshape(target_messages.size(0) * target_messages.size(1),
-                                                  target_messages.size(2))
+        # Imitator tries to imitate messages
+        _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs, messages, return_whole_log_probs=True)
+        log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
+                                                     target_messages=messages)
 
-        inputs = inputs.repeat(len(self.population.sender_names) * N_samples, 1, 1)
-        losses = {}
+        task = "imitation"
 
-        for sender_id in self.population.sender_names:
-            agent_sender = self.population.agents[sender_id]
-            inputs_encoded = agent_sender.encode_object(inputs)
+        # Imitator
 
-            messages, _, log_prob_sender, entropy_sender = agent_sender.send(inputs_encoded,
-                                                                             return_whole_log_probs=True)
+        loss = agent_imitator.tasks[task]["loss"].compute(sender_log_prob=log_probs_imitation,
+                                                          target_messages=messages)
 
-            loss_sender = agent_sender.compute_sender_imitation_loss(sender_log_prob=log_prob_sender,
-                                                                     target_messages=target_messages)  # [batch_size]
+        agent_imitator.tasks[task]["loss_value"] = loss.mean()
 
-            losses[sender_id] = loss_sender.mean()
+        # Sender
+        reward = log_imitation.detach()
 
-        return losses
+        loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                        sender_log_prob=log_prob_sender,
+                                                        sender_entropy=entropy_sender,
+                                                        message=messages)
+
+        agent_sender.tasks[task]["loss_value"] = loss.mean()
+
 
 
 class ReferentialGame(nn.Module):
