@@ -221,6 +221,22 @@ class Trainer:
                     mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
                     n_batches[receiver_id][task] += 1
 
+                if compute_metrics:
+                    # Store metrics
+                    if sender_id not in mean_metrics:
+                        mean_metrics[sender_id] = {"accuracy": 0.,
+                                                   "sender_entropy": 0.,
+                                                   "sender_log_prob": 0.,
+                                                   "message_length": 0.}
+                    if receiver_id not in mean_metrics:
+                        mean_metrics[receiver_id] = {"accuracy": 0.}
+
+                    mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
+                    mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
+                    mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
+                    mean_metrics[sender_id]["message_length"] += metrics["message_length"]
+                    mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
+
             else:
                 task = "imitation"
                 if task not in mean_loss_senders[sender_id]:
@@ -248,22 +264,6 @@ class Trainer:
                     mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
                     n_batches[imitator_id][task] += 1
 
-            if compute_metrics:
-                # Store metrics
-                if sender_id not in mean_metrics:
-                    mean_metrics[sender_id] = {"accuracy": 0.,
-                                               "sender_entropy": 0.,
-                                               "sender_log_prob": 0.,
-                                               "message_length": 0.}
-                if receiver_id not in mean_metrics:
-                    mean_metrics[receiver_id] = {"accuracy": 0.}
-
-                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
-                mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
-                mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
-                mean_metrics[sender_id]["message_length"] += metrics["message_length"]
-                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
-
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
         mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
@@ -273,7 +273,7 @@ class Trainer:
 
         if compute_metrics:
             for agt in mean_metrics:
-                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt])
+                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt]["communication"])
 
         return mean_loss_senders, mean_loss_receivers, mean_loss_imitators, mean_metrics
 
@@ -366,12 +366,11 @@ class Trainer:
                 batch = move_to(batch, self.device)
                 metrics = self.game(batch, compute_metrics=compute_metrics)
 
-                for task in agent_sender.tasks:
-                    mean_loss_senders[sender_id] += agent_sender.tasks[task]["loss_value"]
-                    n_batches[sender_id][task] += 1
-                for task in agent_receiver.tasks:
-                    mean_loss_receivers[receiver_id] += agent_receiver.tasks[task]["loss_value"]
-                    n_batches[receiver_id][task] += 1
+                task = "communication"
+                mean_loss_senders[sender_id] += agent_sender.tasks[task]["loss_value"]
+                n_batches[sender_id][task] += 1
+                mean_loss_receivers[receiver_id] += agent_receiver.tasks[task]["loss_value"]
+                n_batches[receiver_id][task] += 1
 
                 if compute_metrics:
                     # Store metrics
@@ -391,7 +390,7 @@ class Trainer:
 
             if compute_metrics:
                 for agt in mean_metrics:
-                    mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt])
+                    mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt]["communication"])
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
