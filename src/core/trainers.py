@@ -409,21 +409,25 @@ class Trainer:
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{sender}/{task}_train', l.item(), epoch)
 
-                self.writer.add_scalar(f'{sender}/accuracy (train)',
-                                       train_metrics[sender]['accuracy'],epoch)
-                self.writer.add_scalar(f'{sender}/Language entropy (train)',
-                                       train_metrics[sender]['sender_entropy'],epoch)
-                self.writer.add_scalar(f'{sender}/Sender log prob',
-                                       train_metrics[sender]['sender_log_prob'],epoch)
-                self.writer.add_scalar(f'{sender}/Messages length (train)',
-                                       train_metrics[sender]['message_length'],epoch)
+                    if task=="communication":
+
+                        self.writer.add_scalar(f'{sender}/accuracy (train)',
+                                               train_metrics[sender]['accuracy'],epoch)
+                        self.writer.add_scalar(f'{sender}/Language entropy (train)',
+                                               train_metrics[sender]['sender_entropy'],epoch)
+                        self.writer.add_scalar(f'{sender}/Sender log prob',
+                                               train_metrics[sender]['sender_log_prob'],epoch)
+                        self.writer.add_scalar(f'{sender}/Messages length (train)',
+                                               train_metrics[sender]['message_length'],epoch)
 
             for receiver, l in train_loss_receivers.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{receiver}/{task}_train', l.item(),epoch)
 
-                self.writer.add_scalar(f'{receiver}/accuracy (train)',
-                                       train_metrics[receiver]['accuracy'],epoch)
+                    if task=="communication":
+
+                        self.writer.add_scalar(f'{receiver}/accuracy (train)',
+                                               train_metrics[receiver]['accuracy'],epoch)
 
         # Train/imitate loss
         if train_loss_imitators is not None:
