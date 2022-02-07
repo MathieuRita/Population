@@ -181,13 +181,13 @@ class Trainer:
             metrics = self.game(batch, compute_metrics=compute_metrics)
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
+                mean_loss_senders[sender_id] = {}
                 n_batches[sender_id] = 0
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {task:0. for task in agent_receiver.tasks}
+                mean_loss_receivers[receiver_id] = {}
                 n_batches[receiver_id] = 0
             if imitator_id not in mean_loss_imitators:
-                mean_loss_imitators[imitator_id] = {task:0. for task in agent_imitator.tasks}
+                mean_loss_imitators[imitator_id] = {}
                 n_batches[imitator_id] = 0
 
 
@@ -195,6 +195,13 @@ class Trainer:
             if rdm_float<=0.5:
                 # Communication
                 task="communication"
+                if task not in mean_loss_senders[sender_id]:
+                    mean_loss_senders[sender_id]=0.
+                if task not in mean_loss_receivers[sender_id]:
+                    mean_loss_senders[sender_id]=0.
+                if task not in mean_loss_imitators[sender_id]:
+                    mean_loss_senders[sender_id]=0.
+
                 #Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
                     agent_sender.tasks[task]["optimizer"].zero_grad()
@@ -216,6 +223,12 @@ class Trainer:
 
             else:
                 task = "imitation"
+                if task not in mean_loss_senders[sender_id]:
+                    mean_loss_senders[sender_id]=0.
+                if task not in mean_loss_receivers[sender_id]:
+                    mean_loss_senders[sender_id]=0.
+                if task not in mean_loss_imitators[sender_id]:
+                    mean_loss_senders[sender_id]=0.
 
                 # Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
