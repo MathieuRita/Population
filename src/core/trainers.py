@@ -352,7 +352,7 @@ class Trainer:
             batch = next(iter(self.mi_loader))
             inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
-            optimal_listener_id = agent_sender.optimal_listener_id
+            optimal_listener_id = agent_sender.optimal_listener
             optimal_listener = self.population.agents[optimal_listener_id]
             batch = move_to((inputs,sender_id,optimal_listener_id), self.device)
 
