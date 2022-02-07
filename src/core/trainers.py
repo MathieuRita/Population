@@ -59,12 +59,6 @@ class Trainer:
             else:
                 train_loss_senders, train_loss_receivers, train_loss_imitators, train_metrics = None, None, None, None
 
-            # Train imitation
-            if epoch % imitation_freq == 0:
-                imitation_loss_senders = self.train_imitation()  # dict
-            else:
-                imitation_loss_senders = None
-
             # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
                 val_loss_senders, val_loss_receivers, val_metrics = self.eval(compute_metrics=True)
@@ -77,7 +71,6 @@ class Trainer:
                                  train_loss_receivers=train_loss_receivers,
                                  train_loss_imitators=train_loss_imitators,
                                  mi_loss_senders=mi_loss_senders,
-                                 imitation_loss_senders=imitation_loss_senders,
                                  train_metrics=train_metrics,
                                  val_loss_senders=val_loss_senders,
                                  val_loss_receivers=val_loss_receivers,
