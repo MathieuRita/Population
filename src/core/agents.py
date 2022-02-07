@@ -27,6 +27,7 @@ class Agent(object):
         self.sender = sender
         self.receiver = receiver
         self.object_decoder = object_decoder
+        self.optimal_listener = optimal_listener
         self.tasks = tasks
         self.device = device
 
