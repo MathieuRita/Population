@@ -226,8 +226,8 @@ class ReconstructionImitationGame(nn.Module):
                                                     target_messages=messages)
 
         for task in agent_imitator.tasks:
-            loss = agent_sender.tasks[task]["loss"].compute(sender_log_prob=log_probs_imitation,
-                                                            target_messages=messages)
+            loss = agent_imitator.tasks[task]["loss"].compute(sender_log_prob=log_probs_imitation,
+                                                                target_messages=messages)
 
             agent_imitator.tasks[task]["loss_value"] = loss.mean()
 
