@@ -20,6 +20,7 @@ class Agent(object):
                  object_encoder: nn.Module,
                  object_decoder: nn.Module,
                  tasks:dict,
+                 optimal_listener : str = None,
                  device: str = "cpu")->None:
         self.agent_name = agent_name
         self.object_encoder = object_encoder
@@ -210,6 +211,7 @@ def get_agent(agent_name: str,
                   sender=sender,
                   receiver=receiver,
                   tasks=tasks,
+                  optimal_listener = agent_params["optimal_listener"],
                   device=device)
 
     return agent

@@ -337,7 +337,42 @@ class Trainer:
 
         return mean_loss_senders, mean_loss_receivers, mean_loss_imitators, mean_metrics
 
-    def train_mutual_information(self):
+    def train_mutual_information(self,threshold=1e-3):
+
+        self.game.train()
+
+        prev_loss_value = 0.
+        continue_optimal_listener_training = True
+
+        task = "communication"
+
+        while continue_optimal_listener_training:
+
+            batch = next(iter(self.mi_loader))
+            inputs, sender_id = batch.inputs, batch.sender_id
+            agent_sender = self.population.agents[sender_id]
+            optimal_listener_id = agent_sender.optimal_listener_id
+            optimal_listener = self.population.agents[optimal_listener_id]
+            batch = move_to((inputs,sender_id,optimal_listener_id), self.device)
+
+            _ = self.game(batch)
+
+            optimal_listener.tasks[task]["optimizer"].zero_grad()
+            optimal_listener.tasks[task]["loss_value"].backward()
+            optimal_listener.tasks[task]["optimizer"].step()
+
+            if abs(optimal_listener.tasks[task]["loss_value"].item()-prev_loss_value)<threshold:
+                continue_optimal_listener_training=False
+            else:
+                prev_loss_value = optimal_listener.tasks[task]["loss_value"].item()
+
+        agent_sender.tasks[task]["optimizer"].zero_grad()
+        agent_sender.tasks[task]["loss_value"].backward()
+        agent_sender.tasks[task]["optimizer"].step()
+
+        return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
+
+    def train_mutual_information_direct(self):
 
         mean_mi_senders = {}
         n_batches = {}
