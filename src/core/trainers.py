@@ -499,12 +499,12 @@ class Trainer:
         if train_imitation_loss_senders is not None:
             for sender, tasks in train_imitation_loss_senders.items():
                 for task, l in tasks.items():
-                    self.writer.add_scalar(f'{sender}/{task}', l, epoch)
+                    self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
 
         if train_imitation_loss_imitators is not None:
             for sender, tasks in train_imitation_loss_imitators.items():
                 for task, l in tasks.items():
-                    self.writer.add_scalar(f'{sender}/{task}', l, epoch)
+                    self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
 
         # MI
         if train_mi_loss_senders is not None:
