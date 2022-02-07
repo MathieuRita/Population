@@ -49,7 +49,7 @@ class ReconstructionGame(nn.Module):
 
         for task in agent_receiver.tasks:
             loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
-                                                              output_receiver=output_receiver)
+                                                              receiver_output=output_receiver)
 
             agent_receiver.tasks[task]["loss_value"] = loss.mean()
 
@@ -243,7 +243,7 @@ class ReconstructionImitationGame(nn.Module):
 
         for task in agent_receiver.tasks:
             loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
-                                                              output_receiver=output_receiver)
+                                                              receiver_output=output_receiver)
 
             agent_receiver.tasks[task]["loss_value"] = loss.mean()
 
