@@ -168,7 +168,7 @@ class Trainer:
 
             batch = move_to(batch, self.device)
 
-            self.game.imitation_instance(batch)
+            self.game.imitation_instance(*batch)
 
             if sender_id not in mean_loss_senders:
                 mean_loss_senders[sender_id] = {}
