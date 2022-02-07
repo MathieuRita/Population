@@ -203,13 +203,18 @@ def get_agent(agent_name: str,
 
         tasks[task] = {"loss": loss, "optimizer": optimizer, "p_step": p_step}
 
+    if "optimal_listener" in agent_params:
+        optimal_listener = agent_params["optimal_listener"]
+    else:
+        optimal_listener = None
+
     agent = Agent(agent_name=agent_name,
                   object_encoder=object_encoder,
                   object_decoder=object_decoder,
                   sender=sender,
                   receiver=receiver,
                   tasks=tasks,
-                  optimal_listener = agent_params["optimal_listener"],
+                  optimal_listener = optimal_listener,
                   device=device)
 
     return agent
