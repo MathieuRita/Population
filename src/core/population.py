@@ -1,7 +1,7 @@
 # coding=utf-8
 import torch as th
 
-from src.core.agents import build_agent
+from .agents import get_agent
 
 
 class Population(object):
@@ -35,10 +35,10 @@ class Population(object):
         self.agents = {}
         for agent_name in self.agent_names:
 
-            agent = build_agent(agent_name=agent_name,
-                                agent_repertory=agent_repertory,
-                                game_params=game_params,
-                                device=device)
+            agent = get_agent(agent_name=agent_name,
+                              agent_repertory=agent_repertory,
+                              game_params=game_params,
+                              device=device)
 
             self.agents[agent_name] = agent
 
@@ -70,6 +70,7 @@ class FullyConnectedPopulation(Population):
                  game_params : dict,
                  device : str = "cpu") -> None:
         pairs_prob = 1-th.eye(n_agents)  # type: th.Tensor
+        sender_names, receiver_names = [], []
         super().__init__(n_agents = n_agents,
                          agent_names = agent_names,
                          sender_names=sender_names,
