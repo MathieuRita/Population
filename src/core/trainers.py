@@ -190,35 +190,50 @@ class Trainer:
                 mean_loss_imitators[imitator_id] = {task:0. for task in agent_imitator.tasks}
                 n_batches[imitator_id] = 0
 
-            # Sender
-            for task in agent_sender.tasks:
+
+            rdm_float = th.rand(1)[0]
+            if rdm_float<=0.5:
+                # Communication
+                task="communication"
+                #Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
                     agent_sender.tasks[task]["optimizer"].zero_grad()
                     agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
                     agent_sender.tasks[task]["optimizer"].step()
 
-                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
-            n_batches[sender_id] += 1
+                    mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
+                n_batches[sender_id] += 1
 
-            # Receiver
-            for task in agent_receiver.tasks:
-                if th.rand(1)[0] < agent_receiver.tasks[task]["p_step"]:
-                    agent_receiver.tasks[task]["optimizer"].zero_grad()
-                    agent_receiver.tasks[task]["loss_value"].backward()
-                    agent_receiver.tasks[task]["optimizer"].step()
+                # Receiver
+                for task in agent_receiver.tasks:
+                    if th.rand(1)[0] < agent_receiver.tasks[task]["p_step"]:
+                        agent_receiver.tasks[task]["optimizer"].zero_grad()
+                        agent_receiver.tasks[task]["loss_value"].backward()
+                        agent_receiver.tasks[task]["optimizer"].step()
 
-                mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
-            n_batches[receiver_id] += 1
+                    mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
+                n_batches[receiver_id] += 1
 
-            # Imitator
-            for task in agent_imitator.tasks:
+            else:
+                task = "imitation"
+
+                # Sender
+                if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
+                    agent_sender.tasks[task]["optimizer"].zero_grad()
+                    agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
+                    agent_sender.tasks[task]["optimizer"].step()
+
+                    mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
+                n_batches[sender_id] += 1
+
+                # Imitator
                 if th.rand(1)[0] < agent_imitator.tasks[task]["p_step"]:
                     agent_imitator.tasks[task]["optimizer"].zero_grad()
                     agent_imitator.tasks[task]["loss_value"].backward()
                     agent_imitator.tasks[task]["optimizer"].step()
 
-                mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
-            n_batches[imitator_id] += 1
+                    mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
+                n_batches[imitator_id] += 1
 
             if compute_metrics:
                 # Store metrics
