@@ -235,11 +235,11 @@ class ReconstructionImitationGame(nn.Module):
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver,
                                                                 log_imitation=log_imitation).detach()
-            loss = agent_sender.tasks[task]["loss"].loss.compute(reward=reward,
-                                                                 sender_log_prob=log_prob_sender,
-                                                                 sender_entropy=entropy_sender,
-                                                                 messages=messages
-                                                                 )
+            loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                             sender_log_prob=log_prob_sender,
+                                                             sender_entropy=entropy_sender,
+                                                             messages=messages
+                                                             )
             agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         for task in agent_receiver.tasks:
