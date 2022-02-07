@@ -130,9 +130,9 @@ class ReinforceLoss:
 
         """
         TO DO :
-        - prendre en compte les EOS
         - implement KL regularization
 
+        :param reward:
         :param neg_log_imit:
         :param receiver_output:
         :param sender_entropy:
