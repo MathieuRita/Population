@@ -182,13 +182,13 @@ class Trainer:
 
             if sender_id not in mean_loss_senders:
                 mean_loss_senders[sender_id] = {}
-                n_batches[sender_id] = 0
+                n_batches[sender_id] = {}
             if receiver_id not in mean_loss_receivers:
                 mean_loss_receivers[receiver_id] = {}
-                n_batches[receiver_id] = 0
+                n_batches[receiver_id] = {}
             if imitator_id not in mean_loss_imitators:
                 mean_loss_imitators[imitator_id] = {}
-                n_batches[imitator_id] = 0
+                n_batches[imitator_id] = {}
 
 
             rdm_float = th.rand(1)[0]
@@ -197,8 +197,10 @@ class Trainer:
                 task="communication"
                 if task not in mean_loss_senders[sender_id]:
                     mean_loss_senders[sender_id][task]=0.
+                    n_batches[sender_id][task]=0
                 if task not in mean_loss_receivers[receiver_id]:
                     mean_loss_senders[receiver_id][task]=0.
+                    n_batches[receiver_id][task] = 0
 
                 #Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
@@ -207,7 +209,7 @@ class Trainer:
                     agent_sender.tasks[task]["optimizer"].step()
 
                     mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
-                n_batches[sender_id] += 1
+                    n_batches[sender_id][task] += 1
 
                 # Receiver
                 for task in agent_receiver.tasks:
@@ -217,14 +219,16 @@ class Trainer:
                         agent_receiver.tasks[task]["optimizer"].step()
 
                     mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"]
-                n_batches[receiver_id] += 1
+                    n_batches[receiver_id][task] += 1
 
             else:
                 task = "imitation"
                 if task not in mean_loss_senders[sender_id]:
                     mean_loss_senders[sender_id][task]=0.
+                    n_batches[sender_id][task] = 0
                 if task not in mean_loss_imitators[imitator_id]:
                     mean_loss_imitators[imitator_id][task]=0.
+                    n_batches[imitator_id][task] = 0
 
                 # Sender
                 if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
@@ -233,7 +237,7 @@ class Trainer:
                     agent_sender.tasks[task]["optimizer"].step()
 
                     mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"]
-                n_batches[sender_id] += 1
+                    n_batches[sender_id][task] += 1
 
                 # Imitator
                 if th.rand(1)[0] < agent_imitator.tasks[task]["p_step"]:
@@ -242,7 +246,7 @@ class Trainer:
                     agent_imitator.tasks[task]["optimizer"].step()
 
                     mean_loss_imitators[imitator_id][task] += agent_imitator.tasks[task]["loss_value"]
-                n_batches[imitator_id] += 1
+                    n_batches[imitator_id][task] += 1
 
             if compute_metrics:
                 # Store metrics
@@ -260,11 +264,11 @@ class Trainer:
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                 mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
 
-        mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches)
+        mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
-        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches)
+        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
                                for receiver_id in mean_loss_receivers}
-        mean_loss_imitators = {imitator_id: _div_dict(mean_loss_imitators[imitator_id], n_batches)
+        mean_loss_imitators = {imitator_id: _div_dict(mean_loss_imitators[imitator_id], n_batches[imitator_id])
                                for imitator_id in mean_loss_imitators}
 
         if compute_metrics:
@@ -354,20 +358,20 @@ class Trainer:
 
                 if sender_id not in mean_loss_senders:
                     mean_loss_senders[sender_id] = {task:0. for task in agent_sender.tasks}
-                    n_batches[sender_id] = 0
+                    n_batches[sender_id] = {task:0 for task in agent_sender.tasks}
                 if receiver_id not in mean_loss_receivers:
                     mean_loss_receivers[receiver_id] = {task:0. for task in agent_receiver.tasks}
-                    n_batches[receiver_id] = 0
+                    n_batches[receiver_id] = {task:0 for task in agent_sender.tasks}
 
                 batch = move_to(batch, self.device)
                 metrics = self.game(batch, compute_metrics=compute_metrics)
 
                 for task in agent_sender.tasks:
                     mean_loss_senders[sender_id] += agent_sender.tasks[task]["loss_value"]
-                n_batches[sender_id] += 1
+                    n_batches[sender_id][task] += 1
                 for task in agent_receiver.tasks:
                     mean_loss_receivers[receiver_id] += agent_receiver.tasks[task]["loss_value"]
-                n_batches[receiver_id] += 1
+                    n_batches[receiver_id][task] += 1
 
                 if compute_metrics:
                     # Store metrics
@@ -380,9 +384,9 @@ class Trainer:
                     mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                     mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
 
-            mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches)
+            mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                                  for sender_id in mean_loss_senders}
-            mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches)
+            mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[sender_id])
                                    for receiver_id in mean_loss_receivers}
 
             if compute_metrics:
