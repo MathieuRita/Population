@@ -475,7 +475,7 @@ class Trainer:
         if train_communication_loss_senders is not None:
             for sender, tasks in train_communication_loss_senders.items():
                 for task, l in tasks.items():
-                    self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
+                    self.writer.add_scalar(f'{sender}/{task} (train)', l, epoch)
 
                     if task == "communication":
                         self.writer.add_scalar(f'{sender}/accuracy (train)',
@@ -499,12 +499,12 @@ class Trainer:
         if train_imitation_loss_senders is not None:
             for sender, tasks in train_imitation_loss_senders.items():
                 for task, l in tasks.items():
-                    self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
+                    self.writer.add_scalar(f'{sender}/{task} (train)', l, epoch)
 
         if train_imitation_loss_imitators is not None:
             for sender, tasks in train_imitation_loss_imitators.items():
                 for task, l in tasks.items():
-                    self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
+                    self.writer.add_scalar(f'{sender}/{task} (train)', l, epoch)
 
         # MI
         if train_mi_loss_senders is not None:
@@ -524,7 +524,7 @@ class Trainer:
                 self.writer.add_scalar(f'{sender}/Messages length (val)',
                                        val_metrics[sender]['message_length'], epoch)
 
-            for sender, tasks in val_loss_receivers.items():
+            for receiver, tasks in val_loss_receivers.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{receiver}/Loss val', l, epoch)
 
