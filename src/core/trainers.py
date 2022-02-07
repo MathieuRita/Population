@@ -438,8 +438,9 @@ class Trainer:
 
         # Val
         if val_loss_senders is not None:
-            for sender, l in val_loss_senders.items():
-                self.writer.add_scalar(f'{sender}/Loss val', l.item(),epoch)
+            for sender, tasks in val_loss_senders.items():
+                for task, l in tasks.items():
+                    self.writer.add_scalar(f'{sender}/Loss val', l.item(),epoch)
 
                 self.writer.add_scalar(f'{sender}/accuracy (val)',
                                        val_metrics[sender]['accuracy'],epoch)
@@ -448,8 +449,9 @@ class Trainer:
                 self.writer.add_scalar(f'{sender}/Messages length (val)',
                                        val_metrics[sender]['message_length'],epoch)
 
-            for receiver, l in val_loss_receivers.items():
-                self.writer.add_scalar(f'{receiver}/Loss val', l.item(),epoch)
+            for sender, tasks in val_loss_receivers.items():
+                for task, l in tasks.items():
+                    self.writer.add_scalar(f'{receiver}/Loss val', l.item(),epoch)
 
                 self.writer.add_scalar(f'{receiver}/accuracy (val)',
                                        val_metrics[receiver]['accuracy'],epoch)
