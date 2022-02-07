@@ -16,6 +16,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                  batches_per_epoch: int,
                  batch_size: int,
                  imitation_probs: th.Tensor = None,
+                 task : str = "communication",
                  mode: str = "train",
                  seed: int = None):
 
@@ -26,6 +27,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
         self.population_split = population_split
         self.batches_per_epoch = batches_per_epoch
         self.batch_size = batch_size
+        self.task = task
         self.mode = mode
         self.seed = seed
 
@@ -43,6 +45,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                                        population_split=self.population_split,
                                        n_batches_per_epoch=self.batches_per_epoch,
                                        batch_size=self.batch_size,
+                                       task = self.task,
                                        mode=self.mode,
                                        seed=seed)
 
