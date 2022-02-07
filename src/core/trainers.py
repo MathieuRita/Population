@@ -144,12 +144,12 @@ class Trainer:
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
-        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[sender_id])
+        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
                                for receiver_id in mean_loss_receivers}
 
         if compute_metrics:
             for agt in mean_metrics:
-                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt])
+                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt][task])
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
