@@ -42,23 +42,23 @@ class Trainer:
 
             # Train communication
             if epoch % train_communication_freq == 0:
-                train_loss_senders, train_loss_receivers, train_metrics = \
+                train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication(compute_metrics=True)  # dict,dict, dict
             else:
-                train_loss_senders, train_loss_receivers, train_metrics = None, None, None
+                train_communication_loss_senders, train_communication_loss_receivers, train_metrics = None, None, None
 
             # Train imitation
             if epoch % train_imitation_freq == 0:
-                train_loss_senders, train_loss_imitators = \
+                train_imitation_loss_senders, train_imitation_loss_imitators = \
                     self.train_imitation()  # dict,dict, dict
             else:
-                train_loss_senders, train_loss_imitators = None, None
+                train_imitation_loss_senders, train_imitation_loss_imitators = None, None
 
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
-                mi_loss_senders = self.train_mutual_information()
+                train_mi_loss_senders = self.train_mutual_information()
             else:
-                mi_loss_senders = None
+                train_mi_loss_senders = None
 
             # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
@@ -68,10 +68,11 @@ class Trainer:
 
             if self.writer is not None:
                 self.log_metrics(epoch=epoch,
-                                 train_loss_senders=train_loss_senders,
-                                 train_loss_receivers=train_loss_receivers,
-                                 train_loss_imitators=train_loss_imitators,
-                                 mi_loss_senders=mi_loss_senders,
+                                 train_communication_loss_senders=train_communication_loss_senders,
+                                 train_communication_loss_receivers=train_communication_loss_receivers,
+                                 train_imitation_loss_senders=train_imitation_loss_senders,
+                                 train_imitation_loss_imitators=train_imitation_loss_imitators,
+                                 train_mi_loss_senders=train_mi_loss_senders,
                                  train_metrics=train_metrics,
                                  val_loss_senders=val_loss_senders,
                                  val_loss_receivers=val_loss_receivers,
@@ -460,18 +461,19 @@ class Trainer:
 
     def log_metrics(self,
                     epoch: int,
-                    train_loss_senders: dict,
-                    train_loss_receivers: dict,
-                    train_loss_imitators: dict,
-                    mi_loss_senders: dict,
+                    train_communication_loss_senders: dict,
+                    train_communication_loss_receivers: dict,
+                    train_imitation_loss_senders: dict,
+                    train_imitation_loss_imitators: dict,
+                    train_mi_loss_senders: dict,
                     train_metrics: dict,
                     val_loss_senders: dict,
                     val_loss_receivers: dict,
                     val_metrics: dict) -> None:
 
         # Train
-        if train_loss_senders is not None:
-            for sender, tasks in train_loss_senders.items():
+        if train_communication_loss_senders is not None:
+            for sender, tasks in train_communication_loss_senders.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{sender}/{task}_train', l, epoch)
 
@@ -485,7 +487,7 @@ class Trainer:
                         self.writer.add_scalar(f'{sender}/Messages length (train)',
                                                train_metrics[sender]['message_length'], epoch)
 
-            for receiver, tasks in train_loss_receivers.items():
+            for receiver, tasks in train_communication_loss_receivers.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{receiver}/{task}_train', l, epoch)
 
@@ -493,15 +495,20 @@ class Trainer:
                         self.writer.add_scalar(f'{receiver}/accuracy (train)',
                                                train_metrics[receiver]['accuracy'], epoch)
 
-        # Train/imitate loss
-        if train_loss_imitators is not None:
-            for sender, tasks in train_loss_imitators.items():
+        # Imitation
+        if train_imitation_loss_senders is not None:
+            for sender, tasks in train_imitation_loss_senders.items():
+                for task, l in tasks.items():
+                    self.writer.add_scalar(f'{sender}/{task}', l, epoch)
+
+        if train_imitation_loss_imitators is not None:
+            for sender, tasks in train_imitation_loss_imitators.items():
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{sender}/{task}', l, epoch)
 
         # MI
-        if mi_loss_senders is not None:
-            for sender, l in mi_loss_senders.items():
+        if train_mi_loss_senders is not None:
+            for sender, l in train_mi_loss_senders.items():
                 self.writer.add_scalar(f'{sender}/Loss Mutual information', l, epoch)
 
         # Val
