@@ -74,9 +74,9 @@ class ReconstructionGame(nn.Module):
 
     def forward(self, batch, compute_metrics: bool = False):
 
-        loss_sender, loss_receiver, metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
 
-        return loss_sender, loss_receiver, metrics
+        return metrics
 
     def imitation_instance(self,
                            inputs : th.Tensor,
