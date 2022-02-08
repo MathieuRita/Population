@@ -1,5 +1,6 @@
 import torch as th
 import torch.nn as nn
+import torch.nn.functional as F
 from .losses import accuracy, find_lengths,cross_entropy_imitation
 
 
@@ -105,8 +106,13 @@ class ReconstructionGame(nn.Module):
         agent_imitator.tasks[task]["loss_value"] = loss.mean()
 
         # Sender
-        print(log_prob_sender.size())
-        print(log_imitation.size())
+        message_lengths = find_lengths(messages)
+        max_len = messages.size(1)
+
+        # Mask log_prob / entropy post EOS
+        mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
+                                           num_classes=max_len + 1), dim=1)[:, :-1]
+        log_prob_sender = (log_prob_sender * mask_eos).sum(dim=1)
         reward = (log_prob_sender-log_imitation).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
