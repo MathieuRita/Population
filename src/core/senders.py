@@ -145,6 +145,7 @@ class RecurrentGenerator(nn.Module):
 
         logits = []
         whole_logits = []
+        entropy = []
 
         for step in range(self.max_len):
             for i, layer in enumerate(self.sender_cells):
@@ -161,6 +162,7 @@ class RecurrentGenerator(nn.Module):
 
             step_logits = F.log_softmax(self.hidden_to_output(h_t), dim=1)
             distr = Categorical(logits=step_logits)
+            entropy.append(distr.entropy())
 
             x = messages[:,step]
 
@@ -171,6 +173,7 @@ class RecurrentGenerator(nn.Module):
             input = self.sender_embedding(x)
 
         logits = th.stack(logits).permute(1, 0)
+        entropy = th.stack(entropy).permute(1, 0)
         if return_whole_log_probs: whole_logits = th.stack(whole_logits).permute(1, 0, 2)
 
         if not return_whole_log_probs:

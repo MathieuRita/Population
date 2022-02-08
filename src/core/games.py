@@ -105,7 +105,7 @@ class ReconstructionGame(nn.Module):
         agent_imitator.tasks[task]["loss_value"] = loss.mean()
 
         # Sender
-        reward = log_imitation.detach()
+        reward = (log_prob_sender-log_imitation).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         sender_log_prob=log_prob_sender,
