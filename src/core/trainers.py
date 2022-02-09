@@ -271,7 +271,7 @@ class Trainer:
             batch = next(iter(self.imitation_loader))
             inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
-            optimal_lm_id = agent_sender.optimal_lm_id
+            optimal_lm_id = agent_sender.optimal_lm
             optimal_lm = self.population.agents[optimal_lm_id]
             batch = move_to((inputs,sender_id,optimal_lm), self.device)
 
