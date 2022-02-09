@@ -159,6 +159,7 @@ def main(params):
                   train_communication_freq=training_params["train_communication_freq"],
                   train_imitation_freq=training_params["train_imitation_freq"],
                   train_mi_freq=training_params["train_mi_freq"],
+                  train_mi_freq_with_lm=training_params["train_mi_freq_with_lm"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"])
 

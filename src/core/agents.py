@@ -21,6 +21,7 @@ class Agent(object):
                  object_decoder: nn.Module,
                  tasks:dict,
                  optimal_listener : str = None,
+                 optimal_lm: str = None,
                  device: str = "cpu")->None:
         self.agent_name = agent_name
         self.object_encoder = object_encoder
@@ -28,6 +29,7 @@ class Agent(object):
         self.receiver = receiver
         self.object_decoder = object_decoder
         self.optimal_listener = optimal_listener
+        self.optimal_lm = optimal_lm
         self.tasks = tasks
         self.device = device
 
@@ -206,8 +208,16 @@ def get_agent(agent_name: str,
 
         tasks[task] = {"loss": loss, "optimizer": optimizer, "p_step": p_step}
 
+        if 'lm_mode' in task_infos:
+            tasks["lm_mode"]=task_infos["lm_mode"]
+
     if "optimal_listener" in agent_params:
         optimal_listener = agent_params["optimal_listener"]
+    else:
+        optimal_listener = None
+
+    if "optimal_lm" in agent_params:
+        optimal_listener = agent_params["optimal_lm"]
     else:
         optimal_listener = None
 
@@ -218,6 +228,7 @@ def get_agent(agent_name: str,
                   receiver=receiver,
                   tasks=tasks,
                   optimal_listener = optimal_listener,
+                  optimal_lm = optimal_lm,
                   device=device)
 
     return agent
