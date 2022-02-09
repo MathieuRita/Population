@@ -33,6 +33,7 @@ class Trainer:
               validation_freq: int = 1,
               train_imitation_freq: int = 100000,
               train_mi_freq: int = 100000,
+              train_mi_with_lm_freq: int = 100000,
               evaluator_freq: int = 1000000,
               print_evolution: bool = True):
 
@@ -57,6 +58,12 @@ class Trainer:
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
                 train_mi_loss_senders = self.train_mutual_information()
+            else:
+                train_mi_loss_senders = None
+
+            # Train Mutual information
+            if epoch % train_mi_with_lm_freq == 0 and self.mi_loader is not None:
+                train_mi_loss_senders = self.train_mutual_information_with_lm()
             else:
                 train_mi_loss_senders = None
 
@@ -243,6 +250,52 @@ class Trainer:
                 continue_optimal_listener_training=False
             else:
                 prev_loss_value = optimal_listener.tasks[task]["loss_value"].item()
+
+        agent_sender.tasks[task]["optimizer"].zero_grad()
+        agent_sender.tasks[task]["loss_value"].backward()
+        agent_sender.tasks[task]["optimizer"].step()
+
+        return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
+
+    def train_mutual_information_with_lm(self,threshold=1e-3):
+
+        self.game.train()
+
+        prev_loss_value = 0.
+        continue_optimal_lm_training = True
+
+        task = "imitation"
+
+        while continue_optimal_lm_training:
+
+            batch = next(iter(self.imitation_loader))
+            inputs, sender_id = batch.data, batch.sender_id
+            agent_sender = self.population.agents[sender_id]
+            optimal_lm_id = agent_sender.optimal_lm_id
+            optimal_lm = self.population.agents[optimal_lm_id]
+            batch = move_to((inputs,sender_id,optimal_lm), self.device)
+
+            _ = self.game.imitation_instance(*batch)
+
+            optimal_lm.tasks[task]["optimizer"].zero_grad()
+            optimal_lm.tasks[task]["loss_value"].backward()
+            optimal_lm.tasks[task]["optimizer"].step()
+
+            if abs(optimal_lm.tasks[task]["loss_value"].item()-prev_loss_value)<threshold:
+                continue_optimal_lm_training=False
+            else:
+                prev_loss_value = optimal_lm.tasks[task]["loss_value"].item()
+
+        task = "mutual_information"
+
+        next(iter(self.mi_loader))
+        inputs, sender_id = batch.data, batch.sender_id
+        agent_sender = self.population.agents[sender_id]
+        optimal_lm_id = agent_sender.optimal_lm_id
+        optimal_lm = self.population.agents[optimal_lm_id]
+        batch = move_to((inputs, sender_id, optimal_lm), self.device)
+
+        _ = self.game.direct_mi_instance(*batch)
 
         agent_sender.tasks[task]["optimizer"].zero_grad()
         agent_sender.tasks[task]["loss_value"].backward()

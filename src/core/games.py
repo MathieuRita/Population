@@ -83,6 +83,7 @@ class ReconstructionGame(nn.Module):
                            inputs : th.Tensor,
                            sender_id: str,
                            imitator_id: str):
+        task = "imitation"
 
         agent_sender = self.population.agents[sender_id]
         agent_imitator = self.population.agents[imitator_id]
@@ -92,11 +93,12 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Imitator tries to imitate messages
-        _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs, messages, return_whole_log_probs=True)
+        inputs_imitation = (1-agent_imitator[task]["lm_mode"])*inputs
+        _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
+                                                                       messages,
+                                                                       return_whole_log_probs=True)
         log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
                                                      target_messages=messages)
-
-        task = "imitation"
 
         # Imitator
 
@@ -111,6 +113,45 @@ class ReconstructionGame(nn.Module):
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
                                            num_classes=max_len + 1), dim=1)[:, :-1]
         reward = (log_imitation-(log_prob_sender * mask_eos).sum(dim=1)).detach()
+
+        loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                        sender_log_prob=log_prob_sender,
+                                                        sender_entropy=entropy_sender,
+                                                        message=messages)
+
+        agent_sender.tasks[task]["loss_value"] = loss.mean()
+
+    def direct_mi_instance(self,
+                           inputs : th.Tensor,
+                           sender_id: str,
+                           imitator_id: str):
+
+        task = "mutual_information"
+
+        agent_sender = self.population.agents[sender_id]
+        agent_imitator = self.population.agents[imitator_id]
+
+        # Agent Sender sends message based on input
+        inputs_embedding = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+
+        # Imitator tries to imitate messages
+        inputs_imitation = 0.*inputs
+        _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
+                                                                       messages,
+                                                                       return_whole_log_probs=True)
+        log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
+                                                     target_messages=messages)
+
+        # Imitator
+        ## Nothing
+
+        # Sender
+        message_lengths = find_lengths(messages)
+        max_len = messages.size(1)
+        mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
+                                           num_classes=max_len + 1), dim=1)[:, :-1]
+        reward = ((log_prob_sender * mask_eos).sum(dim=1) - log_imitation).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         sender_log_prob=log_prob_sender,
