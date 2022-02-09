@@ -209,7 +209,7 @@ def get_agent(agent_name: str,
         tasks[task] = {"loss": loss, "optimizer": optimizer, "p_step": p_step}
 
         if 'lm_mode' in task_infos:
-            tasks["lm_mode"]=task_infos["lm_mode"]
+            tasks[task]["lm_mode"]=task_infos["lm_mode"]
 
     if "optimal_listener" in agent_params:
         optimal_listener = agent_params["optimal_listener"]
