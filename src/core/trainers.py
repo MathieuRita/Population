@@ -268,7 +268,7 @@ class Trainer:
 
         while continue_optimal_lm_training:
 
-            batch = next(iter(self.imitation_loader))
+            batch = next(iter(self.mi_loader))
             inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
             optimal_lm_id = agent_sender.optimal_lm
