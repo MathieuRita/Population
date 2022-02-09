@@ -217,9 +217,9 @@ def get_agent(agent_name: str,
         optimal_listener = None
 
     if "optimal_lm" in agent_params:
-        optimal_listener = agent_params["optimal_lm"]
+        optimal_lm = agent_params["optimal_lm"]
     else:
-        optimal_listener = None
+        optimal_lm = None
 
     agent = Agent(agent_name=agent_name,
                   object_encoder=object_encoder,
