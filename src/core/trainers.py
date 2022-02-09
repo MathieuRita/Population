@@ -273,7 +273,7 @@ class Trainer:
             agent_sender = self.population.agents[sender_id]
             optimal_lm_id = agent_sender.optimal_lm
             optimal_lm = self.population.agents[optimal_lm_id]
-            batch = move_to((inputs,sender_id,optimal_lm), self.device)
+            batch = move_to((inputs,sender_id,optimal_lm_id), self.device)
 
             _ = self.game.imitation_instance(*batch)
 
