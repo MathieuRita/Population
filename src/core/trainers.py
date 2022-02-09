@@ -269,7 +269,6 @@ class Trainer:
         while continue_optimal_lm_training:
 
             batch = next(iter(self.mi_loader))
-            print(batch)
             inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
             optimal_lm_id = agent_sender.optimal_lm
@@ -281,8 +280,8 @@ class Trainer:
             optimal_lm.tasks[task]["optimizer"].zero_grad()
             optimal_lm.tasks[task]["loss_value"].backward()
             optimal_lm.tasks[task]["optimizer"].step()
-            
-            print(optimal_lm.tasks[task]["loss_value"])
+
+            print(abs(optimal_lm.tasks[task]["loss_value"].item() - prev_loss_value))
 
             if abs(optimal_lm.tasks[task]["loss_value"].item()-prev_loss_value)<threshold:
                 continue_optimal_lm_training=False
@@ -291,7 +290,7 @@ class Trainer:
 
         task = "mutual_information"
 
-        next(iter(self.mi_loader))
+        batch = next(iter(self.mi_loader))
         inputs, sender_id = batch.data, batch.sender_id
         agent_sender = self.population.agents[sender_id]
         optimal_lm_id = agent_sender.optimal_lm_id
