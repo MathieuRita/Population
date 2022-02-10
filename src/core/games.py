@@ -94,6 +94,9 @@ class ReconstructionGame(nn.Module):
 
         # Imitator tries to imitate messages
         inputs_imitation = (1-agent_imitator.tasks[task]["lm_mode"])*inputs
+
+        print(inputs_imitation)
+
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
                                                                        messages,
                                                                        return_whole_log_probs=True)
