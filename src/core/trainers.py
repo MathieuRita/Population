@@ -26,6 +26,7 @@ class Trainer:
         self.start_epoch = 1
         self.device = th.device(device)
         self.writer = logger
+        self.mi_step=0
 
     def train(self,
               n_epochs,
@@ -286,13 +287,17 @@ class Trainer:
             else:
                 prev_loss_value = optimal_lm.tasks[task]["loss_value"].item()
 
+            self.writer.add_scalar(f'{optimal_lm_id}/loss',
+                                   optimal_lm.tasks[task]["loss_value"].item(), self.mi_step)
+
+            self.mi_step+=1
+
         task = "mutual_information"
 
         batch = next(iter(self.mi_loader))
         inputs, sender_id = batch.data, batch.sender_id
         agent_sender = self.population.agents[sender_id]
         optimal_lm_id = agent_sender.optimal_lm
-        optimal_lm = self.population.agents[optimal_lm_id]
         batch = move_to((inputs, sender_id, optimal_lm_id), self.device)
 
         _ = self.game.direct_mi_instance(*batch)
@@ -330,6 +335,7 @@ class Trainer:
             # Store losses
             mean_mi_senders[sender_id] += loss_m_i
             n_batches[sender_id] += 1
+
 
         mean_mi_senders = _div_dict(mean_mi_senders, n_batches)
 
