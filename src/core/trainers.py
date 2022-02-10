@@ -304,7 +304,7 @@ class Trainer:
 
             self.mi_step+=1
 
-        task = "mutual_information"
+        task = "communication"
 
         batch = next(iter(self.mi_loader))
         inputs, sender_id = batch.data, batch.sender_id
