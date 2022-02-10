@@ -253,6 +253,11 @@ class Trainer:
             else:
                 prev_loss_value = optimal_listener.tasks[task]["loss_value"].item()
 
+            self.writer.add_scalar(f'{optimal_listener_id}/loss',
+                                   optimal_listener_id.tasks[task]["loss_value"].item(), self.mi_step)
+
+            self.mi_step += 1
+
         agent_sender.tasks[task]["optimizer"].zero_grad()
         agent_sender.tasks[task]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
@@ -308,10 +313,6 @@ class Trainer:
         agent_sender.tasks[task]["optimizer"].zero_grad()
         agent_sender.tasks[task]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
-
-        optimal_lm.tasks[task]["optimizer"].zero_grad()
-        optimal_lm.tasks[task]["loss_value"].backward()
-        optimal_lm.tasks[task]["optimizer"].step()
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
