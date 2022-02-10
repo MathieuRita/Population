@@ -1,4 +1,5 @@
 import torch as th
+import numpy as np
 import torch.utils.tensorboard
 from torch.utils.tensorboard import SummaryWriter
 from .utils import _div_dict, move_to
@@ -258,11 +259,11 @@ class Trainer:
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
-    def train_mutual_information_with_lm(self,threshold=1e-3):
+    def train_mutual_information_with_lm(self,threshold=1e-5):
 
         self.game.train()
 
-        prev_loss_value = 0.
+        prev_loss_value = [0.]
         continue_optimal_lm_training = True
 
         task = "imitation"
@@ -282,10 +283,12 @@ class Trainer:
             optimal_lm.tasks[task]["loss_value"].backward()
             optimal_lm.tasks[task]["optimizer"].step()
 
-            if abs(optimal_lm.tasks[task]["loss_value"].item()-prev_loss_value)<threshold:
+            if abs(optimal_lm.tasks[task]["loss_value"].item()-np.mean(prev_loss_value))<threshold:
                 continue_optimal_lm_training=False
             else:
-                prev_loss_value = optimal_lm.tasks[task]["loss_value"].item()
+                prev_loss_value.append(optimal_lm.tasks[task]["loss_value"].item())
+                if len(prev_loss_value)>5:
+                    prev_loss_value.pop(0)
 
             self.writer.add_scalar(f'{optimal_lm_id}/loss',
                                    optimal_lm.tasks[task]["loss_value"].item(), self.mi_step)
