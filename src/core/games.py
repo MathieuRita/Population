@@ -148,7 +148,7 @@ class ReconstructionGame(nn.Module):
         ## Nothing
 
         # Sender
-        p_x=th.Tensor(1/256).to("cuda")
+        p_x=th.Tensor([1/256]).to("cuda")
         message_lengths = find_lengths(messages)
         max_len = messages.size(1)
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
