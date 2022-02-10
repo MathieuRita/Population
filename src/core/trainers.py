@@ -315,7 +315,7 @@ class Trainer:
         _ = self.game.direct_mi_instance(*batch)
 
         agent_sender.tasks[task]["optimizer"].zero_grad()
-        agent_sender.tasks[task]["loss_value"].backward()
+        agent_sender.tasks["mutual_information"]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
