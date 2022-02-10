@@ -254,7 +254,7 @@ class Trainer:
                 prev_loss_value = optimal_listener.tasks[task]["loss_value"].item()
 
             self.writer.add_scalar(f'{optimal_listener_id}/loss',
-                                   optimal_listener_id.tasks[task]["loss_value"].item(), self.mi_step)
+                                   optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
 
             self.mi_step += 1
 
