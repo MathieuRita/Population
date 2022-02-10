@@ -113,15 +113,18 @@ def main(params):
                                          mode="train")
 
     # Imitation loaders
-    imitation_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
-                                                dataset=full_dataset,
-                                                agent_names=population.agent_names,
-                                                population_split=population_split,
-                                                population_probs=population.pairs_prob,
-                                                imitation_probs=population.imitation_probs,
-                                                training_params=training_params,
-                                                task="imitation",
-                                                mode="train")
+    if sum(population_params['is_imitator'])>0.:
+        imitation_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                                    dataset=full_dataset,
+                                                    agent_names=population.agent_names,
+                                                    population_split=population_split,
+                                                    population_probs=population.pairs_prob,
+                                                    imitation_probs=population.imitation_probs,
+                                                    training_params=training_params,
+                                                    task="imitation",
+                                                    mode="train")
+    else:
+        imitation_loader = None
 
     if opts.print_info_population: print(f"✅ Successfully built loaders")
 
