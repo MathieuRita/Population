@@ -261,11 +261,9 @@ class Trainer:
 
             self.mi_step += 1
 
-        task = "mutual_information"
-
-        agent_sender.tasks[task]["optimizer"].zero_grad()
+        agent_sender.tasks["mutual_information"]["optimizer"].zero_grad()
         agent_sender.tasks[task]["loss_value"].backward()
-        agent_sender.tasks[task]["optimizer"].step()
+        agent_sender.tasks["mutual_information"]["optimizer"].step()
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
