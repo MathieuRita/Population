@@ -309,6 +309,10 @@ class Trainer:
         agent_sender.tasks[task]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
 
+        optimal_lm.tasks[task]["optimizer"].zero_grad()
+        optimal_lm.tasks[task]["loss_value"].backward()
+        optimal_lm.tasks[task]["optimizer"].step()
+
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
     def train_mutual_information_direct(self):
