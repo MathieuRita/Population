@@ -267,7 +267,7 @@ class Trainer:
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
-    def train_mutual_information_with_lm(self,threshold=1e-1):
+    def train_mutual_information_with_lm(self,threshold=1e-3):
 
         self.game.train()
 
@@ -318,7 +318,7 @@ class Trainer:
         agent_sender.tasks["mutual_information"]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
 
-        return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
+        return {sender_id:agent_sender.tasks["mutual_information"]["loss_value"].item()}
 
     def train_mutual_information_direct(self):
 
