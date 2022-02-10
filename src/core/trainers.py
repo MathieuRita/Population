@@ -259,7 +259,7 @@ class Trainer:
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
-    def train_mutual_information_with_lm(self,threshold=1e-5):
+    def train_mutual_information_with_lm(self,threshold=1e-1):
 
         self.game.train()
 
