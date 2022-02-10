@@ -228,7 +228,7 @@ class Trainer:
 
         self.game.train()
 
-        prev_loss_value = 0.
+        prev_loss_value = [0.]
         continue_optimal_listener_training = True
 
         task = "communication"
@@ -248,10 +248,13 @@ class Trainer:
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
 
-            if abs(optimal_listener.tasks[task]["loss_value"].item()-prev_loss_value)<threshold:
-                continue_optimal_listener_training=False
+            if len(prev_loss_value) > 9 and \
+                    abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold:
+                continue_optimal_listener_training = False
             else:
-                prev_loss_value = optimal_listener.tasks[task]["loss_value"].item()
+                prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
+                if len(prev_loss_value) > 10:
+                    prev_loss_value.pop(0)
 
             self.writer.add_scalar(f'{optimal_listener_id}/loss',
                                    optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
@@ -288,7 +291,8 @@ class Trainer:
             optimal_lm.tasks[task]["loss_value"].backward()
             optimal_lm.tasks[task]["optimizer"].step()
 
-            if abs(optimal_lm.tasks[task]["loss_value"].item()-np.mean(prev_loss_value))<threshold:
+            if len(prev_loss_value)>9 and \
+                    abs(optimal_lm.tasks[task]["loss_value"].item()-np.mean(prev_loss_value))<threshold:
                 continue_optimal_lm_training=False
             else:
                 prev_loss_value.append(optimal_lm.tasks[task]["loss_value"].item())
