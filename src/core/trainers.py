@@ -287,7 +287,7 @@ class Trainer:
                 continue_optimal_lm_training=False
             else:
                 prev_loss_value.append(optimal_lm.tasks[task]["loss_value"].item())
-                if len(prev_loss_value)>5:
+                if len(prev_loss_value)>10:
                     prev_loss_value.pop(0)
 
             self.writer.add_scalar(f'{optimal_lm_id}/loss',
