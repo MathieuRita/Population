@@ -152,7 +152,7 @@ class ReconstructionGame(nn.Module):
         max_len = messages.size(1)
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
                                            num_classes=max_len + 1), dim=1)[:, :-1]
-        reward = ((log_prob_sender - log_probs_imitation) * mask_eos).sum(dim=1).detach()
+        reward = - ((log_prob_sender - log_probs_imitation) * mask_eos).sum(dim=1).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         sender_log_prob=log_prob_sender,
