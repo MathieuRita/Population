@@ -136,13 +136,10 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Concat starting token
-        print(messages.size())
-        voc_size = messages.size(2)
-        messages_imit = th.cat((messages, th.zeros(messages.size(0), messages.size(1), 1)), dim=2)
-        start_token = th.nn.functional.one_hot(th.Tensor(messages_imit.size(0) * [voc_size]).to(int),
-                                               num_classes=voc_size + 1)
+        voc_size = 10
+        start_token = th.Tensor(messages.size(0) * [voc_size + 1]).to(int).to(messages.device)
         start_token = start_token.unsqueeze(1)
-        messages_imit = th.cat((start_token, messages_imit), dim=1)
+        messages_imit = th.cat((start_token, messages), dim=1)
 
         # Imitator tries to imitate messages
         inputs_imitation = (1-agent_imitator.tasks[task]["lm_mode"])*inputs
