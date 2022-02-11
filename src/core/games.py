@@ -164,6 +164,8 @@ class ReconstructionGame(nn.Module):
 
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
+        return reward
+
 
 
 class ReferentialGame(nn.Module):
