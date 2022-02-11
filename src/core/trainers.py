@@ -267,7 +267,7 @@ class Trainer:
 
         return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
 
-    def train_mutual_information_with_lm(self,threshold=1e-3):
+    def train_mutual_information_with_lm(self,threshold=1e-5):
 
         self.game.train()
 
@@ -312,11 +312,14 @@ class Trainer:
         optimal_lm_id = agent_sender.optimal_lm
         batch = move_to((inputs, sender_id, optimal_lm_id), self.device)
 
-        _ = self.game.direct_mi_instance(*batch)
+        reward = _ = self.game.direct_mi_instance(*batch)
 
         agent_sender.tasks[task]["optimizer"].zero_grad()
         agent_sender.tasks["mutual_information"]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
+
+        self.writer.add_scalar(f'{sender_id}/reward_mi',
+                               reward.mean().item(), self.mi_step)
 
         return {sender_id:agent_sender.tasks["mutual_information"]["loss_value"].item()}
 
