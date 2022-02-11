@@ -201,6 +201,10 @@ def build_sender(sender_params,game_params):
     voc_size=game_params["channel"]["voc_size"]
     max_len = game_params["channel"]["max_len"]
 
+    if "lm_mode" in sender_params and sender_params["lm_mode"]==1:
+        voc_size+=1
+        max_len+=1
+
     # Message generator
     if sender_type=="recurrent":
 
