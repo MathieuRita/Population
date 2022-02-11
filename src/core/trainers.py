@@ -274,6 +274,15 @@ class Trainer:
         prev_loss_value = [0.]
         continue_optimal_lm_training = True
 
+        batch = next(iter(self.mi_loader))
+        inputs, sender_id = batch.data, batch.sender_id
+        agent_sender = self.population.agents[sender_id]
+        optimal_lm_id = agent_sender.optimal_lm
+        optimal_lm = self.population.agents[optimal_lm_id]
+
+        model_parameters = list(optimal_lm.object_encoder.parameters()) + list(optimal_lm.sender.parameters())
+        optimal_lm.tasks["imitation"]["optimizer"] = th.optim.Adam(model_parameters,lr=0.01)
+
         task = "imitation"
 
         while continue_optimal_lm_training:
