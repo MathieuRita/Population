@@ -122,6 +122,43 @@ class ReconstructionGame(nn.Module):
 
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
+    def imitation_instance_lm(self,
+                               inputs : th.Tensor,
+                               sender_id: str,
+                               imitator_id: str):
+        task = "imitation"
+
+        agent_sender = self.population.agents[sender_id]
+        agent_imitator = self.population.agents[imitator_id]
+
+        # Agent Sender sends message based on input
+        inputs_embedding = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+
+        # Concat starting token
+        voc_size = messages.size(2)
+        messages_imit = th.cat((messages, th.zeros(messages.size(0), messages.size(1), 1)), dim=2)
+        start_token = th.nn.functional.one_hot(th.Tensor(messages_imit.size(0) * [voc_size]).to(int),
+                                               num_classes=voc_size + 1)
+        start_token = start_token.unsqueeze(1)
+        messages_imit = th.cat((start_token, messages_imit), dim=1)
+
+        # Imitator tries to imitate messages
+        inputs_imitation = (1-agent_imitator.tasks[task]["lm_mode"])*inputs
+
+        _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
+                                                                       messages_imit,
+                                                                       return_whole_log_probs=True)
+
+        # Imitator
+
+        log_probs_imitation = log_probs_imitation[:,1:]
+
+        loss = agent_imitator.tasks[task]["loss"].compute(sender_log_prob=log_probs_imitation,
+                                                          target_messages=messages)
+
+        agent_imitator.tasks[task]["loss_value"] = loss.mean()
+
     def direct_mi_instance(self,
                            inputs : th.Tensor,
                            sender_id: str,

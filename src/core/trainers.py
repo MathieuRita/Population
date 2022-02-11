@@ -294,7 +294,7 @@ class Trainer:
             optimal_lm = self.population.agents[optimal_lm_id]
             batch = move_to((inputs,sender_id,optimal_lm_id), self.device)
 
-            _ = self.game.imitation_instance(*batch)
+            _ = self.game.imitation_instance_lm(*batch)
 
             optimal_lm.tasks[task]["optimizer"].zero_grad()
             optimal_lm.tasks[task]["loss_value"].backward()
