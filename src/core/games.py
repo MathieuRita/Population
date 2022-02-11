@@ -137,7 +137,7 @@ class ReconstructionGame(nn.Module):
 
         # Concat starting token
         voc_size = 10
-        start_token = th.Tensor(messages.size(0) * [voc_size + 1]).to(int).to(messages.device)
+        start_token = th.Tensor(messages.size(0) * [voc_size]).to(int).to(messages.device)
         start_token = start_token.unsqueeze(1)
         messages_imit = th.cat((start_token, messages), dim=1)
 
