@@ -173,9 +173,16 @@ class ReconstructionGame(nn.Module):
 
         # Imitator tries to imitate messages
         inputs_imitation = 0. * inputs
+        # Concat starting token
+        voc_size = 10
+        start_token = th.Tensor(messages.size(0) * [voc_size]).to(int).to(messages.device)
+        start_token = start_token.unsqueeze(1)
+        messages_imit = th.cat((start_token, messages), dim=1)
         log_probs_imitation, _ = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
-                                                                       messages,
+                                                                       messages_imit,
                                                                        return_whole_log_probs=True)
+
+        log_probs_imitation = log_probs_imitation[:, 1:]
         #log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
         #                                             target_messages=messages)
 
