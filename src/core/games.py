@@ -136,6 +136,7 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Concat starting token
+        print(messages.size())
         voc_size = messages.size(2)
         messages_imit = th.cat((messages, th.zeros(messages.size(0), messages.size(1), 1)), dim=2)
         start_token = th.nn.functional.one_hot(th.Tensor(messages_imit.size(0) * [voc_size]).to(int),
