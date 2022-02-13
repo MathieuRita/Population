@@ -280,8 +280,8 @@ class Trainer:
         optimal_lm_id = agent_sender.optimal_lm
         optimal_lm = self.population.agents[optimal_lm_id]
 
-        model_parameters = list(optimal_lm.object_encoder.parameters()) + list(optimal_lm.sender.parameters())
-        optimal_lm.tasks["imitation"]["optimizer"] = th.optim.Adam(model_parameters,lr=0.001)
+        #model_parameters = list(optimal_lm.object_encoder.parameters()) + list(optimal_lm.sender.parameters())
+        #optimal_lm.tasks["imitation"]["optimizer"] = th.optim.Adam(model_parameters,lr=0.001)
 
         task = "imitation"
 

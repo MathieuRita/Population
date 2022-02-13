@@ -202,7 +202,6 @@ def build_sender(sender_params,game_params):
     max_len = game_params["channel"]["max_len"]
 
     if "lm_mode" in sender_params and sender_params["lm_mode"]==1:
-        print("coucou")
         voc_size+=1
         max_len+=1
 
