@@ -139,7 +139,9 @@ class ReconstructionGame(nn.Module):
         voc_size = 10
         start_token = th.Tensor(messages.size(0) * [voc_size]).to(int).to(messages.device)
         start_token = start_token.unsqueeze(1)
-        messages_imit = th.cat((start_token, messages), dim=1)
+        eos = th.Tensor(messages.size(0) * [0]).to(int).to(messages.device)
+        eos = eos.unsqueeze(1)
+        messages_imit = th.cat((start_token, messages, eos), dim=1)
 
         # Imitator tries to imitate messages
         inputs_imitation = (1-agent_imitator.tasks[task]["lm_mode"])*inputs
