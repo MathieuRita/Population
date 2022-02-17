@@ -271,64 +271,36 @@ class Trainer:
 
         self.game.train()
 
-        prev_loss_value = [0.]
-        continue_optimal_lm_training = True
+        # Language model training
+        messages_lm = []
+        for sender_id in self.population.sender_names:
 
-        batch = next(iter(self.mi_loader))
-        inputs, sender_id = batch.data, batch.sender_id
-        agent_sender = self.population.agents[sender_id]
-        optimal_lm_id = agent_sender.optimal_lm
-        optimal_lm = self.population.agents[optimal_lm_id]
-
-        #model_parameters = list(optimal_lm.object_encoder.parameters()) + list(optimal_lm.sender.parameters())
-        #optimal_lm.tasks["imitation"]["optimizer"] = th.optim.Adam(model_parameters,lr=0.001)
-
-        task = "imitation"
-
-        while continue_optimal_lm_training:
-
-            batch = next(iter(self.mi_loader))
-            inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
-            optimal_lm_id = agent_sender.optimal_lm
-            optimal_lm = self.population.agents[optimal_lm_id]
-            batch = move_to((inputs,sender_id,optimal_lm_id), self.device)
 
-            _ = self.game.imitation_instance_lm(*batch)
+            for batch in self.mi_loader:
+                inputs = batch.data
+                inputs_embedding = agent_sender.encode_object(inputs)
+                messages, _, _ = agent_sender.send(inputs_embedding)
+                messages_lm.append(messages)
+            messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
 
-            optimal_lm.tasks[task]["optimizer"].zero_grad()
-            optimal_lm.tasks[task]["loss_value"].backward()
-            optimal_lm.tasks[task]["optimizer"].step()
+            agent_sender.train_language_model(messages_lm)
 
-            if len(prev_loss_value)>9 and \
-                    abs(optimal_lm.tasks[task]["loss_value"].item()-np.mean(prev_loss_value))<threshold:
-                continue_optimal_lm_training=False
-            else:
-                prev_loss_value.append(optimal_lm.tasks[task]["loss_value"].item())
-                if len(prev_loss_value)>10:
-                    prev_loss_value.pop(0)
+        task = "mutual_information"
 
-            self.writer.add_scalar(f'{optimal_lm_id}/loss',
-                                   optimal_lm.tasks[task]["loss_value"].item(), self.mi_step)
-
-            self.mi_step+=1
-
-        task = "communication"
-
-        batch = next(iter(self.mi_loader))
+        batch = next(iter(self.train_loader))
         inputs, sender_id = batch.data, batch.sender_id
         agent_sender = self.population.agents[sender_id]
-        optimal_lm_id = agent_sender.optimal_lm
-        batch = move_to((inputs, sender_id, optimal_lm_id), self.device)
+        batch = move_to((inputs, sender_id), self.device)
 
-        reward = _ = self.game.direct_mi_instance(*batch)
+        mutual_information = self.game.mi_instance(*batch)
 
         agent_sender.tasks[task]["optimizer"].zero_grad()
         agent_sender.tasks["mutual_information"]["loss_value"].backward()
         agent_sender.tasks[task]["optimizer"].step()
 
         self.writer.add_scalar(f'{sender_id}/reward_mi',
-                               reward.mean().item(), self.mi_step)
+                               mutual_information.mean().item(), self.mi_step)
 
         return {sender_id:agent_sender.tasks["mutual_information"]["loss_value"].item()}
 

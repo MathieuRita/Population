@@ -6,8 +6,8 @@
 #SBATCH --cpus-per-task=9           # nombre de coeurs CPU par tache (pour gpu_p2 : 1/8 du noeud 8-GPU)
 #SBATCH --gres=gpu:1
 #SBATCH --qos=qos_gpu-t3
-#SBATCH --time=00:15:00              # temps maximum d'execution demande (HH:MM:SS)
-#SBATCH --output=output.txt      # nom du fichier de sortie
+#SBATCH --time=02:30:00              # temps maximum d'execution demande (HH:MM:SS)
+#SBATCH --output=mi.txt      # nom du fichier de sortie
 #SBATCH -A ovy@gpu
 
 module load pytorch-gpu/py3/1.7.1
