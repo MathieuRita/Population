@@ -202,7 +202,7 @@ class LanguageModelNetwork(nn.Module):
         x, hidden = self.lstm(x, hidden)
 
         # undo the packing operation
-        x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True,enforce_sorted=False)
+        x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
         x = x.contiguous()
         x = x.view(-1, x.shape[2])
 
