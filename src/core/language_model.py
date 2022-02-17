@@ -77,9 +77,11 @@ class LanguageModel():
         mask = mask.to(y_hat.device)
 
         # flatten all the labels
-        y = y.resize(y.size(0)*y.size(1))
+        y = y.contiguous()
+        y = y.view(-1)
 
         # flatten all predictions
+        y_hat = y_hat.contiguous()
         y_hat = y_hat.view(-1, self.model.voc_size)
 
         # count how many tokens we have
