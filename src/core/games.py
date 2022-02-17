@@ -145,7 +145,7 @@ class ReconstructionGame(nn.Module):
         #print(th.exp((log_prob_sender * mask_eos).sum(dim=1))[:10])
         #print(prob_lm[:10])
 
-        reward = (log_prob_sender * mask_eos).sum(dim=1) - th.log(prob_lm).detach()
+        reward = th.log(p_x) + (log_prob_sender.detach() * mask_eos).sum(dim=1) - th.log(prob_lm).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward.detach(),
                                                         sender_log_prob=log_prob_sender,
