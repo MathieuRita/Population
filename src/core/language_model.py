@@ -28,7 +28,7 @@ def build_data_lm(messages):
 
     x = messages[:, :-1]
     y = messages[:, 1:]
-    x_lengths = (message_lengths)
+    x_lengths = message_lengths
 
     return x, y, x_lengths
 
@@ -187,7 +187,7 @@ class LanguageModelNetwork(nn.Module):
     def forward(self, x, x_lengths):
         batch_size = x.size(0)
 
-
+        print(x.size())
         # Prepare data
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
