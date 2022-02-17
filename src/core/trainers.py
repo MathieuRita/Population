@@ -281,7 +281,7 @@ class Trainer:
                 inputs = batch.data.to(self.device)
                 inputs_embedding = agent_sender.encode_object(inputs)
                 messages, _, _ = agent_sender.send(inputs_embedding)
-                messages_lm.append(messages)
+                messages_lm.append(messages.argmax(2)) #one-hot to index
             messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
 
             agent_sender.train_language_model(messages_lm)
