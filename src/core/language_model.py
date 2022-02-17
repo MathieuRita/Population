@@ -177,11 +177,11 @@ class LanguageModelNetwork(nn.Module):
             batch_first=True,
         )
 
-        self.hidden_to_symbol = nn.Linear(self.nb_lstm_units, self.nb_vocab_words)
+        self.hidden_to_symbol = nn.Linear(self.hidden_size, self.voc_size)
 
     def init_hidden(self, batch_size):
-        hidden_a = th.zeros(self.nb_layers, batch_size, self.nb_lstm_units)
-        hidden_b = th.zeros(self.nb_layers, batch_size, self.nb_lstm_units)
+        hidden_a = th.zeros(self.num_layers, batch_size, self.hidden_size)
+        hidden_b = th.zeros(self.num_layers, batch_size, self.hidden_size)
         return hidden_a, hidden_b
 
     def forward(self, x, x_lengths):
