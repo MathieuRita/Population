@@ -133,6 +133,7 @@ class ReconstructionGame(nn.Module):
         # Agent Sender sends message based on input
         inputs_embedding = agent_sender.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+        agent_sender.train_language_model(messages)
         prob_lm = agent_sender.language_model.get_prob_messages(messages)
 
         # Sender
@@ -141,9 +142,6 @@ class ReconstructionGame(nn.Module):
         max_len = messages.size(1)
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
                                            num_classes=max_len + 1), dim=1)[:, :-1]
-
-        #print(th.exp((log_prob_sender * mask_eos).sum(dim=1))[:10])
-        #print(prob_lm[:10])
 
         reward = th.log(p_x) + (log_prob_sender.detach() * mask_eos).sum(dim=1) - th.log(prob_lm).detach()
 
