@@ -53,17 +53,17 @@ class LanguageModel():
             x_test, y_test, x_lengths_test = build_data_lm(messages=messages)
 
             # Reorder by length
-            idx_sorted = th.argsort(x_lengths_test, descending=True).cpu()
-            idx_sorted_inv = th.empty_like(idx_sorted)
-            idx_sorted_inv[idx_sorted] = th.arange(idx_sorted.size(0), device=idx_sorted.device)
-            x_test, y_test, x_lengths_test = x_test[idx_sorted], y_test[idx_sorted], x_lengths_test[idx_sorted]
+            #idx_sorted = th.argsort(x_lengths_test, descending=True).cpu()
+            #idx_sorted_inv = th.empty_like(idx_sorted)
+            #idx_sorted_inv[idx_sorted] = th.arange(idx_sorted.size(0), device=idx_sorted.device)
+            #x_test, y_test, x_lengths_test = x_test[idx_sorted], y_test[idx_sorted], x_lengths_test[idx_sorted]
 
             y_hat = self.model(x_test, x_lengths_test)
 
             # Reorder according to first order
-            x_test, y_test, x_lengths_test = x_test[idx_sorted_inv], y_test[idx_sorted_inv], x_lengths_test[
-                idx_sorted_inv]
-            y_hat = y_hat[idx_sorted_inv]
+           # x_test, y_test, x_lengths_test = x_test[idx_sorted_inv], y_test[idx_sorted_inv], x_lengths_test[
+           #     idx_sorted_inv]
+            #y_hat = y_hat[idx_sorted_inv]
 
             batch_size, seq_len, nb_vocab_words = y_hat.size()
             mask = nn.functional.one_hot(x_lengths_test, num_classes=seq_len + 1)
@@ -125,10 +125,10 @@ class LanguageModel():
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size]
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
-                idx_sorted = th.argsort(len_batch, descending=True).cpu()
-                x_batch = x_batch[idx_sorted]
-                y_batch = y_batch[idx_sorted]
-                len_batch = len_batch[idx_sorted]
+                #idx_sorted = th.argsort(len_batch, descending=True).cpu()
+                #x_batch = x_batch[idx_sorted]
+                #y_batch = y_batch[idx_sorted]
+                #len_batch = len_batch[idx_sorted]
 
                 y_hat = self.model(x_batch, len_batch)
                 loss = self.compute_loss(y_hat, y_batch, len_batch)
@@ -193,13 +193,13 @@ class LanguageModelNetwork(nn.Module):
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
 
-        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True)
+        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True,enforce_sorted=False)
 
         # now run through LSTM
         x, hidden = self.lstm(x, hidden)
 
         # undo the packing operation
-        x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+        x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True,enforce_sorted=False)
         x = x.contiguous()
         x = x.view(-1, x.shape[2])
 
