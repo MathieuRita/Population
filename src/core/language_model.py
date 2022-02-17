@@ -165,7 +165,7 @@ class LanguageModelNetwork(nn.Module):
         self.max_len = max_len
 
         self.word_embedding = nn.Embedding(
-            num_embeddings=self.nb_vocab_words,
+            num_embeddings=self.voc_size,
             embedding_dim=self.embedding_dim,
             padding_idx=PAD_TOKEN
         )
