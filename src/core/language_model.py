@@ -210,8 +210,8 @@ class LanguageModelNetwork(nn.Module):
 
 def get_language_model(lm_params:dict,game_params:dict,device:str):
 
-    model = LanguageModelNetwork(max_len=game_params["max_len"],
-                                 voc_size=game_params["voc_size"]+2,
+    model = LanguageModelNetwork(max_len=game_params["channel"]["max_len"],
+                                 voc_size=game_params["channel"]["voc_size"]+2,
                                  num_layers=lm_params["num_layers"],
                                  hidden_size=lm_params["hidden_size"],
                                  embedding_size=lm_params["embedding_size"])
