@@ -200,12 +200,14 @@ class LanguageModelNetwork(nn.Module):
         # undo the packing operation
         x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
         x = x.contiguous()
-        x = x.view(-1, x.shape[2])
+        print(x.size())
+        x = x.view(-1, x.size(2))
 
         # Pass through actual linear layer
         y_hat = self.hidden_to_symbol(x)
         y_hat = F.log_softmax(y_hat, dim=1)
         print(y_hat.size())
+        print(batch_size, self.max_len, self.voc_size)
         y_hat = y_hat.view(batch_size, self.max_len, self.voc_size)
 
         return y_hat
