@@ -187,7 +187,6 @@ class LanguageModelNetwork(nn.Module):
     def forward(self, x, x_lengths):
         batch_size = x.size(0)
 
-        print(x.size())
 
         # Prepare data
         hidden = self.init_hidden(batch_size)
@@ -206,6 +205,7 @@ class LanguageModelNetwork(nn.Module):
         # Pass through actual linear layer
         y_hat = self.hidden_to_symbol(x)
         y_hat = F.log_softmax(y_hat, dim=1)
+        print(y_hat.size())
         y_hat = y_hat.view(batch_size, self.max_len, self.voc_size)
 
         return y_hat
