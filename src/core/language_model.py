@@ -187,6 +187,7 @@ class LanguageModelNetwork(nn.Module):
     def forward(self, x, x_lengths):
         batch_size = x.size(0)
 
+        print(x.size())
 
         # Prepare data
         hidden = self.init_hidden(batch_size)
