@@ -77,8 +77,7 @@ class LanguageModel():
         mask = mask.to(y_hat.device)
 
         # flatten all the labels
-        print(y.size())
-        y = y.view(-1)
+        y = y.resize(y.size(0)*y.size(1))
 
         # flatten all predictions
         y_hat = y_hat.view(-1, self.model.voc_size)
