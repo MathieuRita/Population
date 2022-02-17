@@ -188,13 +188,13 @@ class LanguageModelNetwork(nn.Module):
     def forward(self, x, x_lengths):
         batch_size = x.size(0)
 
-        print(x.size(),x_lengths.size())
 
         # Prepare data
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
 
-        print(x.size(), x_lengths.size())
+        for val in x_lengths:
+            print(val)
 
         x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True)
 
