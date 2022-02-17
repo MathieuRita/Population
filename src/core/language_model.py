@@ -96,7 +96,7 @@ class LanguageModel():
     def train(self,
               messages,
               n_epochs: int = 100000,
-              threshold: float = 1e-4):
+              threshold: float = 1e-3):
 
         x, y, x_lengths = build_data_lm(messages=messages)
 
@@ -110,6 +110,8 @@ class LanguageModel():
         epoch = 0
 
         while continue_training:
+
+            mean_loss=0.
 
             # Mini batches
             for i in range(num_batches):
@@ -128,12 +130,16 @@ class LanguageModel():
                 # Updated parameters
                 self.optimizer.step()
 
-            if (len(prev_losses) > 9 and abs(loss.item() - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
+                mean_loss+=loss.item()
+
+            print(mean_loss)
+
+            if (len(prev_losses) > 5 and abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
                 continue_training = False
             else:
-                prev_losses.append(loss.item())
+                prev_losses.append(mean_loss)
                 epoch += 1
-                if len(prev_losses) > 10 : prev_losses.pop(0)
+                if len(prev_losses) > 5 : prev_losses.pop(0)
 
 
 class LanguageModelNetwork(nn.Module):
