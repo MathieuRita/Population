@@ -14,13 +14,13 @@ def build_data_lm(messages):
     max_len = messages.size(1)
 
     messages = EOS_TOKEN + messages
-    messages = torch.cat((torch.Tensor([START_TOKEN] * messages.size(0)).unsqueeze(1), messages), dim=1)
+    messages = th.cat((th.Tensor([START_TOKEN] * messages.size(0)).unsqueeze(1), messages), dim=1)
 
     eos_mask = messages == EOS_TOKEN
     message_lengths = max_len + 1 - (eos_mask.cumsum(dim=1) > 0).sum(dim=1)
     message_lengths.add_(1).clamp_(max=max_len + 1)
 
-    pad_mask = 1 - torch.cumsum(1 * eos_mask, dim=1)
+    pad_mask = 1 - th.cumsum(1 * eos_mask, dim=1)
     messages = messages * pad_mask
     messages += EOS_TOKEN * eos_mask
 
@@ -52,9 +52,9 @@ class LanguageModel():
             x_test, y_test, x_lengths_test = build_data_lm(messages=messages)
 
             # Reorder by length
-            idx_sorted = torch.argsort(x_lengths_test, descending=True)
-            idx_sorted_inv = torch.empty_like(idx_sorted)
-            idx_sorted_inv[idx_sorted] = torch.arange(idx_sorted.size(0), device=idx_sorted.device)
+            idx_sorted = th.argsort(x_lengths_test, descending=True)
+            idx_sorted_inv = th.empty_like(idx_sorted)
+            idx_sorted_inv[idx_sorted] = th.arange(idx_sorted.size(0), device=idx_sorted.device)
             x_test, y_test, x_lengths_test = x_test[idx_sorted], y_test[idx_sorted], x_lengths_test[idx_sorted]
 
             y_hat = self.model(x_test, x_lengths_test)
