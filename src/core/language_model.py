@@ -19,7 +19,7 @@ def build_data_lm(messages):
 
     eos_mask = messages == EOS_TOKEN
     message_lengths = max_len + 1 - (eos_mask.cumsum(dim=1) > 0).sum(dim=1)
-    message_lengths.add_(1).clamp_(max=max_len + 1)
+    message_lengths.add_(1).clamp_(max=max_len)
 
     pad_mask = 1 - th.cumsum(1 * eos_mask, dim=1)
     messages = messages * pad_mask
@@ -27,7 +27,7 @@ def build_data_lm(messages):
 
     x = messages[:, :-1].to(int)
     y = messages[:, 1:].to(int)
-    x_lengths = (message_lengths - 1).to(int)
+    x_lengths = (message_lengths).to(int)
 
     return x, y, x_lengths
 
@@ -125,7 +125,7 @@ class LanguageModel():
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
-                print(len_batch)
+                print(len_batch[:10])
 
                 print(x_batch[:10])
 
