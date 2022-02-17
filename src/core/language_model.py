@@ -129,7 +129,6 @@ class LanguageModel():
                 x_batch = x_batch[idx_sorted]
                 y_batch = y_batch[idx_sorted]
                 len_batch = len_batch[idx_sorted]
-                print(x.size(), y.size(), x_lengths.size(),idx_sorted.size())
 
                 y_hat = self.model(x_batch, len_batch)
                 loss = self.compute_loss(y_hat, y_batch, len_batch)
@@ -192,7 +191,7 @@ class LanguageModelNetwork(nn.Module):
         # Prepare data
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
-        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.to("cpu"), batch_first=True)
+        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True)
 
         # now run through LSTM
         x, hidden = self.lstm(x, hidden)
