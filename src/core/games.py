@@ -139,7 +139,7 @@ class ReconstructionGame(nn.Module):
         for _ in range(20):
             messages_bis, _, _ = agent_sender.send(inputs_embedding)
             messages_lm.append(messages_bis)
-        messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
+        messages_lm = th.stack(messages_lm).view(-1, messages_lm[0].size(1))
         prob_lm = agent_sender.language_model.get_prob_messages(messages_lm)
 
         # Sender
