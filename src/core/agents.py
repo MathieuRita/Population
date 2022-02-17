@@ -9,6 +9,7 @@ from .senders import build_sender
 from .receivers import build_receiver
 from .object_encoders import build_encoder, build_decoder
 from .losses import ReinforceLoss, CrossEntropyLoss, ReferentialLoss, SpeakerImitation
+from .language_model import get_language_model
 
 
 class Agent(object):
@@ -19,6 +20,7 @@ class Agent(object):
                  receiver: nn.Module,
                  object_encoder: nn.Module,
                  object_decoder: nn.Module,
+                 language_model,
                  tasks:dict,
                  optimal_listener : str = None,
                  optimal_lm: str = None,
@@ -27,6 +29,7 @@ class Agent(object):
         self.object_encoder = object_encoder
         self.sender = sender
         self.receiver = receiver
+        self.language_model = language_model
         self.object_decoder = object_decoder
         self.optimal_listener = optimal_listener
         self.optimal_lm = optimal_lm
@@ -75,6 +78,7 @@ class Agent(object):
 
     def compute_task_losses(self, inputs, sender_log_prob, sender_entropy, messages, receiver_output,
                             neg_log_imit=None):
+
         return self.sender_loss_fn.compute(inputs=inputs,
                                            message=messages,
                                            sender_log_prob=sender_log_prob,
@@ -82,48 +86,56 @@ class Agent(object):
                                            receiver_output=receiver_output,
                                            neg_log_imit=neg_log_imit)
 
-    def compute_mutual_information(self, inputs):
-        inputs_embeddings = self.encode_object(inputs)
-        messages, log_prob_sender, entropy_sender = self.send(inputs_embeddings)
-        batch_size = messages.size(0)
+    def train_language_model(self, messages):
 
-        id_sampled_messages = np.arange(batch_size)
-        sampled_messages = messages[id_sampled_messages]
-        sampled_messages = sampled_messages.unsqueeze(0)
-        sampled_messages = sampled_messages.repeat(batch_size, 1, 1)
-        sampled_messages = sampled_messages.permute(1, 0, 2)
-        sampled_messages = sampled_messages.reshape([batch_size * batch_size, sampled_messages.size(-1)])
-        sampled_x = inputs.repeat(batch_size, 1, 1, 1)
-        sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[1:]])
+        self.language_model.train(messages,threshold=0.0001)
 
-        sampled_x = move_to(sampled_x, self.device)
-        sampled_messages = move_to(sampled_messages, self.device)
-        log_probs = self.get_log_prob_m_given_x(sampled_x, sampled_messages)
+    def compute_mutual_information(self,inputs):
+
+        raise NotImplementedError
+
+    #def compute_mutual_information(self, inputs):
+    #    inputs_embeddings = self.encode_object(inputs)
+    #    messages, log_prob_sender, entropy_sender = self.send(inputs_embeddings)
+    #    batch_size = messages.size(0)
+
+    #    id_sampled_messages = np.arange(batch_size)
+    #    sampled_messages = messages[id_sampled_messages]
+    #    sampled_messages = sampled_messages.unsqueeze(0)
+    #    sampled_messages = sampled_messages.repeat(batch_size, 1, 1)
+    #    sampled_messages = sampled_messages.permute(1, 0, 2)
+    #    sampled_messages = sampled_messages.reshape([batch_size * batch_size, sampled_messages.size(-1)])
+    #    sampled_x = inputs.repeat(batch_size, 1, 1, 1)
+    #    sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[1:]])
+
+    #    sampled_x = move_to(sampled_x, self.device)
+    #    sampled_messages = move_to(sampled_messages, self.device)
+    #    log_probs = self.get_log_prob_m_given_x(sampled_x, sampled_messages)
 
         # log_probs -> pm1_x1,...,pm1_xn ; pm2_x1,...,pm2_xn,.....
-        message_lengths = find_lengths(sampled_messages)
-        max_len = sampled_messages.size(1)
-        mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
-                                           num_classes=max_len + 1), dim=1)[:, :-1]
-        log_probs = (log_probs * mask_eos).sum(dim=1)
+    #    message_lengths = find_lengths(sampled_messages)
+    #    max_len = sampled_messages.size(1)
+    #    mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
+    #                                       num_classes=max_len + 1), dim=1)[:, :-1]
+    #    log_probs = (log_probs * mask_eos).sum(dim=1)
 
-        log_pi_m_x = log_probs.reshape([batch_size, batch_size])
-        pi_m_x = th.exp(log_pi_m_x)
-        p_x = th.ones(batch_size) / batch_size  # Here we set p(x)=1/batch_size
-        p_x = p_x.to(pi_m_x.device)  # Fix device issue
+    #    log_pi_m_x = log_probs.reshape([batch_size, batch_size])
+    #    pi_m_x = th.exp(log_pi_m_x)
+    #    p_x = th.ones(batch_size) / batch_size  # Here we set p(x)=1/batch_size
+    #    p_x = p_x.to(pi_m_x.device)  # Fix device issue
 
-        log_p_x = th.log(p_x)
-        log_pi_m = th.log((pi_m_x * p_x).sum(1))
-        log_pi_m_x = th.log(pi_m_x.diagonal(0))
+    #    log_p_x = th.log(p_x)
+    #    log_pi_m = th.log((pi_m_x * p_x).sum(1))
+    #    log_pi_m_x = th.log(pi_m_x.diagonal(0))
 
-        mutual_information = log_pi_m_x + log_p_x - log_pi_m
+    #    mutual_information = log_pi_m_x + log_p_x - log_pi_m
 
-        reward = mutual_information.detach()
-        reward = (reward - reward.mean()) / reward.std()
+    #    reward = mutual_information.detach()
+    #    reward = (reward - reward.mean()) / reward.std()
 
-        loss_mi = - log_pi_m_x * reward
+    #    loss_mi = - log_pi_m_x * reward
 
-        return loss_mi.mean()
+    #    return loss_mi.mean()
 
 
 def get_agent(agent_name: str,
@@ -146,6 +158,12 @@ def get_agent(agent_name: str,
         object_encoder = build_encoder(object_params=game_params["objects"],
                                        embedding_size=agent_params["sender_params"]["sender_embed_dim"])
         sender = build_sender(sender_params=agent_params["sender_params"], game_params=game_params)
+        if "language_model" in agent_params:
+            language_model = get_language_model(lm_params = agent_repertory[agent_params["language_model"]],
+                                                game_params=game_params,
+                                                device=device)
+        else:
+            language_model = None
         object_decoder = None
         receiver = None
 
@@ -154,6 +172,8 @@ def get_agent(agent_name: str,
             object_encoder.load_state_dict(th.load(pretrained_modules["object_encoder"]))
         if "sender" in pretrained_modules:
             sender.load_state_dict(th.load(pretrained_modules["sender"]))
+        if "language_model" in pretrained_modules:
+            language_model.load_state_dict(th.load(pretrained_modules["language_model"]))
 
         # Send models to device
         sender.to(device)
@@ -170,6 +190,7 @@ def get_agent(agent_name: str,
         object_decoder = build_decoder(object_params=game_params["objects"],
                                        embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
         sender = None
+        language_model = None
         receiver = build_receiver(receiver_params=agent_params["receiver_params"], game_params=game_params)
 
         # Pretrained modules
@@ -223,6 +244,7 @@ def get_agent(agent_name: str,
                   object_decoder=object_decoder,
                   sender=sender,
                   receiver=receiver,
+                  language_model = language_model,
                   tasks=tasks,
                   optimal_listener = optimal_listener,
                   optimal_lm = optimal_lm,
