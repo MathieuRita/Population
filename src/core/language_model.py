@@ -25,9 +25,9 @@ def build_data_lm(messages):
     messages = messages * pad_mask
     messages += EOS_TOKEN * eos_mask
 
-    x = messages[:, :-1]
-    y = messages[:, 1:]
-    x_lengths = message_lengths - 1
+    x = messages[:, :-1].to(int)
+    y = messages[:, 1:].to(int)
+    x_lengths = (message_lengths - 1).to(int)
 
     return x, y, x_lengths
 
