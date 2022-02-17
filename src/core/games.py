@@ -1,7 +1,7 @@
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from .losses import accuracy, find_lengths,cross_entropy_imitation
+from .losses import accuracy, find_lengths, cross_entropy_imitation
 
 
 class ReconstructionGame(nn.Module):
@@ -13,10 +13,10 @@ class ReconstructionGame(nn.Module):
         self.population = population
 
     def communication_instance(self,
-                              inputs: th.Tensor,
-                              sender_id: th.Tensor,
-                              receiver_id: th.Tensor,
-                              compute_metrics: bool = False):
+                               inputs: th.Tensor,
+                               sender_id: th.Tensor,
+                               receiver_id: th.Tensor,
+                               compute_metrics: bool = False):
 
         """
         :param compute_metrics:
@@ -43,10 +43,10 @@ class ReconstructionGame(nn.Module):
         reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                             receiver_output=output_receiver).detach()
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                         sender_log_prob=log_prob_sender,
-                                                         sender_entropy=entropy_sender,
-                                                         message=messages
-                                                         )
+                                                        sender_log_prob=log_prob_sender,
+                                                        sender_entropy=entropy_sender,
+                                                        message=messages
+                                                        )
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
@@ -80,7 +80,7 @@ class ReconstructionGame(nn.Module):
         return metrics
 
     def imitation_instance(self,
-                           inputs : th.Tensor,
+                           inputs: th.Tensor,
                            sender_id: str,
                            imitator_id: str):
         task = "imitation"
@@ -93,7 +93,7 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Imitator tries to imitate messages
-        inputs_imitation = (1-agent_imitator.tasks[task]["lm_mode"])*inputs
+        inputs_imitation = (1 - agent_imitator.tasks[task]["lm_mode"]) * inputs
 
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
                                                                        messages,
@@ -113,7 +113,7 @@ class ReconstructionGame(nn.Module):
         max_len = messages.size(1)
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
                                            num_classes=max_len + 1), dim=1)[:, :-1]
-        reward = (log_imitation-(log_prob_sender * mask_eos).sum(dim=1)).detach()
+        reward = (log_imitation - (log_prob_sender * mask_eos).sum(dim=1)).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         sender_log_prob=log_prob_sender,
@@ -123,8 +123,8 @@ class ReconstructionGame(nn.Module):
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
     def mi_instance(self,
-                    inputs : th.Tensor,
-                    sender_id:str):
+                    inputs: th.Tensor,
+                    sender_id: str):
 
         task = "mutual_information"
 
@@ -134,7 +134,13 @@ class ReconstructionGame(nn.Module):
         inputs_embedding = agent_sender.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
         agent_sender.train_language_model(messages)
-        prob_lm = agent_sender.language_model.get_prob_messages(messages)
+
+        messages_lm = [messages]
+        for _ in range(20):
+            messages_bis, _, _ = agent_sender.send(inputs_embedding)
+            messages_lm.append(messages_bis)
+        messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
+        prob_lm = agent_sender.language_model.get_prob_messages(messages_lm)
 
         # Sender
         p_x = th.Tensor([1 / 256]).to("cuda")
@@ -145,7 +151,7 @@ class ReconstructionGame(nn.Module):
 
         reward = th.log(p_x) + (log_prob_sender.detach() * mask_eos).sum(dim=1) - th.log(prob_lm).detach()
 
-        loss = agent_sender.tasks[task]["loss"].compute(reward= reward.detach(),
+        loss = agent_sender.tasks[task]["loss"].compute(reward=reward.detach(),
                                                         sender_log_prob=log_prob_sender,
                                                         sender_entropy=entropy_sender,
                                                         message=messages)
@@ -155,7 +161,7 @@ class ReconstructionGame(nn.Module):
         return reward
 
     def direct_mi_instance(self,
-                           inputs : th.Tensor,
+                           inputs: th.Tensor,
                            sender_id: str,
                            imitator_id: str):
 
@@ -180,20 +186,20 @@ class ReconstructionGame(nn.Module):
                                                                        return_whole_log_probs=True)
 
         log_probs_imitation = log_probs_imitation[:, 1:]
-        #log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
+        # log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
         #                                             target_messages=messages)
 
         # Imitator
         ## Nothing
 
         # Sender
-        p_x=th.Tensor([1/256]).to("cuda")
+        p_x = th.Tensor([1 / 256]).to("cuda")
         message_lengths = find_lengths(messages)
         max_len = messages.size(1)
         mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
                                            num_classes=max_len + 1), dim=1)[:, :-1]
-        log_prob_sender = log_prob_sender*mask_eos.detach()
-        log_probs_imitation = log_probs_imitation*mask_eos.detach()
+        log_prob_sender = log_prob_sender * mask_eos.detach()
+        log_probs_imitation = log_probs_imitation * mask_eos.detach()
         reward = th.log(p_x) + (log_prob_sender.sum(dim=1).detach() - log_probs_imitation.sum(dim=1).detach())
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
@@ -204,7 +210,6 @@ class ReconstructionGame(nn.Module):
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         return reward
-
 
 
 class ReferentialGame(nn.Module):
@@ -287,10 +292,10 @@ class ReconstructionImitationGame(nn.Module):
         self.population = population
 
     def game_instance(self,
-                      inputs:th.Tensor,
-                      sender_id:str,
-                      receiver_id:str,
-                      imitator_id:str,
+                      inputs: th.Tensor,
+                      sender_id: str,
+                      receiver_id: str,
+                      imitator_id: str,
                       compute_metrics: bool = False):
         """
         :param compute_metrics:
@@ -316,12 +321,12 @@ class ReconstructionImitationGame(nn.Module):
 
         # Imitator tries to imitate messages
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs, messages, return_whole_log_probs=True)
-        log_imitation = -1*cross_entropy_imitation(sender_log_prob=log_probs_imitation,
-                                                    target_messages=messages)
+        log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
+                                                     target_messages=messages)
 
         for task in agent_imitator.tasks:
             loss = agent_imitator.tasks[task]["loss"].compute(sender_log_prob=log_probs_imitation,
-                                                                target_messages=messages)
+                                                              target_messages=messages)
 
             agent_imitator.tasks[task]["loss_value"] = loss.mean()
 
@@ -330,9 +335,9 @@ class ReconstructionImitationGame(nn.Module):
                                                                 receiver_output=output_receiver,
                                                                 log_imitation=log_imitation).detach()
             loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                             sender_log_prob=log_prob_sender,
-                                                             sender_entropy=entropy_sender,
-                                                             message=messages)
+                                                            sender_log_prob=log_prob_sender,
+                                                            sender_entropy=entropy_sender,
+                                                            message=messages)
             agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         for task in agent_receiver.tasks:
@@ -360,7 +365,7 @@ class ReconstructionImitationGame(nn.Module):
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False,return_imitation_loss:bool=False):
+    def forward(self, batch, compute_metrics: bool = False, return_imitation_loss: bool = False):
 
         return self.game_instance(*batch,
                                   compute_metrics=compute_metrics)
