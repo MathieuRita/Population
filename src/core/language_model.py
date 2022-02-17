@@ -74,9 +74,10 @@ class LanguageModel():
         # create a mask by filtering out all tokens that ARE NOT the padding token
         mask = F.one_hot(x_lengths, num_classes=y_hat.size(1) + 1)
         mask = 1 - th.cumsum(mask, dim=1)[:, :-1]
-        mask=mask.to(y_hat.device)
+        mask = mask.to(y_hat.device)
 
         # flatten all the labels
+        print(y.size())
         y = y.view(-1)
 
         # flatten all predictions
