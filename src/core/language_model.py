@@ -10,6 +10,7 @@ EOS_TOKEN = 2
 
 
 def build_data_lm(messages):
+    print(messages[:10])
 
     max_len = messages.size(1)
 
@@ -24,6 +25,7 @@ def build_data_lm(messages):
     pad_mask = 1 - th.cumsum(1 * eos_mask, dim=1)
     messages = messages * pad_mask
     messages += EOS_TOKEN * eos_mask
+    print(messages[:10])
     messages = messages.to(int)
 
     x = messages[:, :-1]
