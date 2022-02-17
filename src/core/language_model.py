@@ -199,8 +199,8 @@ class LanguageModelNetwork(nn.Module):
         # undo the packing operation
         x, _ = th.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
         if x.size(1) < self.max_len:
-            dummy_tensor = torch.zeros(batch_size,self.max_len - x.size(1), s.size(2),device=self.device)
-            x = torch.cat([x, dummy_tensor], 1)
+            dummy_tensor = th.zeros((batch_size,self.max_len - x.size(1), x.size(2)),device=self.device)
+            x = th.cat([x, dummy_tensor], 1)
 
         x = x.contiguous()
         x = x.view(-1, x.size(2))
