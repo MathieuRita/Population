@@ -191,6 +191,8 @@ class LanguageModelNetwork(nn.Module):
         # Prepare data
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
+
+        print(x.size(),x_lengths.size())
         x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True)
 
         # now run through LSTM
