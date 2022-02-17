@@ -97,8 +97,8 @@ class LanguageModel():
 
     def train(self,
               messages,
-              n_epochs: int = 100000,
-              threshold: float = 1e-3):
+              n_epochs: int = 500,
+              threshold: float = 1e-2):
 
         x, y, x_lengths = build_data_lm(messages=messages)
 
@@ -135,7 +135,7 @@ class LanguageModel():
                 mean_loss+=loss.item()
 
             mean_loss/=num_batches
-            print(mean_loss)
+            
             if (len(prev_losses) > 5 and abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
                 continue_training = False
             else:
