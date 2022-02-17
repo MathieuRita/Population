@@ -123,7 +123,9 @@ class LanguageModel():
             for i in range(num_batches):
                 x_batch = x[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
-                len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
+                len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
+
+                print(len_batch)
 
                 #idx_sorted = th.argsort(len_batch, descending=True).cpu()
                 #x_batch = x_batch[idx_sorted]
@@ -193,7 +195,7 @@ class LanguageModelNetwork(nn.Module):
         hidden = self.init_hidden(batch_size)
         x = self.word_embedding(x)
 
-        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True,enforce_sorted=False)
+        x = th.nn.utils.rnn.pack_padded_sequence(x, x_lengths.cpu(), batch_first=True, enforce_sorted=False)
 
         # now run through LSTM
         x, hidden = self.lstm(x, hidden)
