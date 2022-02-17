@@ -62,6 +62,7 @@ class LanguageModel():
 
             y_hat = y_hat * mask.unsqueeze(2)
             y_hat = th.exp(y_hat)
+            y_hat = y_hat.contiguous()
             y_hat = y_hat.view(-1, self.model.voc_size)
 
             y_hat = y_hat[range(y_hat.size(0)), y_test.view(-1)]
@@ -135,7 +136,7 @@ class LanguageModel():
                 mean_loss+=loss.item()
 
             mean_loss/=num_batches
-            
+
             if (len(prev_losses) > 5 and abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
                 continue_training = False
             else:
