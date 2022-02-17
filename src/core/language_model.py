@@ -24,10 +24,11 @@ def build_data_lm(messages):
     pad_mask = 1 - th.cumsum(1 * eos_mask, dim=1)
     messages = messages * pad_mask
     messages += EOS_TOKEN * eos_mask
+    messages = messages.to(int)
 
-    x = messages[:, :-1].to(int)
-    y = messages[:, 1:].to(int)
-    x_lengths = (message_lengths).to(int)
+    x = messages[:, :-1]
+    y = messages[:, 1:]
+    x_lengths = (message_lengths)
 
     return x, y, x_lengths
 
@@ -71,7 +72,7 @@ class LanguageModel():
 
             y_hat = y_hat * mask.unsqueeze(2)
             y_hat = th.exp(y_hat)
-            y_hat = y_hat.view(-1, nb_vocab_words)
+            y_hat = y_hat.view(-1, self.model.voc_size)
 
             y_hat = y_hat[range(y_hat.size(0)), y_test.view(-1)]
             y_hat = y_hat.resize(batch_size, seq_len)
@@ -80,21 +81,21 @@ class LanguageModel():
 
     def compute_loss(self, y_hat, y, x_lengths):
 
+        # create a mask by filtering out all tokens that ARE NOT the padding token
+        mask = F.one_hot(x_lengths, num_classes=y_hat.size(1) + 1)
+        mask = 1 - th.cumsum(mask, dim=1)[:, :-1]
+
         # flatten all the labels
         y = y.view(-1)
 
         # flatten all predictions
         y_hat = y_hat.view(-1, self.model.voc_size)
 
-        # create a mask by filtering out all tokens that ARE NOT the padding token
-        mask = F.one_hot(x_lengths, num_classes=y_hat.size(1) + 1)
-        mask = 1 - th.cumsum(mask, dim=1)[:, :-1]
-
         # count how many tokens we have
         nb_tokens = int(th.sum(mask).item())
 
         # pick the values for the label and zero out the rest with the mask
-        y_hat = y_hat[range(y_hat.size(0)), y] * mask
+        y_hat = y_hat[range(y_hat.size(0)), y] * mask.view(-1)
 
         # compute cross entropy loss which ignores all <PAD> tokens
         ce_loss = -th.sum(y_hat) / nb_tokens
