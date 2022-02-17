@@ -65,6 +65,7 @@ class LanguageModel():
             y_hat = y_hat.contiguous()
             y_hat = y_hat.view(-1, self.model.voc_size)
 
+            y_test = y_test.contiguous()
             y_hat = y_hat[range(y_hat.size(0)), y_test.view(-1)]
             y_hat = y_hat.resize(batch_size, seq_len)
 
