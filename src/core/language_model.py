@@ -54,17 +54,7 @@ class LanguageModel():
             x_test, y_test, x_lengths_test = build_data_lm(messages=messages)
 
             # Reorder by length
-            #idx_sorted = th.argsort(x_lengths_test, descending=True).cpu()
-            #idx_sorted_inv = th.empty_like(idx_sorted)
-            #idx_sorted_inv[idx_sorted] = th.arange(idx_sorted.size(0), device=idx_sorted.device)
-            #x_test, y_test, x_lengths_test = x_test[idx_sorted], y_test[idx_sorted], x_lengths_test[idx_sorted]
-
             y_hat = self.model(x_test, x_lengths_test)
-
-            # Reorder according to first order
-           # x_test, y_test, x_lengths_test = x_test[idx_sorted_inv], y_test[idx_sorted_inv], x_lengths_test[
-           #     idx_sorted_inv]
-            #y_hat = y_hat[idx_sorted_inv]
 
             batch_size, seq_len, nb_vocab_words = y_hat.size()
             mask = nn.functional.one_hot(x_lengths_test, num_classes=seq_len + 1)
@@ -84,6 +74,7 @@ class LanguageModel():
         # create a mask by filtering out all tokens that ARE NOT the padding token
         mask = F.one_hot(x_lengths, num_classes=y_hat.size(1) + 1)
         mask = 1 - th.cumsum(mask, dim=1)[:, :-1]
+        mask.to(y_hat.device)
 
         # flatten all the labels
         y = y.view(-1)
@@ -125,11 +116,6 @@ class LanguageModel():
                 x_batch = x[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
-
-                #idx_sorted = th.argsort(len_batch, descending=True).cpu()
-                #x_batch = x_batch[idx_sorted]
-                #y_batch = y_batch[idx_sorted]
-                #len_batch = len_batch[idx_sorted]
 
                 y_hat = self.model(x_batch, len_batch)
                 loss = self.compute_loss(y_hat, y_batch, len_batch)
