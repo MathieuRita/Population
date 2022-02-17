@@ -284,7 +284,7 @@ class Trainer:
                 messages_lm.append(messages)
             messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
 
-            agent_sender.train_language_model(messages_lm.cpu())
+            agent_sender.train_language_model(messages_lm)
 
         task = "mutual_information"
 
