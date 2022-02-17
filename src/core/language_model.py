@@ -24,7 +24,6 @@ def build_data_lm(messages):
     pad_mask = 1 - th.cumsum(1 * eos_mask, dim=1).clamp_(max=1)
     messages = messages * pad_mask
     messages += EOS_TOKEN * eos_mask
-    print(messages[:10])
     messages = messages.to(int)
 
     x = messages[:, :-1]
@@ -127,10 +126,6 @@ class LanguageModel():
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
-                print(len_batch[:10])
-
-                print(x_batch[:10])
-
                 #idx_sorted = th.argsort(len_batch, descending=True).cpu()
                 #x_batch = x_batch[idx_sorted]
                 #y_batch = y_batch[idx_sorted]
@@ -162,7 +157,8 @@ class LanguageModelNetwork(nn.Module):
                  voc_size: int,
                  num_layers: int = 1,
                  hidden_size: int = 128,
-                 embedding_size: int = 20) -> None:
+                 embedding_size: int = 20,
+                 device : str ="cpu") -> None:
         super(LanguageModelNetwork, self).__init__()
 
         self.num_layers = num_layers
@@ -170,6 +166,7 @@ class LanguageModelNetwork(nn.Module):
         self.embedding_size = embedding_size
         self.voc_size = voc_size
         self.max_len = max_len
+        self.device=device
 
         self.word_embedding = nn.Embedding(
             num_embeddings=self.voc_size,
@@ -187,8 +184,8 @@ class LanguageModelNetwork(nn.Module):
         self.hidden_to_symbol = nn.Linear(self.hidden_size, self.voc_size)
 
     def init_hidden(self, batch_size):
-        hidden_a = th.zeros(self.num_layers, batch_size, self.hidden_size)
-        hidden_b = th.zeros(self.num_layers, batch_size, self.hidden_size)
+        hidden_a = th.zeros(self.num_layers, batch_size, self.hidden_size, device=self.device)
+        hidden_b = th.zeros(self.num_layers, batch_size, self.hidden_size, device=self.device)
         return hidden_a, hidden_b
 
     def forward(self, x, x_lengths):
@@ -223,7 +220,8 @@ def get_language_model(lm_params:dict,game_params:dict,device:str):
                                  voc_size=game_params["channel"]["voc_size"]+2,
                                  num_layers=lm_params["num_layers"],
                                  hidden_size=lm_params["hidden_size"],
-                                 embedding_size=lm_params["embedding_size"])
+                                 embedding_size=lm_params["embedding_size"],
+                                 device=device)
 
     model.to(device)
 
