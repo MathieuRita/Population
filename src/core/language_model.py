@@ -115,8 +115,8 @@ class LanguageModel():
 
             # Mini batches
             for i in range(num_batches):
-                x_batch = x[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
-                y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
+                x_batch = x[i * self.batch_size: (i + 1) * self.batch_size]
+                y_batch = y[i * self.batch_size: (i + 1) * self.batch_size]
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
                 y_hat = self.model(x_batch, len_batch)
