@@ -14,7 +14,8 @@ def build_data_lm(messages):
     max_len = messages.size(1)
 
     messages = EOS_TOKEN + messages
-    messages = th.cat((th.Tensor([START_TOKEN] * messages.size(0)).unsqueeze(1), messages), dim=1)
+    start_tokens = th.Tensor([START_TOKEN] * messages.size(0)).unsqueeze(1).to(messages.device)
+    messages = th.cat((start_tokens, messages), dim=1)
 
     eos_mask = messages == EOS_TOKEN
     message_lengths = max_len + 1 - (eos_mask.cumsum(dim=1) > 0).sum(dim=1)
