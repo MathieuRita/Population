@@ -166,7 +166,7 @@ class LanguageModelNetwork(nn.Module):
 
         self.word_embedding = nn.Embedding(
             num_embeddings=self.voc_size,
-            embedding_dim=self.embedding_dim,
+            embedding_dim=self.embedding_size,
             padding_idx=PAD_TOKEN
         )
 
