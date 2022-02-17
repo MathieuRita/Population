@@ -278,8 +278,7 @@ class Trainer:
             agent_sender = self.population.agents[sender_id]
 
             for batch in self.mi_loader:
-                inputs = batch.data
-                inputs.to(self.device)
+                inputs = batch.data.to(self.device)
                 inputs_embedding = agent_sender.encode_object(inputs)
                 messages, _, _ = agent_sender.send(inputs_embedding)
                 messages_lm.append(messages)
