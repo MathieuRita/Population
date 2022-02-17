@@ -121,9 +121,9 @@ class LanguageModel():
 
             # Mini batches
             for i in range(num_batches):
-                x_batch = x[i * self.batch_size: (i + 1) * self.batch_size]
-                y_batch = y[i * self.batch_size: (i + 1) * self.batch_size]
-                len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
+                x_batch = x[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
+                y_batch = y[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
+                len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size].to("cuda")
 
                 #idx_sorted = th.argsort(len_batch, descending=True).cpu()
                 #x_batch = x_batch[idx_sorted]
