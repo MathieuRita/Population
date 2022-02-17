@@ -152,7 +152,11 @@ class ReinforceLoss:
         sender_entropy = (sender_entropy * mask_eos).sum(dim=1) / message_lengths.float()  # [batch_size]
 
         # Policy gradient loss
+        print("reward")
+        print(reward)
         reward = self.baseline_fn(reward=reward)
+        print("reward centered")
+        print(reward)
         policy_loss = - (reward * sender_log_prob)  # [batch_size]
 
         # Entropy regularization
