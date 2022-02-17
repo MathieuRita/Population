@@ -127,6 +127,8 @@ class LanguageModel():
 
                 print(len_batch)
 
+                print(x_batch[:10])
+
                 #idx_sorted = th.argsort(len_batch, descending=True).cpu()
                 #x_batch = x_batch[idx_sorted]
                 #y_batch = y_batch[idx_sorted]
