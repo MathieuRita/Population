@@ -53,7 +53,7 @@ class LanguageModel():
             x_test, y_test, x_lengths_test = build_data_lm(messages=messages)
 
             # Reorder by length
-            idx_sorted = th.argsort(x_lengths_test, descending=True)
+            idx_sorted = th.argsort(x_lengths_test, descending=True).cpu()
             idx_sorted_inv = th.empty_like(idx_sorted)
             idx_sorted_inv[idx_sorted] = th.arange(idx_sorted.size(0), device=idx_sorted.device)
             x_test, y_test, x_lengths_test = x_test[idx_sorted], y_test[idx_sorted], x_lengths_test[idx_sorted]
@@ -125,7 +125,7 @@ class LanguageModel():
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size]
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
-                idx_sorted = th.argsort(len_batch, descending=True)
+                idx_sorted = th.argsort(len_batch, descending=True).cpu()
                 x_batch = x_batch[idx_sorted]
                 y_batch = y_batch[idx_sorted]
                 len_batch = len_batch[idx_sorted]
