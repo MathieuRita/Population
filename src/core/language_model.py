@@ -99,7 +99,7 @@ class LanguageModel():
 
     def train(self,
               messages,
-              n_epochs: int = 500,
+              n_epochs: int = 200,
               threshold: float = 1e-2):
 
         x, y, x_lengths = build_data_lm(messages=messages)

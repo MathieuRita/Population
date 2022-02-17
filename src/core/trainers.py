@@ -302,6 +302,8 @@ class Trainer:
         self.writer.add_scalar(f'{sender_id}/reward_mi',
                                mutual_information.mean().item(), self.mi_step)
 
+        self.mi_step+=1
+
         return {sender_id:agent_sender.tasks["mutual_information"]["loss_value"].item()}
 
     def train_mutual_information_direct(self):
