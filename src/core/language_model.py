@@ -28,7 +28,7 @@ def build_data_lm(messages):
 
     x = messages[:, :-1]
     y = messages[:, 1:]
-    x_lengths = message_lengths
+    x_lengths = message_lengths - 1
 
     return x, y, x_lengths
 
@@ -100,9 +100,13 @@ class LanguageModel():
     def train(self,
               messages,
               n_epochs: int = 200,
-              threshold: float = 1e-2):
+              threshold: float = 1e-4):
 
         x, y, x_lengths = build_data_lm(messages=messages)
+        r = th.randperm(x.size(0))
+        x = x[r]
+        y = y[r]
+        x_lengths = x_lengths[r]
 
         self.model.train()
 
@@ -138,7 +142,7 @@ class LanguageModel():
 
             mean_loss/=num_batches
 
-            if (len(prev_losses) > 5 and abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
+            if (len(prev_losses) > 5 or abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
                 continue_training = False
             else:
                 prev_losses.append(mean_loss)
