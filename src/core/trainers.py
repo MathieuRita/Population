@@ -361,7 +361,7 @@ class TrainerBis:
                         self.writer.add_scalar(f'{sender}/Messages length (train)',
                                                train_metrics[sender]['message_length'], epoch)
 
-            if train_communication_loss_receivers is not None:
+        if train_communication_loss_receivers is not None:
 
             for receiver, tasks in train_communication_loss_receivers.items():
                 for task, l in tasks.items():
