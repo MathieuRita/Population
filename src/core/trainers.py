@@ -232,7 +232,7 @@ class TrainerBis:
 
             batch = move_to((batch.data,sender_id,[receiver_id,optimal_listener_id],weights), self.device)
 
-            metrics = self.game.communication_multi_listener_instance(batch, compute_metrics=compute_metrics)
+            metrics = self.game.communication_multi_listener_instance(*batch, compute_metrics=compute_metrics)
 
             # Sender
             if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:

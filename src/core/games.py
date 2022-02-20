@@ -83,7 +83,7 @@ class ReconstructionGame(nn.Module):
                                                inputs: th.Tensor,
                                                sender_id: th.Tensor,
                                                receiver_ids: list,
-                                               weight_receivers : list,
+                                               weight_receivers : dict,
                                                compute_metrics: bool = False):
 
         """
