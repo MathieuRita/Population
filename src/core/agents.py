@@ -34,6 +34,7 @@ class Agent(object):
         self.optimal_listener = optimal_listener
         self.optimal_lm = optimal_lm
         self.tasks = tasks
+        self.weights = weights
         self.device = device
 
     def encode_object(self, x):
@@ -239,6 +240,11 @@ def get_agent(agent_name: str,
     else:
         optimal_lm = None
 
+    if "weights" in agent_params:
+        weights = agent_params["weights"]
+    else:
+        weights = None
+
     agent = Agent(agent_name=agent_name,
                   object_encoder=object_encoder,
                   object_decoder=object_decoder,
@@ -246,6 +252,7 @@ def get_agent(agent_name: str,
                   receiver=receiver,
                   language_model = language_model,
                   tasks=tasks,
+                  weights = weights,
                   optimal_listener = optimal_listener,
                   optimal_lm = optimal_lm,
                   device=device)
