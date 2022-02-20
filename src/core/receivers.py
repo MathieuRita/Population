@@ -110,7 +110,7 @@ class RecurrentProcessorLayerNorm(nn.Module):
             raise ValueError(f"Unknown RNN Cell: {receiver_cell}")
 
         cell_type = nn.LSTMCell
-        self.sender_cells = nn.ModuleList([
+        self.receiver_cells = nn.ModuleList([
             cell_type(input_size=self.receiver_embed_dim, hidden_size=self.receiver_hidden_size) if i == 0 else \
                 cell_type(input_size=self.receiver_hidden_size, hidden_size=self.receiver_hidden_size) \
             for i in range(self.receiver_num_layers)])
