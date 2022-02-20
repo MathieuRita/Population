@@ -142,7 +142,7 @@ class LanguageModel():
 
             mean_loss/=num_batches
 
-            if (len(prev_losses) > 5 or abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
+            if (len(prev_losses) > 4 or abs(mean_loss - np.mean(prev_losses)) < threshold) or epoch >= n_epochs:
                 continue_training = False
             else:
                 prev_losses.append(mean_loss)
