@@ -79,6 +79,77 @@ class ReconstructionGame(nn.Module):
 
         return metrics
 
+    def communication_multi_listener_instance(self,
+                                               inputs: th.Tensor,
+                                               sender_id: th.Tensor,
+                                               receiver_ids: list,
+                                               weight_receivers : list,
+                                               compute_metrics: bool = False):
+
+        """
+        :param compute_metrics:
+        :param receiver_id:
+        :param sender_id:
+        :param inputs:
+        :param x: tuple (sender_id,receiver_id,batch)
+        :return: (loss_sender,loss_receiver) [batch_size,batch_size]
+        """
+
+        agent_sender = self.population.agents[sender_id]
+
+        # Agent Sender sends message based on input
+        inputs_embedding = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+
+        task = "communication"
+
+        average_reward=th.zeros((messages.size(0)),device=messages.device)
+
+        # Agent receiver encodes message and predict the reconstructed object
+        for receiver_id in receiver_ids:
+            agent_receiver = self.population.agents[receiver_id]
+            message_embedding = agent_receiver.receive(messages)
+            output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+
+            reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
+                                                                receiver_output=output_receiver).detach()
+
+            loss_receiver = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
+                                                                        receiver_output=output_receiver)
+
+            agent_receiver.tasks[task]["loss_value"] = loss_receiver.mean()
+
+            average_reward += weight_receivers[receiver_id]*reward
+
+        average_reward/=sum([v for _,v in weight_receivers.items()])
+
+        loss_sender = agent_sender.tasks[task]["loss"].compute(reward=average_reward,
+                                                                sender_log_prob=log_prob_sender,
+                                                                sender_entropy=entropy_sender,
+                                                                message=messages
+                                                                )
+
+        agent_sender.tasks[task]["loss_value"] = loss_sender.mean()
+
+        # Compute additional metrics
+        metrics = {}
+
+        if compute_metrics:
+            # accuracy
+            #metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            # Sender entropy
+            metrics["sender_entropy"] = entropy_sender.mean().item()
+            # Sender log prob
+            metrics["sender_log_prob"] = log_prob_sender.detach()
+            # Raw messages
+            metrics["messages"] = messages
+            # Average message length
+            metrics["message_length"] = find_lengths(messages).float().mean().item()
+            # Output receiver
+            # metrics["receiver_output"] = output_receiver.detach()
+
+        return metrics
+
     def imitation_instance(self,
                            inputs: th.Tensor,
                            sender_id: str,
