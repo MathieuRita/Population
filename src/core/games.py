@@ -96,6 +96,7 @@ class ReconstructionGame(nn.Module):
         """
 
         agent_sender = self.population.agents[sender_id]
+        accuracies={}
 
         # Agent Sender sends message based on input
         inputs_embedding = agent_sender.encode_object(inputs)
@@ -110,6 +111,7 @@ class ReconstructionGame(nn.Module):
             agent_receiver = self.population.agents[receiver_id]
             message_embedding = agent_receiver.receive(messages)
             output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+            accuracies[receiver_id] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
 
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver).detach()
@@ -136,7 +138,7 @@ class ReconstructionGame(nn.Module):
 
         if compute_metrics:
             # accuracy
-            #metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            metrics["accuracy"] = accuracies
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Sender log prob
