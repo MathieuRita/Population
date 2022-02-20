@@ -130,8 +130,8 @@ class RecurrentProcessorLayerNorm(nn.Module):
 
         embedding = self.receiver_embedding(message)
 
-        prev_hidden = [embedding]
-        prev_hidden.extend([th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers - 1)])
+        prev_hidden = [th.zeros((embedding.size(0),self.receiver_hidden_size),device=embedding.device)
+                            for _ in range(self.receiver_num_layers)]
         prev_c = [th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers)]  # only used for LSTM
 
         #if message_lengths is None:
