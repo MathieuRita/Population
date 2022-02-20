@@ -82,6 +82,77 @@ class RecurrentProcessor(nn.Module):
 
         return encoded
 
+class RecurrentProcessorLayerNorm(nn.Module):
+
+    def __init__(self,
+                 receiver_cell,
+                 receiver_embed_dim,
+                 receiver_num_layers,
+                 receiver_hidden_size,
+                 voc_size,
+                 max_len
+                 ):
+        super(RecurrentProcessorLayerNorm, self).__init__()
+
+        # Network parameters
+        self.receiver_embed_dim = receiver_embed_dim
+        self.receiver_num_layers = receiver_num_layers
+        self.receiver_hidden_size = receiver_hidden_size
+        self.sos_embedding = nn.Parameter(th.zeros(self.receiver_embed_dim))
+
+        # Communication channel parameters
+        self.voc_size = voc_size
+        self.max_len = max_len
+
+        # Network
+
+        if receiver_cell not in cell_types:
+            raise ValueError(f"Unknown RNN Cell: {receiver_cell}")
+
+        cell_type = nn.LSTMCell
+        self.sender_cells = nn.ModuleList([
+            cell_type(input_size=self.receiver_embed_dim, hidden_size=self.receiver_hidden_size) if i == 0 else \
+                cell_type(input_size=self.receiver_hidden_size, hidden_size=self.receiver_hidden_size) \
+            for i in range(self.receiver_num_layers)])
+
+        self.receiver_embedding = nn.Embedding(self.voc_size, self.receiver_embed_dim)
+        self.receiver_norm_h = nn.LayerNorm(self.receiver_hidden_size)
+        self.receiver_norm_c = nn.LayerNorm(self.receiver_hidden_size)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.normal_(self.sos_embedding, 0.0, 1.)
+
+    def forward(self,
+                message,
+                message_lengths=None):
+
+        embedding = self.receiver_embedding(message)
+
+        prev_hidden = [embedding]
+        prev_hidden.extend([th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers - 1)])
+        prev_c = [th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers)]  # only used for LSTM
+
+        #if message_lengths is None:
+        #    message_lengths = find_lengths(message)
+
+        for step in range(self.max_len):
+            for i, layer in enumerate(self.receiver_cells):
+                if isinstance(layer, nn.LSTMCell):
+                    h_t, c_t = layer(embedding[:,step], (prev_hidden[i], prev_c[i]))
+                    h_t = self.sender_norm_h(h_t)
+                    c_t = self.sender_norm_c(c_t)
+                    prev_c[i] = c_t
+                else:
+                    h_t = layer(embedding[:,step], prev_hidden[i])
+                    h_t = self.sender_norm_h(h_t)
+                prev_hidden[i] = h_t
+
+        encoded = prev_hidden[-1]
+
+        return encoded
+
 
 def build_receiver(receiver_params,game_params):
 
@@ -98,12 +169,12 @@ def build_receiver(receiver_params,game_params):
 
     # Message processor
     if receiver_type == "recurrent":
-        message_encoder = RecurrentProcessor(receiver_cell=receiver_cell,
-                                               receiver_embed_dim=receiver_embed_dim,
-                                               receiver_num_layers=receiver_num_layers,
-                                               receiver_hidden_size=receiver_hidden_size,
-                                               voc_size=voc_size,
-                                               max_len=max_len)
+        message_encoder = RecurrentProcessorLayerNorm(receiver_cell=receiver_cell,
+                                                       receiver_embed_dim=receiver_embed_dim,
+                                                       receiver_num_layers=receiver_num_layers,
+                                                       receiver_hidden_size=receiver_hidden_size,
+                                                       voc_size=voc_size,
+                                                       max_len=max_len)
     else:
         raise "Specify a known receiver type"
 
