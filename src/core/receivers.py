@@ -141,12 +141,12 @@ class RecurrentProcessorLayerNorm(nn.Module):
             for i, layer in enumerate(self.receiver_cells):
                 if isinstance(layer, nn.LSTMCell):
                     h_t, c_t = layer(embedding[:,step], (prev_hidden[i], prev_c[i]))
-                    h_t = self.sender_norm_h(h_t)
-                    c_t = self.sender_norm_c(c_t)
+                    h_t = self.receiver_norm_h(h_t)
+                    c_t = self.receiver_norm_c(c_t)
                     prev_c[i] = c_t
                 else:
                     h_t = layer(embedding[:,step], prev_hidden[i])
-                    h_t = self.sender_norm_h(h_t)
+                    h_t = self.receiver_norm_h(h_t)
                 prev_hidden[i] = h_t
 
         encoded = prev_hidden[-1]
