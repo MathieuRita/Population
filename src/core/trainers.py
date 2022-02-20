@@ -382,8 +382,9 @@ class TrainerBis:
 
         # MI
         if train_communication_mi_loss_senders is not None:
-            for sender, l in train_communication_mi_loss_senders.items():
-                self.writer.add_scalar(f'{sender}/Loss Mutual information', l, epoch)
+            for sender, tasks in train_communication_mi_loss_senders.items():
+                for task, l in tasks.items():
+                    self.writer.add_scalar(f'{sender}/{task} (train)', l, epoch)
 
         # Val
         if val_loss_senders is not None:
