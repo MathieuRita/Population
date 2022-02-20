@@ -22,6 +22,7 @@ class Agent(object):
                  object_decoder: nn.Module,
                  language_model,
                  tasks:dict,
+                 weights:dict,
                  optimal_listener : str = None,
                  optimal_lm: str = None,
                  device: str = "cpu")->None:
