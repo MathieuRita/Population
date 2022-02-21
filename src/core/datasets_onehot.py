@@ -345,7 +345,7 @@ def split_data_into_population(dataset_size: int,
             data_split[agent_name] = {}
             data_split[agent_name]["train_split"] = train_split
             data_split[agent_name]["val_split"] = val_split
-            data_split[agent_name]["MI_split"] = random_permut
+            data_split[agent_name]["MI_split"] = train_split
 
     else:
         raise "Specify a known population dataset type"
