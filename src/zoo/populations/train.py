@@ -160,6 +160,7 @@ def main(params):
 
     trainer.train(n_epochs=training_params["n_epochs"],
                   train_communication_freq=training_params["train_communication_freq"],
+                  train_broadcasting_freq=training_params["train_broadcasting_freq"],
                   train_imitation_freq=training_params["train_imitation_freq"],
                   train_mi_freq=training_params["train_mi_freq"],
                   train_mi_with_lm_freq=training_params["train_mi_with_lm_freq"],
