@@ -232,7 +232,7 @@ class TrainerBis:
 
                 mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
                 n_batches[receiver_id][task] += 1
-                
+
                 mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
                 n_batches[sender_id][task] += 1
 
@@ -416,7 +416,7 @@ class TrainerBis:
 
             mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                                  for sender_id in mean_loss_senders}
-            mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[sender_id])
+            mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
                                    for receiver_id in mean_loss_receivers}
 
             if compute_metrics:
