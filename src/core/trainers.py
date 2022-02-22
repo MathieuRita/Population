@@ -70,9 +70,6 @@ class TrainerBis:
             if epoch % train_broadcasting_freq == 0:
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_broadcasting(compute_metrics=True)  # dict,dict, dict
-            else:
-                train_communication_loss_senders, train_communication_loss_receivers, train_metrics = None, None, None
-
 
             # Train Mutual information
             #if epoch % train_mi_with_lm_freq == 0 and self.mi_loader is not None:
