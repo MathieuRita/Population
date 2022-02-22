@@ -6,6 +6,7 @@ import collections
 CommunicationBatch = collections.namedtuple("CommunicationBatch", ["data", "sender_id", "receiver_id"])
 ImitationBatch = collections.namedtuple("ImitationBatch", ["data", "sender_id", "imitator_id"])
 MIBatch = collections.namedtuple("MIBatch", ["data", "sender_id"])
+BroadcastingBatch = collections.namedtuple("BroadcastingBatch", ["data", "sender_id", "receiver_ids"])
 
 
 class ReconstructionDataLoader(th.utils.data.DataLoader):
@@ -18,7 +19,8 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                  batches_per_epoch: int,
                  batch_size: int,
                  imitation_probs: th.Tensor = None,
-                 task : str = "communication",
+                 task: str = "communication",
+                 broadcasting: bool = False,
                  mode: str = "train",
                  seed: int = None):
 
@@ -30,6 +32,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
         self.batches_per_epoch = batches_per_epoch
         self.batch_size = batch_size
         self.task = task
+        self.broadcasting = broadcasting
         self.mode = mode
         self.seed = seed
 
@@ -47,7 +50,8 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                                        population_split=self.population_split,
                                        n_batches_per_epoch=self.batches_per_epoch,
                                        batch_size=self.batch_size,
-                                       task = self.task,
+                                       task=self.task,
+                                       broadcasting=self.broadcasting,
                                        mode=self.mode,
                                        seed=seed)
 
@@ -63,6 +67,7 @@ class _ReconstructionIterator():
                  batch_size,
                  imitation_probs: th.Tensor = None,
                  task: str = "communication",
+                 broadcasting: bool = False,
                  mode: str = "train",
                  seed: int = 10):
 
@@ -74,6 +79,7 @@ class _ReconstructionIterator():
         self.imitation_probs = imitation_probs
         self.population_split = population_split
         self.n_batches_per_epoch = n_batches_per_epoch
+        self.broadcasting = broadcasting
         self.batch_size = batch_size
         self.batches_generated = 0
         self.mode = mode
@@ -117,6 +123,14 @@ class _ReconstructionIterator():
         elif self.task == "MI":
             batch = MIBatch(data=batch_data,
                             sender_id=sender_id)
+
+        if self.broadcasting:
+            receiver_ids = [pair[1] for j, pair in enumerate(self.grid_names)
+                            if pair[0] == sender_id and self.population_probs[j] > 0]
+
+            batch = BroadcastingBatch(data=batch_data,
+                                      sender_id=sender_id,
+                                      receiver_ids=receiver_ids)
 
         return batch
 
@@ -366,6 +380,11 @@ def build_one_hot_dataloader(game_type: str,
                              ) -> th.utils.data.DataLoader:
     if game_type == "reconstruction":
 
+        if "broadcasting" in training_params:
+            broadcasting = training_params["broadcasting"]
+        else:
+            broadcasting = False
+
         if task == "communication":
 
             if mode == "val" and training_params["split_train_val"] == 1:
@@ -379,6 +398,7 @@ def build_one_hot_dataloader(game_type: str,
                                                   batches_per_epoch=training_params["batches_per_epoch"],
                                                   task=task,
                                                   mode=mode,
+                                                  broadcasting=broadcasting,
                                                   seed=training_params["seed"])
 
         elif task == "imitation":
