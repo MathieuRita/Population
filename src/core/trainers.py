@@ -480,15 +480,15 @@ class TrainerBis:
                 for task, l in tasks.items():
                     self.writer.add_scalar(f'{sender}/{task} (train)', l, epoch)
 
-                if task == "communication":
-                    self.writer.add_scalar(f'{sender}/accuracy (train)',
-                                           train_metrics[sender]['accuracy'], epoch)
-                    self.writer.add_scalar(f'{sender}/Language entropy (train)',
-                                           train_metrics[sender]['sender_entropy'], epoch)
-                    self.writer.add_scalar(f'{sender}/Sender log prob',
-                                           train_metrics[sender]['sender_log_prob'], epoch)
-                    self.writer.add_scalar(f'{sender}/Messages length (train)',
-                                           train_metrics[sender]['message_length'], epoch)
+                    if task == "communication":
+                        self.writer.add_scalar(f'{sender}/accuracy (train)',
+                                               train_metrics[sender]['accuracy'], epoch)
+                        self.writer.add_scalar(f'{sender}/Language entropy (train)',
+                                               train_metrics[sender]['sender_entropy'], epoch)
+                        self.writer.add_scalar(f'{sender}/Sender log prob',
+                                               train_metrics[sender]['sender_log_prob'], epoch)
+                        self.writer.add_scalar(f'{sender}/Messages length (train)',
+                                               train_metrics[sender]['message_length'], epoch)
 
         # Val
         if val_loss_senders is not None:
