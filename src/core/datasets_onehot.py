@@ -380,7 +380,7 @@ def build_one_hot_dataloader(game_type: str,
                              ) -> th.utils.data.DataLoader:
     if game_type == "reconstruction":
 
-        if "broadcasting" in training_params:
+        if "broadcasting" in training_params and mode!="val":
             broadcasting = training_params["broadcasting"]
         else:
             broadcasting = False
