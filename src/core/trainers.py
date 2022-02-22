@@ -213,9 +213,6 @@ class TrainerBis:
                 agent_sender.tasks[task]["loss_value"].backward()
                 agent_sender.tasks[task]["optimizer"].step()
 
-            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
-            n_batches[sender_id][task] += 1
-
             if compute_metrics:
                 # Store metrics
                 if sender_id not in mean_metrics:
@@ -235,6 +232,9 @@ class TrainerBis:
 
                 mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
                 n_batches[receiver_id][task] += 1
+                
+                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
+                n_batches[sender_id][task] += 1
 
                 if compute_metrics:
 
