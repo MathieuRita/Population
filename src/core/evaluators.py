@@ -1,5 +1,6 @@
 import torch as th
 import numpy as np
+from scipy.stats import spearmanr
 from .utils import move_to, find_lengths
 import torch.nn.functional as F
 from .language_metrics import compute_language_similarity
@@ -39,6 +40,8 @@ class Evaluator:
             self.stored_metrics["accuracy_with_untrained_speakers"] = list()
         if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
             self.stored_metrics["accuracy_with_untrained_listeners"] = list()
+        if self.metrics_to_measure["topographic_similarity"]:
+            self.stored_metrics["topographic_similarity"] = list()
 
     def step(self,
              epoch: int) -> None:
@@ -69,10 +72,14 @@ class Evaluator:
             accuracy_with_untrained_listeners = self.accuracy_with_untrained_listeners()
             self.stored_metrics["accuracy_with_untrained_listeners"].append(accuracy_with_untrained_listeners)
 
+        if self.metrics_to_measure["topographic_similarity"]:
+            top_sim = self.evaluate_topographic_similarity()
+            self.stored_metrics["topographic_similarity"].append(top_sim)
+
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def save_messages(self,save_dir):
+    def save_messages(self, save_dir):
 
         self.game.eval()
 
@@ -88,15 +95,15 @@ class Evaluator:
                 messages, _, entropy_sender = self.population.agents[agent_id].send(inputs_embedding)
                 messages_per_agents.append(messages.cpu().numpy())
                 entropy_per_agents.append(entropy_sender.cpu().numpy())
-                
+
             for agent_id in self.population.untrained_sender_names:
                 inputs_embedding = self.population.agents[agent_id].encode_object(inputs)
                 messages, _, entropy_sender = self.population.agents[agent_id].send(inputs_embedding)
                 messages_per_agents.append(messages.cpu().numpy())
                 entropy_per_agents.append(entropy_sender.cpu().numpy())
-            
-            np.save(f"{save_dir}/messages.npy",np.stack(messages_per_agents))
-            np.save(f"{save_dir}/entropy_messages.npy",np.stack(entropy_per_agents))
+
+            np.save(f"{save_dir}/messages.npy", np.stack(messages_per_agents))
+            np.save(f"{save_dir}/entropy_messages.npy", np.stack(entropy_per_agents))
 
     def reward_decomposition(self):
 
@@ -142,7 +149,7 @@ class Evaluator:
             log_pi_m_x = log_probs.reshape([n_m, n_x])
             pi_m_x = th.exp(log_pi_m_x)
             p_x = th.ones(n_x) / n_x  # Here we set p(x)=1/batch_size
-            p_x = p_x.to(pi_m_x.device) # Fix device issue
+            p_x = p_x.to(pi_m_x.device)  # Fix device issue
 
             log_pi_m = th.log((pi_m_x * p_x).sum(1))
 
@@ -155,6 +162,50 @@ class Evaluator:
             reward_information = f_pi_m.mean().item()
 
             return reward_total, reward_information, reward_coordination
+
+    def evaluate_topographic_similarity(self,
+                                        n_pairs: int = 1000,
+                                        dist_input: str = "common_attributes",
+                                        dist_message: str = "edit_distance"):
+
+        topographic_similarity = np.zeros(len(self.population.sender_names))
+
+        inputs = move_to(self.dump_batch.data, self.device)
+        inputs_np = self.dump_batch.data.numpy()
+
+        self.game.train()
+
+        with th.no_grad():
+
+            for i, sender_id in enumerate(self.population.sender_names):
+                inputs_embedding = self.population.agents[sender_id].encode_object(inputs)
+                messages, _, _ = self.population.agents[sender_id].send(inputs_embedding)
+                messages_len = find_lengths(messages)
+
+                # Sample pairs of messages ; inputs
+                idx = np.random.randint(0, batch_size, n_pairs * 2)
+                inputs_pairs = inputs_np[idx].reshape((n_pairs,2,-1))
+                messages_pairs = messages.cpu().numpy()[idx].reshape((n_pairs,2,-1))
+                messages_len_pairs = messages_len.cpu().numpy()[idx].reshape((n_pairs,2))
+
+                if dist_input == "common_attributes":
+                    distances_inputs = np.mean(1 - 1 * ((inputs_pairs[:, 0, :] - inputs_pairs[:, 1, :]) == 0), axis=1)
+                else:
+                    raise NotImplementedError
+
+                if dist_message == "edit_distance":
+                    distances_messages = 1 - compute_language_similarity(messages_1=messages_pairs[:, 0, :],
+                                                                         messages_2=messages_pairs[:, 1, :],
+                                                                         len_messages_1=messages_len_pairs[:, 0],
+                                                                         len_messages_2=messages_len_pairs[:, 1])
+                else:
+                    raise NotImplementedError
+
+                top_sim = spearmanr(distances_inputs, distances_messages).correlation
+
+                topographic_similarity[i] = top_sim
+
+        return topographic_similarity
 
     def evaluate_language_similarity(self,
                                      n_samples: int = 50,
@@ -358,7 +409,7 @@ class Evaluator:
             accuracy_matrix = self.stored_metrics["accuracy_with_untrained_speakers"][-1]
             for i, receiver_id in enumerate(self.population.receiver_names):
                 for j, untrained_sender_id in enumerate(self.population.untrained_sender_names):
-                    self.writer.add_scalar(f'{receiver_id}/Accurcy with {untrained_sender_id}',
+                    self.writer.add_scalar(f'{receiver_id}/Accuracy with {untrained_sender_id}',
                                            accuracy_matrix[i, j],
                                            iter)
 
@@ -369,6 +420,13 @@ class Evaluator:
                     self.writer.add_scalar(f'{sender_id}/Accuracy with {untrained_receiver_id}',
                                            accuracy_matrix[i, j],
                                            iter)
+
+        if self.metrics_to_measure["topographic_similarity"]:
+            topographic_similarity = self.stored_metrics["topographic_similarity"][-1]
+            for i, sender_id in enumerate(self.population.sender_names):
+                self.writer.add_scalar(f'{sender_id}/Topographic similarity',
+                                       topographic_similarity[i],
+                                       iter)
 
     def save_metrics(self, save_dir):
 
@@ -394,6 +452,9 @@ class Evaluator:
         if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
             np.save(f"{save_dir}/accuracy_with_untrained_speakers.npy",
                     np.stack(self.stored_metrics["accuracy_with_untrained_speakers"]))
+        if self.metrics_to_measure["topographic_similarity"]:
+            np.save(f"{save_dir}/topographic_similarity.npy",
+                    np.stack(self.stored_metrics["topographic_similarity"]))
 
 
 def build_evaluator(metrics_to_measure,
