@@ -170,8 +170,8 @@ class Evaluator:
 
         topographic_similarity = np.zeros(len(self.population.sender_names))
 
-        inputs = move_to(self.dump_batch.data, self.device)
-        inputs_np = self.dump_batch.data.numpy()
+        inputs = move_to(self.dump_batch[0], self.device)
+        inputs_np = self.dump_batch[0].numpy()
 
         self.game.train()
 
