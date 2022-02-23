@@ -8,14 +8,19 @@ def compute_language_similarity(messages_1 : th.Tensor,
                                 len_messages_1 : th.Tensor = None,
                                 len_messages_2 : th.Tensor = None) -> th.Tensor:
 
-    messages_1 = messages_1.cpu().numpy()
-    messages_2 = messages_2.cpu().numpy()
+
+    if not type(messages_1)==np.ndarray:
+        messages_1 = messages_1.cpu().numpy()
+    if not type(messages_2) == np.ndarray:
+        messages_2 = messages_2.cpu().numpy()
     if len_messages_1 is not None:
-        len_messages_1=len_messages_1.cpu().numpy()
+        if not type(len_messages_1)==np.ndarray:
+            len_messages_1=len_messages_1.cpu().numpy()
     else:
         len_messages_1 = [messages_1.size(1)]*messages_1.size(0)
     if len_messages_2 is not None:
-        len_messages_2=len_messages_2.cpu().numpy()
+        if not type(len_messages_2) == np.ndarray:
+            len_messages_2=len_messages_2.cpu().numpy()
     else:
         len_messages_2 = [messages_2.size(1)] * messages_2.size(0)
 
