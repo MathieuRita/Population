@@ -183,7 +183,7 @@ class Evaluator:
                 messages_len = find_lengths(messages)
 
                 # Sample pairs of messages ; inputs
-                idx = np.random.randint(0, batch_size, n_pairs * 2)
+                idx = np.random.randint(0, inputs_np.shape[0], n_pairs * 2)
                 inputs_pairs = inputs_np[idx].reshape((n_pairs,2,-1))
                 messages_pairs = messages.cpu().numpy()[idx].reshape((n_pairs,2,-1))
                 messages_len_pairs = messages_len.cpu().numpy()[idx].reshape((n_pairs,2))
