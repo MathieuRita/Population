@@ -295,7 +295,7 @@ class TrainerBis:
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
                                optimal_listener.tasks[task]["loss_value"].item(), epoch)
 
-    def pretrain_language_model(self,epoch:int,threshold=1e-3):
+    def pretrain_language_model(self,epoch:int,threshold=1e-1):
 
         self.game.train()
 
@@ -312,7 +312,7 @@ class TrainerBis:
 
             messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
 
-            agent_sender.train_language_model(messages_lm)
+            agent_sender.train_language_model(messages_lm,threshold=threshold)
 
     def train_communication_and_kl(self,compute_metrics=True):
 
