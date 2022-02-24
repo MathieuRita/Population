@@ -35,7 +35,7 @@ class TrainerBis:
               validation_freq: int = 1,
               train_imitation_freq: int = 100000,
               train_mi_freq: int = 100000,
-              train_mi_with_lm_freq: int = 100000,
+              train_kl_freq: int = 100000,
               train_broadcasting_freq:int = 1000000,
               evaluator_freq: int = 1000000,
               print_evolution: bool = True):
@@ -71,11 +71,11 @@ class TrainerBis:
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_broadcasting(compute_metrics=True)  # dict,dict, dict
 
-            # Train Mutual information
-            #if epoch % train_mi_with_lm_freq == 0 and self.mi_loader is not None:
-            #    train_mi_loss_senders = self.train_mutual_information_with_lm()
-            #else:
-            #    train_mi_loss_senders = None
+            # Train KL div
+            if epoch % train_kl_freq == 0 and self.mi_loader is not None:
+                self.pretrain_language_model(epoch=epoch)
+                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
+                    self.train_communication_and_kl()
 
             # Validation
             if self.val_loader is not None and epoch % validation_freq == 0:
@@ -295,6 +295,102 @@ class TrainerBis:
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
                                optimal_listener.tasks[task]["loss_value"].item(), epoch)
 
+    def pretrain_language_model(self,epoch:int,threshold=1e-3):
+
+        self.game.train()
+
+        messages_lm = []
+        for sender_id in self.population.sender_names:
+
+            agent_sender = self.population.agents[sender_id]
+
+            for batch in self.mi_loader:
+                inputs = batch.data.to(self.device)
+                inputs_embedding = agent_sender.encode_object(inputs)
+                messages, _, _ = agent_sender.send(inputs_embedding)
+                messages_lm.append(messages)
+
+            messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
+
+            agent_sender.train_language_model(messages_lm)
+
+    def train_communication_and_kl(self,compute_metrics=True):
+
+        mean_loss_senders = {}
+        mean_loss_receivers = {}
+        n_batches = {}
+        mean_metrics = {}
+
+        self.game.train()
+
+        for batch in self.train_loader:
+
+            sender_id, receiver_id = batch.sender_id, batch.receiver_id
+            agent_sender = self.population.agents[sender_id]
+            agent_receiver = self.population.agents[receiver_id]
+
+            weights = {"communication": agent_sender.weights["communication"],
+                       "KL": agent_sender.weights["KL"]}
+
+            task = "communication"
+
+            if sender_id not in mean_loss_senders:
+                mean_loss_senders[sender_id] = {task: 0.}
+                n_batches[sender_id] = {task: 0}
+            if receiver_id not in mean_loss_receivers:
+                mean_loss_receivers[receiver_id] = {task: 0.}
+                n_batches[receiver_id] = {task: 0}
+
+            batch = move_to((batch.data,sender_id,receiver_id,weights), self.device)
+
+            metrics = self.game.communication_and_kl_instance(*batch, compute_metrics=compute_metrics)
+
+            # Sender
+            if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
+                agent_sender.tasks[task]["optimizer"].zero_grad()
+                agent_sender.tasks[task]["loss_value"].backward()
+                agent_sender.tasks[task]["optimizer"].step()
+
+            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
+            n_batches[sender_id][task] += 1
+
+            # Receiver
+            if th.rand(1)[0] < agent_receiver.tasks[task]["p_step"]:
+                agent_receiver.tasks[task]["optimizer"].zero_grad()
+                agent_receiver.tasks[task]["loss_value"].backward()
+                agent_receiver.tasks[task]["optimizer"].step()
+
+            mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
+            n_batches[receiver_id][task] += 1
+
+            if compute_metrics:
+                # Store metrics
+                if sender_id not in mean_metrics:
+                    mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "sender_entropy": 0.,
+                                               "sender_log_prob": 0.,
+                                               "message_length": 0.}
+                if receiver_id not in mean_metrics:
+                    mean_metrics[receiver_id] = {"accuracy": 0.}
+
+                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
+                mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
+                mean_metrics[sender_id]["message_length"] += metrics["message_length"]
+                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
+
+        mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
+                             for sender_id in mean_loss_senders}
+        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
+                               for receiver_id in mean_loss_receivers}
+
+        if compute_metrics:
+            for agt in mean_metrics:
+                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt][task])
+
+        return mean_loss_senders, mean_loss_receivers, mean_metrics
+
+
     def train_communication_and_mutual_information(self,compute_metrics=True):
 
         mean_loss_senders = {}
@@ -355,6 +451,7 @@ class TrainerBis:
                     mean_metrics[receiver_id] = {"accuracy": 0.}
 
                 mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[sender_id]["accuracy (optimal listener)"] += metrics["accuracy"][optimal_listener_id]
                 mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                 mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]

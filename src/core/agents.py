@@ -88,9 +88,9 @@ class Agent(object):
                                            receiver_output=receiver_output,
                                            neg_log_imit=neg_log_imit)
 
-    def train_language_model(self, messages):
+    def train_language_model(self, messages, threshold=1e-3):
 
-        self.language_model.train(messages,threshold=0.0001)
+        self.language_model.train(messages,threshold=threshold)
 
     def compute_mutual_information(self,inputs):
 

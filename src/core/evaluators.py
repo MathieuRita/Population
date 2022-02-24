@@ -42,6 +42,8 @@ class Evaluator:
             self.stored_metrics["accuracy_with_untrained_listeners"] = list()
         if self.metrics_to_measure["topographic_similarity"]:
             self.stored_metrics["topographic_similarity"] = list()
+        if self.metrics_to_measure["etl_evaluation"]:
+            self.stored_metrics["etl_evaluation"] = list()
 
     def step(self,
              epoch: int) -> None:
@@ -76,8 +78,18 @@ class Evaluator:
             top_sim = self.evaluate_topographic_similarity()
             self.stored_metrics["topographic_similarity"].append(top_sim)
 
+        if self.metrics_to_measure["etl_evaluation"]:
+            top_sim = self.evaluate_etl()
+            self.stored_metrics["etl_evaluation"].append(top_sim)
+
         if self.writer is not None:
             self.log_metrics(iter=epoch)
+
+    def etl_evaluation(self):
+
+        raise NotImplementedError
+
+
 
     def save_messages(self, save_dir):
 
@@ -426,6 +438,13 @@ class Evaluator:
             for i, sender_id in enumerate(self.population.sender_names):
                 self.writer.add_scalar(f'{sender_id}/Topographic similarity',
                                        topographic_similarity[i],
+                                       iter)
+
+        if self.metrics_to_measure["etl_evaluation"]:
+            etl = self.stored_metrics["etl_evaluation"][-1]
+            for i, sender_id in enumerate(self.population.sender_names):
+                self.writer.add_scalar(f'{sender_id}/ETL',
+                                       etl[i],
                                        iter)
 
     def save_metrics(self, save_dir):

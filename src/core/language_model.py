@@ -127,6 +127,10 @@ class LanguageModel():
                 y_batch = y[i * self.batch_size: (i + 1) * self.batch_size]
                 len_batch = x_lengths[i * self.batch_size: (i + 1) * self.batch_size]
 
+                x_batch = x_batch.to(self.model.device)
+                y_batch = y_batch.to(self.model.device)
+                len_batch = len_batch.to(self.model.device)
+
                 y_hat = self.model(x_batch, len_batch)
                 loss = self.compute_loss(y_hat, y_batch, len_batch)
 
