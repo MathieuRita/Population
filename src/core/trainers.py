@@ -295,7 +295,7 @@ class TrainerBis:
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
                                optimal_listener.tasks[task]["loss_value"].item(), epoch)
 
-    def pretrain_language_model(self,epoch:int,threshold=1e-1):
+    def pretrain_language_model(self,epoch:int,threshold=1e-2):
 
         self.game.train()
 
