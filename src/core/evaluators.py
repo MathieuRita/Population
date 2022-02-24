@@ -18,6 +18,7 @@ class Evaluator:
         self.game = game
         self.population = game.population
         self.dump_batch = dump_batch
+        self.etl_listener = None
         self.device = th.device(device)
         self.writer = logger
         self.init_languages = None
