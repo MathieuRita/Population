@@ -60,7 +60,7 @@ class TrainerBis:
 
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
-                self.pretrain_optimal_listener()
+                self.pretrain_optimal_listener(epoch=epoch)
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
             else:
@@ -255,7 +255,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self,threshold=1e-4):
+    def pretrain_optimal_listener(self,epoch:int,threshold=1e-2):
 
         self.game.train()
 
@@ -291,6 +291,9 @@ class TrainerBis:
                                    optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
 
             self.mi_step += 1
+
+        self.writer.add_scalar(f'{optimal_listener_id}/MI',
+                               optimal_listener.tasks[task]["loss_value"].item(), epoch)
 
     def train_communication_and_mutual_information(self,compute_metrics=True):
 
