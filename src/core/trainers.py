@@ -373,11 +373,11 @@ class TrainerBis:
                 if receiver_id not in mean_metrics:
                     mean_metrics[receiver_id] = {"accuracy": 0.}
 
-                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
                 mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                 mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
-                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
