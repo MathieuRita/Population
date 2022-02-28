@@ -19,6 +19,10 @@ class Receiver(nn.Module):
 
         return embedding
 
+    def reset_parameters(self):
+
+        self.message_encoder.reset_parameters()
+
 # MessageProcessor classes
 
 class RecurrentProcessor(nn.Module):
