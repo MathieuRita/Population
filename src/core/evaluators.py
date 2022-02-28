@@ -26,6 +26,8 @@ class Evaluator:
         self.dump_batch = dump_batch
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.agent_repertory = agent_repertory
+        self.game_params = game_params
         self.eval_receiver_id = eval_receiver_id
         self.device = th.device(device)
         self.writer = logger
