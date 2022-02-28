@@ -513,7 +513,7 @@ class Evaluator:
                                        topographic_similarity[i],
                                        iter)
 
-        if self.metrics_to_measure["external_receiver_train_acc"]:
+        if self.metrics_to_measure["external_receiver_evaluation"]:
             train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
             top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
             etl = self.stored_metrics["etl"][-1]
@@ -556,13 +556,11 @@ class Evaluator:
         if self.metrics_to_measure["topographic_similarity"]:
             np.save(f"{save_dir}/topographic_similarity.npy",
                     np.stack(self.stored_metrics["topographic_similarity"]))
-        if self.metrics_to_measure["external_receiver_train_acc"]:
+        if self.metrics_to_measure["external_receiver_evaluation"]:
             np.save(f"{save_dir}/external_receiver_train_acc.npy",
                     np.stack(self.stored_metrics["external_receiver_train_acc"]))
-        if self.metrics_to_measure["external_receiver_val_acc"]:
             np.save(f"{save_dir}/external_receiver_val_acc.npy",
                     np.stack(self.stored_metrics["external_receiver_val_acc"]))
-        if self.metrics_to_measure["etl"]:
             np.save(f"{save_dir}/etl.npy",
                     np.stack(self.stored_metrics["etl"]))
 
