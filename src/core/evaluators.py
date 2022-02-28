@@ -4,6 +4,7 @@ from scipy.stats import spearmanr
 from .utils import move_to, find_lengths
 import torch.nn.functional as F
 from .language_metrics import compute_language_similarity
+from .agents import get_agent
 
 
 class Evaluator:
@@ -14,6 +15,8 @@ class Evaluator:
                  dump_batch,
                  train_loader,
                  val_loader,
+                 agent_repertory,
+                 game_params,
                  eval_receiver_id,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  device: str = "cpu") -> None:
@@ -103,7 +106,11 @@ class Evaluator:
 
         for i, sender_id in enumerate(self.population.sender_names):
 
-            self.population.agents[self.eval_receiver_id].reset_parameters()
+            # TO MODIFY AGENT_PARAMS
+            self.population.agents[self.eval_receiver_id] = get_agent(agent_name=self.eval_receiver_id,
+                                                                      agent_repertory=self.agent_repertory,
+                                                                      game_params=self.game_params,
+                                                                      device=self.device)
 
             train_accuracies = []
             val_accuracies = []
@@ -570,6 +577,8 @@ def build_evaluator(metrics_to_measure,
                     dump_batch,
                     train_loader,
                     val_loader,
+                    agent_repertory,
+                    game_params,
                     eval_receiver_id,
                     logger: th.utils.tensorboard.SummaryWriter = None,
                     device: str = "cpu"):
@@ -579,6 +588,8 @@ def build_evaluator(metrics_to_measure,
                           dump_batch=dump_batch,
                           train_loader=train_loader,
                           val_loader=val_loader,
+                          agent_repertory=agent_repertory,
+                          game_params=game_params,
                           eval_receiver_id=eval_receiver_id,
                           device=device)
 
