@@ -94,9 +94,9 @@ class Agent(object):
 
     def reset_parameters(self):
         if self.object_encoder is not None: self.object_encoder.reset_parameters()
-        if self.object_encoder is not None: self.sender.reset_parameters()
-        if self.object_encoder is not None: self.receiver.reset_parameters()
-        if self.object_encoder is not None: self.object_decoder.reset_parameters()
+        if self.sender is not None: self.sender.reset_parameters()
+        if self.receiver is not None: self.receiver.reset_parameters()
+        if self.object_decoder is not None: self.object_decoder.reset_parameters()
 
     def compute_mutual_information(self,inputs):
 
