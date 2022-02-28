@@ -141,6 +141,9 @@ def main(params):
                                 game=game,
                                 device=training_params["device"],
                                 logger=logger,
+                                train_loader=train_loader,
+                                val_loader=val_loader,
+                                eval_receiver_id=training_params["eval_receiver_id"],
                                 dump_batch=(full_dataset,
                                             population.agent_names[0],
                                             population.agent_names[1]))
