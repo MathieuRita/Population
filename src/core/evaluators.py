@@ -150,7 +150,10 @@ class Evaluator:
 
             train_acc = np.min(train_accuracies[-5:])
             top_val_acc = np.max(val_accuracies[-5:])
-            etl = np.min(np.where(train_accuracies>0.98)[0])
+            if len(np.where(np.array(train_accuracies)>0.98)[0]):
+                etl = np.min(np.where(np.array(train_accuracies)>0.98)[0])
+            else:
+                etl=-1
 
             train_accs[i] = train_acc
             top_val_accs[i] = top_val_acc
