@@ -12,13 +12,18 @@ class Evaluator:
                  metrics_to_measure,
                  game,
                  dump_batch,
+                 train_loader,
+                 val_loader,
+                 eval_receiver_id,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  device: str = "cpu") -> None:
 
         self.game = game
         self.population = game.population
         self.dump_batch = dump_batch
-        self.etl_listener = None
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.eval_receiver_id = eval_receiver_id
         self.device = th.device(device)
         self.writer = logger
         self.init_languages = None
@@ -43,8 +48,8 @@ class Evaluator:
             self.stored_metrics["accuracy_with_untrained_listeners"] = list()
         if self.metrics_to_measure["topographic_similarity"]:
             self.stored_metrics["topographic_similarity"] = list()
-        if self.metrics_to_measure["etl_evaluation"]:
-            self.stored_metrics["etl_evaluation"] = list()
+        if self.metrics_to_measure["external_receiver_evaluation"]:
+            self.stored_metrics["external_receiver_evaluation"] = list()
 
     def step(self,
              epoch: int) -> None:
@@ -79,17 +84,79 @@ class Evaluator:
             top_sim = self.evaluate_topographic_similarity()
             self.stored_metrics["topographic_similarity"].append(top_sim)
 
-        if self.metrics_to_measure["etl_evaluation"]:
-            top_sim = self.evaluate_etl()
-            self.stored_metrics["etl_evaluation"].append(top_sim)
+        if self.metrics_to_measure["external_receiver_evaluation"]:
+            train_acc, top_val_acc, etl = self.evaluate_external_receiver()
+            self.stored_metrics["external_receiver_train_acc"].append(train_acc)
+            self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
+            self.stored_metrics["etl"].append(etl)
 
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def etl_evaluation(self):
+    def evaluate_external_receiver(self,n_step_train:int=50):
 
-        raise NotImplementedError
+        train_accs = np.zeros(len(self.population.sender_names))
+        top_val_accs = np.zeros(len(self.population.sender_names))
+        etls = np.zeros(len(self.population.sender_names))
 
+        for i, sender_id in enumerate(self.population.sender_names):
+
+            self.population.agents[self.eval_receiver_id].reset_parameters()
+
+            train_accuracies = []
+            val_accuracies = []
+
+            for epoch in range(n_step_train):
+
+                # Train
+
+                self.game.train()
+
+                mean_train_acc=0.
+                n_batch=0
+
+                for batch in self.train_loader: # Eval data only composed of inputs
+
+                    eval_receiver = self.population.agents[self.eval_receiver_id]
+
+                    task = "communication"
+
+                    batch = move_to((batch.data,sender_id,self.eval_receiver_id), self.device)
+                    metrics = self.game(batch, compute_metrics=True)
+
+                    eval_receiver.tasks[task]["optimizer"].zero_grad()
+                    eval_receiver.tasks[task]["loss_value"].backward()
+                    eval_receiver.tasks[task]["optimizer"].step()
+
+                    mean_train_acc += metrics["accuracy"].detach().item()
+                    n_batch+=1
+
+                train_accuracies.append(mean_train_acc/n_batch)
+                print(mean_train_acc/n_batch)
+
+                mean_val_acc = 0.
+                n_batch = 0
+
+                # Eval
+                with th.no_grad():
+                    for batch in self.val_loader:
+                        batch = move_to((batch.data, sender_id, self.eval_receiver_id), self.device)
+                        metrics = self.game(batch, compute_metrics=True)
+
+                        mean_val_acc += metrics["accuracy"].detach().item()
+                        n_batch += 1
+
+                val_accuracies.append(mean_val_acc/n_batch)
+
+            train_acc = np.min(train_accuracies[-5:])
+            top_val_acc = np.max(val_accuracies[-5:])
+            etl = np.min(np.where(train_accuracies>0.98)[0])
+
+            train_accs[i] = train_acc
+            top_val_accs[i] = top_val_acc
+            etls[i] = etl
+
+        return train_accs, top_val_accs, etls
 
 
     def save_messages(self, save_dir):
@@ -441,12 +508,21 @@ class Evaluator:
                                        topographic_similarity[i],
                                        iter)
 
-        if self.metrics_to_measure["etl_evaluation"]:
-            etl = self.stored_metrics["etl_evaluation"][-1]
+        if self.metrics_to_measure["external_receiver_train_acc"]:
+            train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
+            top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
+            etl = self.stored_metrics["etl"][-1]
             for i, sender_id in enumerate(self.population.sender_names):
+                self.writer.add_scalar(f'{sender_id}/Train acc external receiver',
+                                       train_acc[i],
+                                       iter)
+                self.writer.add_scalar(f'{sender_id}/Top val external receiver',
+                                       top_val_acc[i],
+                                       iter)
                 self.writer.add_scalar(f'{sender_id}/ETL',
                                        etl[i],
                                        iter)
+
 
     def save_metrics(self, save_dir):
 
@@ -475,17 +551,32 @@ class Evaluator:
         if self.metrics_to_measure["topographic_similarity"]:
             np.save(f"{save_dir}/topographic_similarity.npy",
                     np.stack(self.stored_metrics["topographic_similarity"]))
+        if self.metrics_to_measure["external_receiver_train_acc"]:
+            np.save(f"{save_dir}/external_receiver_train_acc.npy",
+                    np.stack(self.stored_metrics["external_receiver_train_acc"]))
+        if self.metrics_to_measure["external_receiver_val_acc"]:
+            np.save(f"{save_dir}/external_receiver_val_acc.npy",
+                    np.stack(self.stored_metrics["external_receiver_val_acc"]))
+        if self.metrics_to_measure["etl"]:
+            np.save(f"{save_dir}/etl.npy",
+                    np.stack(self.stored_metrics["etl"]))
 
 
 def build_evaluator(metrics_to_measure,
                     game,
                     dump_batch,
+                    train_loader,
+                    val_loader,
+                    eval_receiver_id,
                     logger: th.utils.tensorboard.SummaryWriter = None,
                     device: str = "cpu"):
     evaluator = Evaluator(metrics_to_measure=metrics_to_measure,
                           game=game,
                           logger=logger,
                           dump_batch=dump_batch,
+                          train_loader=train_loader,
+                          val_loader=val_loader,
+                          eval_receiver_id=eval_receiver_id,
                           device=device)
 
     return evaluator

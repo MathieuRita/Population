@@ -92,6 +92,12 @@ class Agent(object):
 
         self.language_model.train(messages,threshold=threshold)
 
+    def reset_parameters(self):
+        if self.object_encoder is not None: self.object_encoder.reset_parameters()
+        if self.object_encoder is not None: self.sender.reset_parameters()
+        if self.object_encoder is not None: self.receiver.reset_parameters()
+        if self.object_encoder is not None: self.object_decoder.reset_parameters()
+
     def compute_mutual_information(self,inputs):
 
         raise NotImplementedError
