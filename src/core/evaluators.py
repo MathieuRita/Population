@@ -49,7 +49,9 @@ class Evaluator:
         if self.metrics_to_measure["topographic_similarity"]:
             self.stored_metrics["topographic_similarity"] = list()
         if self.metrics_to_measure["external_receiver_evaluation"]:
-            self.stored_metrics["external_receiver_evaluation"] = list()
+            self.stored_metrics["external_receiver_train_acc"] = list()
+            self.stored_metrics["external_receiver_val_acc"] = list()
+            self.stored_metrics["etl"] = list()
 
     def step(self,
              epoch: int) -> None:
