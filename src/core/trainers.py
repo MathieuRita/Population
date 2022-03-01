@@ -269,7 +269,7 @@ class TrainerBis:
                 self.population.agents[agent_sender.optimal_listener] = get_agent(agent_name=agent_sender.optimal_listener,
                                                                                   agent_repertory=self.agent_repertory,
                                                                                   game_params=self.game_params,
-                                                                                  device=self.population.device)
+                                                                                  device=self.device)
 
         self.game.train()
         prev_loss_value = [0.]
