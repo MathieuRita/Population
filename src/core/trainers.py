@@ -260,7 +260,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self, epoch: int,reset:bool=False, threshold=1e-3):
+    def pretrain_optimal_listener(self, epoch: int,reset:bool=False, threshold=1e-2):
 
         # Reset optimal listener
         if reset:
