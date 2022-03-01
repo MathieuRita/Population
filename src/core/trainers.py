@@ -3,6 +3,7 @@ import numpy as np
 import torch.utils.tensorboard
 from torch.utils.tensorboard import SummaryWriter
 from .utils import _div_dict, move_to
+from .agents import get_agent
 
 
 class TrainerBis:
@@ -10,6 +11,8 @@ class TrainerBis:
     def __init__(self,
                  game,
                  evaluator,
+                 game_params: dict,
+                 agent_repertory: dict,
                  train_loader: th.utils.data.DataLoader,
                  imitation_loader: th.utils.data.DataLoader = None,
                  mi_loader: th.utils.data.DataLoader = None,
@@ -22,12 +25,14 @@ class TrainerBis:
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.imitation_loader = imitation_loader
+        self.game_params = game_params
+        self.agent_repertory = agent_repertory
         self.mi_loader = mi_loader
         self.evaluator = evaluator
         self.start_epoch = 1
         self.device = th.device(device)
         self.writer = logger
-        self.mi_step=0
+        self.mi_step = 0
 
     def train(self,
               n_epochs,
@@ -36,7 +41,7 @@ class TrainerBis:
               train_imitation_freq: int = 100000,
               train_mi_freq: int = 100000,
               train_kl_freq: int = 100000,
-              train_broadcasting_freq:int = 1000000,
+              train_broadcasting_freq: int = 1000000,
               evaluator_freq: int = 1000000,
               print_evolution: bool = True):
 
@@ -116,11 +121,11 @@ class TrainerBis:
             task = "communication"
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {task:0.}
-                n_batches[sender_id] = {task:0}
+                mean_loss_senders[sender_id] = {task: 0.}
+                n_batches[sender_id] = {task: 0}
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {task:0.}
-                n_batches[receiver_id] = {task:0}
+                mean_loss_receivers[receiver_id] = {task: 0.}
+                n_batches[receiver_id] = {task: 0}
 
             batch = move_to(batch, self.device)
 
@@ -171,7 +176,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def train_communication_broadcasting(self,compute_metrics=True):
+    def train_communication_broadcasting(self, compute_metrics=True):
 
         mean_loss_senders = {}
         mean_loss_receivers = {}
@@ -187,7 +192,7 @@ class TrainerBis:
 
             weights = {}
             for receiver_id in receiver_ids:
-                weights[receiver_id]=1
+                weights[receiver_id] = 1
 
             task = "communication"
 
@@ -255,13 +260,20 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self,epoch:int,threshold=1e-2):
+    def pretrain_optimal_listener(self, epoch: int,reset:bool=True, threshold=1e-2):
+
+        # Reset optimal listener
+        if reset:
+            for sender_id in self.population.sender_names:
+                agent_sender = self.population.agents[sender_id]
+                self.population.agents[agent_sender.optimal_listener] = get_agent(agent_name=agent_sender.optimal_listener,
+                                                                                  agent_repertory=self.agent_repertory,
+                                                                                  game_params=self.game_params,
+                                                                                  device=self.population.device)
 
         self.game.train()
-
         prev_loss_value = [0.]
         continue_optimal_listener_training = True
-
         task = "communication"
 
         while continue_optimal_listener_training:
@@ -271,7 +283,7 @@ class TrainerBis:
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener
             optimal_listener = self.population.agents[optimal_listener_id]
-            batch = move_to((inputs,sender_id,optimal_listener_id), self.device)
+            batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
             _ = self.game(batch)
 
@@ -295,7 +307,7 @@ class TrainerBis:
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
                                optimal_listener.tasks[task]["loss_value"].item(), epoch)
 
-    def pretrain_language_model(self,epoch:int,threshold=1e-2):
+    def pretrain_language_model(self, epoch: int, threshold=1e-2):
 
         self.game.train()
 
@@ -312,9 +324,9 @@ class TrainerBis:
 
             messages_lm = torch.stack(messages_lm).view(-1, messages_lm[0].size(1))
 
-            agent_sender.train_language_model(messages_lm,threshold=threshold)
+            agent_sender.train_language_model(messages_lm, threshold=threshold)
 
-    def train_communication_and_kl(self,compute_metrics=True):
+    def train_communication_and_kl(self, compute_metrics=True):
 
         mean_loss_senders = {}
         mean_loss_receivers = {}
@@ -341,7 +353,7 @@ class TrainerBis:
                 mean_loss_receivers[receiver_id] = {task: 0.}
                 n_batches[receiver_id] = {task: 0}
 
-            batch = move_to((batch.data,sender_id,receiver_id,weights), self.device)
+            batch = move_to((batch.data, sender_id, receiver_id, weights), self.device)
 
             metrics = self.game.communication_and_kl_instance(*batch, compute_metrics=compute_metrics)
 
@@ -390,8 +402,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-
-    def train_communication_and_mutual_information(self,compute_metrics=True):
+    def train_communication_and_mutual_information(self, compute_metrics=True):
 
         mean_loss_senders = {}
         mean_loss_receivers = {}
@@ -405,9 +416,11 @@ class TrainerBis:
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
             agent_receiver = self.population.agents[receiver_id]
+
             optimal_listener_id = agent_sender.optimal_listener
 
-            weights = {receiver_id:agent_sender.weights["communication"],optimal_listener_id:agent_sender.weights["MI"]}
+            weights = {receiver_id: agent_sender.weights["communication"],
+                       optimal_listener_id: agent_sender.weights["MI"]}
 
             task = "communication"
 
@@ -418,7 +431,7 @@ class TrainerBis:
                 mean_loss_receivers[receiver_id] = {task: 0.}
                 n_batches[receiver_id] = {task: 0}
 
-            batch = move_to((batch.data,sender_id,[receiver_id,optimal_listener_id],weights), self.device)
+            batch = move_to((batch.data, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
 
             metrics = self.game.communication_multi_listener_instance(*batch, compute_metrics=compute_metrics)
 
@@ -607,7 +620,6 @@ class TrainerBis:
                                        val_metrics[receiver]['accuracy'], epoch)
 
 
-
 class Trainer:
 
     def __init__(self,
@@ -630,7 +642,7 @@ class Trainer:
         self.start_epoch = 1
         self.device = th.device(device)
         self.writer = logger
-        self.mi_step=0
+        self.mi_step = 0
 
     def train(self,
               n_epochs,
@@ -711,11 +723,11 @@ class Trainer:
             task = "communication"
 
             if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {task:0.}
-                n_batches[sender_id] = {task:0}
+                mean_loss_senders[sender_id] = {task: 0.}
+                n_batches[sender_id] = {task: 0}
             if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {task:0.}
-                n_batches[receiver_id] = {task:0}
+                mean_loss_receivers[receiver_id] = {task: 0.}
+                n_batches[receiver_id] = {task: 0}
 
             batch = move_to(batch, self.device)
 
@@ -827,7 +839,7 @@ class Trainer:
 
         return mean_loss_senders, mean_loss_imitators
 
-    def train_mutual_information(self,threshold=1e-3):
+    def train_mutual_information(self, threshold=1e-3):
 
         self.game.train()
 
@@ -843,7 +855,7 @@ class Trainer:
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener
             optimal_listener = self.population.agents[optimal_listener_id]
-            batch = move_to((inputs,sender_id,optimal_listener_id), self.device)
+            batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
             _ = self.game(batch)
 
@@ -868,15 +880,15 @@ class Trainer:
         agent_sender.tasks[task]["loss_value"].backward()
         agent_sender.tasks["mutual_information"]["optimizer"].step()
 
-        return {sender_id:agent_sender.tasks[task]["loss_value"].item()}
+        return {sender_id: agent_sender.tasks[task]["loss_value"].item()}
 
-    def train_mutual_information_with_lm(self,threshold=1e-3):
+    def train_mutual_information_with_lm(self, threshold=1e-3):
 
         self.game.train()
 
         # Language model training
-        #messages_lm = []
-        #for sender_id in self.population.sender_names:
+        # messages_lm = []
+        # for sender_id in self.population.sender_names:
 
         #    agent_sender = self.population.agents[sender_id]
 
@@ -905,9 +917,9 @@ class Trainer:
         self.writer.add_scalar(f'{sender_id}/reward_mi',
                                mutual_information.mean().item(), self.mi_step)
 
-        self.mi_step+=1
+        self.mi_step += 1
 
-        return {sender_id:agent_sender.tasks["mutual_information"]["loss_value"].item()}
+        return {sender_id: agent_sender.tasks["mutual_information"]["loss_value"].item()}
 
     def train_mutual_information_direct(self):
 
@@ -936,7 +948,6 @@ class Trainer:
             # Store losses
             mean_mi_senders[sender_id] += loss_m_i
             n_batches[sender_id] += 1
-
 
         mean_mi_senders = _div_dict(mean_mi_senders, n_batches)
 
@@ -1143,6 +1154,8 @@ class PretrainingTrainer:
 def build_trainer(game,
                   evaluator,
                   train_loader: th.utils.data.DataLoader,
+                  game_params: dict,
+                  agent_repertory: dict,
                   mi_loader: th.utils.data.DataLoader = None,
                   val_loader: th.utils.data.DataLoader = None,
                   imitation_loader: th.utils.data.DataLoader = None,
@@ -1152,13 +1165,15 @@ def build_trainer(game,
                   device: str = "cpu"):
     if not pretraining:
         trainer = TrainerBis(game=game,
-                              evaluator=evaluator,
-                              train_loader=train_loader,
-                              mi_loader=mi_loader,
-                              imitation_loader=imitation_loader,
-                              val_loader=val_loader,
-                              logger=logger,
-                              device=device)
+                             evaluator=evaluator,
+                             train_loader=train_loader,
+                             mi_loader=mi_loader,
+                             imitation_loader=imitation_loader,
+                             val_loader=val_loader,
+                             game_params=game_params,
+                             agent_repertory=agent_repertory,
+                             logger=logger,
+                             device=device)
     else:
         trainer = PretrainingTrainer(game=game,
                                      train_loader=train_loader,
