@@ -156,6 +156,8 @@ def main(params):
                             mi_loader=mi_loader,
                             val_loader=val_loader,
                             imitation_loader=imitation_loader,
+                            agent_repertory=agent_repertory,
+                            game_params=game_params,
                             device=training_params["device"],
                             compute_metrics=True,
                             logger=logger)
