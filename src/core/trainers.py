@@ -260,7 +260,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self, epoch: int, reset: bool = True, threshold=1e-3):
+    def pretrain_optimal_listener(self, epoch: int, reset: bool = False, threshold=1e-3):
 
         # Reset optimal listener
         if reset:
@@ -283,6 +283,7 @@ class TrainerBis:
 
         self.game.train()
         prev_loss_value = [0.]
+        step=0
         continue_optimal_listener_training = True
         task = "communication"
 
@@ -301,8 +302,9 @@ class TrainerBis:
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
 
-            if len(prev_loss_value) > 9 and \
-                    abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold:
+            if (len(prev_loss_value) > 9 and \
+                    abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold) or \
+                    step==300:
                 continue_optimal_listener_training = False
             else:
                 prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
@@ -313,6 +315,7 @@ class TrainerBis:
                                    optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
 
             self.mi_step += 1
+            step+=1
 
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
                                optimal_listener.tasks[task]["loss_value"].item(), epoch)
