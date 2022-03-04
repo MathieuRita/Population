@@ -272,14 +272,14 @@ class TrainerBis:
                     game_params=self.game_params,
                     device=self.device)
 
-        for sender_id in self.population.sender_names:
-            agent_sender = self.population.agents[sender_id]
-            optimal_listener_id = agent_sender.optimal_listener
-            optimal_listener = self.population.agents[optimal_listener_id]
+        #for sender_id in self.population.sender_names:
+        #    agent_sender = self.population.agents[sender_id]
+        #    optimal_listener_id = agent_sender.optimal_listener
+        #    optimal_listener = self.population.agents[optimal_listener_id]
 
-            model_parameters = list(optimal_listener.receiver.parameters()) + \
-                               list(optimal_listener.object_decoder.parameters())
-            optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+        #    model_parameters = list(optimal_listener.receiver.parameters()) + \
+        #                       list(optimal_listener.object_decoder.parameters())
+        #    optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
         self.game.train()
         prev_loss_value = [0.]
@@ -300,7 +300,6 @@ class TrainerBis:
             optimal_listener.tasks[task]["optimizer"].zero_grad()
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
-            print(optimal_listener.tasks[task]["optimizer"].param_groups)
 
             if len(prev_loss_value) > 9 and \
                     abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold:
