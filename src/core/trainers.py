@@ -260,7 +260,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self, epoch: int,reset:bool=True, threshold=1e-3):
+    def pretrain_optimal_listener(self, epoch: int,reset:bool=False, threshold=1e-3):
 
         # Reset optimal listener
         if reset:
@@ -290,6 +290,7 @@ class TrainerBis:
             optimal_listener.tasks[task]["optimizer"].zero_grad()
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
+            print(optimal_listener.tasks[task]["loss_value"].param_groups[0]['lr'])
 
             if len(prev_loss_value) > 9 and \
                     abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold:
