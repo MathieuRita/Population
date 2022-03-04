@@ -290,7 +290,7 @@ class TrainerBis:
             optimal_listener.tasks[task]["optimizer"].zero_grad()
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
-            print(optimal_listener.tasks[task]["optimizer"].param_groups[0]['lr'])
+            print(optimal_listener.tasks[task]["optimizer"].param_groups)
 
             if len(prev_loss_value) > 9 and \
                     abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold:
