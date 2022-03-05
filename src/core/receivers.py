@@ -55,8 +55,7 @@ class RecurrentProcessor(nn.Module):
         self.receiver_cell = cell_types[receiver_cell](input_size=self.receiver_embed_dim,
                                                        batch_first=True,
                                                        hidden_size=self.receiver_hidden_size,
-                                                       num_layers=self.receiver_num_layers,
-                                                       dropout=0.3)
+                                                       num_layers=self.receiver_num_layers)
 
         self.receiver_embedding = nn.Embedding(self.voc_size, self.receiver_embed_dim)
         self.receiver_norm_h = nn.LayerNorm(self.receiver_hidden_size)
