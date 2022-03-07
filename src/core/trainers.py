@@ -272,7 +272,7 @@ class TrainerBis:
                     game_params=self.game_params,
                     device=self.device)
 
-       for sender_id in self.population.sender_names:
+        for sender_id in self.population.sender_names:
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener
             optimal_listener = self.population.agents[optimal_listener_id]
