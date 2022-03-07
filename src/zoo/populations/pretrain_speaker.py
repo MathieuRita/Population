@@ -6,7 +6,7 @@ import torch as th
 from src.core.agents import get_agent
 from src.core.games import build_game
 from src.core.trainers import build_trainer
-from core.datasets_onehot import build_one_hot_dataset, build_target_messages, build_one_hot_dataloader
+from src.core.datasets_onehot import build_one_hot_dataset, build_target_messages, build_one_hot_dataloader
 from .utils import parse_json
 
 def get_params(params):
