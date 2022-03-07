@@ -305,7 +305,7 @@ class TrainerBis:
             #if (len(prev_loss_value) > 9 and \
             #        abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold) or \
             #        step==300:
-            if step==200:
+            if step==400:
                 continue_optimal_listener_training = False
             else:
                 prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
