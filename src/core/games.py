@@ -543,7 +543,7 @@ class PretrainingGame(nn.Module):
         inputs_encoded = self.agent.encode_object(inputs)
         messages, _, log_prob_sender, entropy_sender = self.agent.send(inputs_encoded, return_whole_log_probs=True)
 
-        loss_sender = cross_entropy_imitation(sender_log_prob=sender_log_prob,target_messages=target_messages)  # [batch_size]
+        loss_sender = cross_entropy_imitation(sender_log_prob=log_prob_sender,target_messages=target_messages)  # [batch_size]
 
         # Compute additional metrics
         metrics = {}
