@@ -3,7 +3,7 @@
 
 import argparse
 import torch as th
-from src.core.agents import build_agent
+from src.core.agents import get_agent
 from src.core.games import build_game
 from src.core.trainers import build_trainer
 from core.datasets_onehot import build_one_hot_dataset, build_target_messages, build_one_hot_dataloader
@@ -47,7 +47,7 @@ def main(params):
     training_params = parse_json(opts.training_json)
 
     # Build agent
-    agent= build_agent(agent_name = opts.agent_name,
+    agent= get_agent(agent_name = opts.agent_name,
                        agent_repertory = agent_repertory,
                        game_params = game_params,
                        device = training_params["device"])
