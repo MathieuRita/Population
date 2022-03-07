@@ -75,7 +75,10 @@ def main(params):
                             val_loader = None,
                             device=training_params["device"],
                             compute_metrics=True,
-                            pretraining=True)
+                            pretraining=True,
+                            game_params=None,
+                            agent_repertory=None,
+                            evaluator=None)
 
     # Train
     trainer.train(n_epochs=training_params["n_epochs"])
