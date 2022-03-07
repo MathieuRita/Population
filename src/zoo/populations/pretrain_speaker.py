@@ -54,7 +54,7 @@ def main(params):
 
 
     # Build datasets and dataloaders
-    full_dataset = build_one_hot_dataset(object_params=game_params["objects"])
+    full_dataset = build_one_hot_dataset(object_params=game_params["objects"],n_elements=game_params["dataset"]["n_elements"])
     full_target_messages = build_target_messages(n_elements=game_params["dataset"]["n_elements"],
                                                  pretrained_language=opts.pretrained_language,
                                                  channel_params=game_params["channel"])
