@@ -75,8 +75,7 @@ def main(params):
                             val_loader = None,
                             device=training_params["device"],
                             compute_metrics=True,
-                            pretraining=True,
-                            log_dir=opts.log_dir)
+                            pretraining=True)
 
     # Train
     trainer.train(n_epochs=training_params["n_epochs"])
