@@ -1145,9 +1145,9 @@ class PretrainingTrainer:
             loss_sender, metrics = self.game(batch, compute_metrics=compute_metrics)
 
 
-            self.agent.tasks["communication"].optimizer.zero_grad()
+            self.agent.tasks["communication"]["optimizer"].zero_grad()
             loss_sender.backward()
-            self.agent.tasks["communication"].optimizer.step()
+            self.agent.tasks["communication"]["optimizer"].step()
 
             # Store losses
             mean_loss += loss_sender
