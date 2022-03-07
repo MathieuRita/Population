@@ -260,7 +260,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self, epoch: int, reset: bool = True, threshold=1e-3):
+    def pretrain_optimal_listener(self, epoch: int, reset: bool = False, threshold=1e-3):
 
         # Reset optimal listener
         if reset:
@@ -272,14 +272,14 @@ class TrainerBis:
                     game_params=self.game_params,
                     device=self.device)
 
-        #for sender_id in self.population.sender_names:
-        #    agent_sender = self.population.agents[sender_id]
-        #    optimal_listener_id = agent_sender.optimal_listener
-        #    optimal_listener = self.population.agents[optimal_listener_id]
+        for sender_id in self.population.sender_names:
+            agent_sender = self.population.agents[sender_id]
+            optimal_listener_id = agent_sender.optimal_listener
+            optimal_listener = self.population.agents[optimal_listener_id]
 
-        #    model_parameters = list(optimal_listener.receiver.parameters()) + \
-        #                       list(optimal_listener.object_decoder.parameters())
-        #    optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+            model_parameters = list(optimal_listener.receiver.parameters()) + \
+                               list(optimal_listener.object_decoder.parameters())
+            optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
         self.game.train()
         prev_loss_value = [0.]
@@ -305,7 +305,7 @@ class TrainerBis:
             #if (len(prev_loss_value) > 9 and \
             #        abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold) or \
             #        step==300:
-            if step==25:
+            if step==200:
                 continue_optimal_listener_training = False
             else:
                 prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
