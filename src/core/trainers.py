@@ -338,7 +338,8 @@ class TrainerBis:
             self.mi_step += 1
             step+=1
 
-            if step==500 or mean_val_loss / n_batch > np.mean(val_losses) :
+            #if step==500 or mean_val_loss / n_batch > np.mean(val_losses) :
+            if step == 200:# or mean_val_loss / n_batch > np.mean(val_losses):
                 continue_optimal_listener_training = False
             else:
                 prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
