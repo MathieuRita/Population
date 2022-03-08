@@ -338,7 +338,7 @@ class TrainerBis:
             self.mi_step += 1
             step+=1
 
-            if step==75 or mean_val_loss / n_batch> np.mean(val_losses) :
+            if step==500 or mean_val_loss / n_batch > np.mean(val_losses) :
                 continue_optimal_listener_training = False
             else:
                 prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
@@ -347,8 +347,24 @@ class TrainerBis:
                 if len(val_accuracies)>10:
                     val_accuracies.pop(0)
 
+        # Mean loss
+        mean_train_loss=0.
+        for _ in range(5):
+            self.game.train()
+
+            batch = next(iter(self.mi_loader))
+            inputs, sender_id = batch.data, batch.sender_id
+            agent_sender = self.population.agents[sender_id]
+            optimal_listener_id = agent_sender.optimal_listener
+            optimal_listener = self.population.agents[optimal_listener_id]
+            batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+            _ = self.game(batch)
+
+            mean_train_loss+=optimal_listener.tasks[task]["loss_value"].item()
+
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
-                               np.mean(prev_loss_value), epoch)
+                               mean_train_loss/5, epoch)
 
     def pretrain_language_model(self, epoch: int, threshold=1e-2):
 
