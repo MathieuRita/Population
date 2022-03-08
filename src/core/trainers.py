@@ -281,13 +281,17 @@ class TrainerBis:
                                list(optimal_listener.object_decoder.parameters())
             optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
-        self.game.train()
         prev_loss_value = [0.]
         step=0
         continue_optimal_listener_training = True
         task = "communication"
 
+        val_accuracies=[]
+        val_losses=[]
+
         while continue_optimal_listener_training:
+
+            self.game.train()
 
             batch = next(iter(self.mi_loader))
             inputs, sender_id = batch.data, batch.sender_id
@@ -315,11 +319,42 @@ class TrainerBis:
             self.writer.add_scalar(f'{optimal_listener_id}/loss',
                                    optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
 
+            mean_val_acc=0.
+            mean_val_loss=0.
+            n_batch=0
+
+            with th.no_grad():
+                for batch in self.val_loader:
+                    batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+
+                    metrics = self.game(batch)
+
+                    mean_val_acc += metrics["accuracy"].detach().item()
+                    mean_val_loss += optimal_listener.tasks[task]["loss_value"]
+                    n_batch += 1
+
+            val_accuracies.append(mean_val_acc / n_batch)
+            val_losses.append(mean_val_loss/n_batch)
+
+            self.writer.add_scalar(f'{optimal_listener_id}/val_accuracy',
+                                   mean_val_acc / n_batch, self.mi_step)
+            self.writer.add_scalar(f'{optimal_listener_id}/val_loss',
+                                   mean_val_loss / n_batch, self.mi_step)
+
             self.mi_step += 1
             step+=1
 
+            if step==500 or mean_val_loss / n_batch> np.mean(val_losses) :
+                continue_optimal_listener_training = False
+            else:
+                prev_loss_value.append(optimal_listener.tasks[task]["loss_value"].item())
+                if len(prev_loss_value) > 10:
+                    prev_loss_value.pop(0)
+                if len(val_accuracies)>10:
+                    val_accuracies.pop(0)
+
         self.writer.add_scalar(f'{optimal_listener_id}/MI',
-                               optimal_listener.tasks[task]["loss_value"].item(), epoch)
+                               np.mean(prev_loss_value), epoch)
 
     def pretrain_language_model(self, epoch: int, threshold=1e-2):
 
