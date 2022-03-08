@@ -330,7 +330,7 @@ class TrainerBis:
                     metrics = self.game(batch,compute_metrics=True)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
-                    mean_val_loss += optimal_listener.tasks[task]["loss_value"]
+                    mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                     n_batch += 1
 
             val_accuracies.append(mean_val_acc / n_batch)
