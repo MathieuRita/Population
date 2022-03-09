@@ -291,28 +291,32 @@ class TrainerBis:
 
         mean_val_acc = 0.
         mean_val_loss = 0.
-        n_batch = 0
 
         while len(self.val_loss_optimal_listener)<10:
+
+            mean_val_loss = 0.
+            n_batch = 0
+
             with th.no_grad():
                 for batch in self.val_loader:
                     batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
                     metrics = self.game(batch, compute_metrics=True)
 
-                    mean_val_acc += metrics["accuracy"].detach().item()
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                     n_batch += 1
 
                 self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
         with th.no_grad():
+
+            n_batch = 0
+            mean_val_loss = 0.
             for batch in self.val_loader:
                 batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
                 metrics = self.game(batch, compute_metrics=True)
 
-                mean_val_acc += metrics["accuracy"].detach().item()
                 mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                 n_batch += 1
                 
