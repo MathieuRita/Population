@@ -328,6 +328,11 @@ class TrainerBis:
 
         if self.step_without_opt_training==5:
             self.step_without_opt_training=0
+            self.population.agents[agent_sender.optimal_listener] = get_agent(
+                agent_name=agent_sender.optimal_listener,
+                agent_repertory=self.agent_repertory,
+                game_params=self.game_params,
+                device=self.device)
             continue_optimal_listener_training = True
 
         while continue_optimal_listener_training:
