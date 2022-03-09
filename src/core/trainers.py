@@ -308,23 +308,23 @@ class TrainerBis:
 
                 self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
-        with th.no_grad():
+        #with th.no_grad():
 
-            n_batch = 0
-            mean_val_loss = 0.
-            for batch in self.val_loader:
-                batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+        #    n_batch = 0
+        #    mean_val_loss = 0.
+        #    for batch in self.val_loader:
+        #        batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                metrics = self.game(batch, compute_metrics=True)
+        #        metrics = self.game(batch, compute_metrics=True)
 
-                mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
-                n_batch += 1
+        #        mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+        #        n_batch += 1
                 
-        print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
+        #print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
-        if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
-            mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
-            continue_optimal_listener_training=False
+        #if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
+        #    mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
+        #    continue_optimal_listener_training=False
 
         while continue_optimal_listener_training:
 
@@ -373,6 +373,8 @@ class TrainerBis:
 
             self.mi_step += 1
             step+=1
+
+            print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
             if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
                     mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
