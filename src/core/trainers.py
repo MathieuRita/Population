@@ -289,8 +289,6 @@ class TrainerBis:
         continue_optimal_listener_training = True
         task = "communication"
 
-        mean_val_acc = 0.
-        mean_val_loss = 0.
 
         while len(self.val_loss_optimal_listener)<10:
 
@@ -364,7 +362,7 @@ class TrainerBis:
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                     n_batch += 1
 
-            self.val_loss_optimal_listener.append(mean_val_acc / n_batch)
+            self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
             self.writer.add_scalar(f'{optimal_listener_id}/val_accuracy',
                                    mean_val_acc / n_batch, self.mi_step)
