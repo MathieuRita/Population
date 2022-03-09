@@ -333,6 +333,20 @@ class TrainerBis:
                 agent_repertory=self.agent_repertory,
                 game_params=self.game_params,
                 device=self.device)
+
+            with th.no_grad():
+
+                n_batch = 0
+                mean_val_loss = 0.
+                for batch in self.val_loader:
+                    batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+
+                    metrics = self.game(batch, compute_metrics=True)
+
+                    mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+                    n_batch += 1
+
+            self.val_loss_optimal_listener=[mean_val_loss/n_batch]
             continue_optimal_listener_training = True
 
         while continue_optimal_listener_training:
