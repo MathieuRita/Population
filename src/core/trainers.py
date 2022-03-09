@@ -326,7 +326,7 @@ class TrainerBis:
             continue_optimal_listener_training=False
             self.step_without_opt_training+=1
 
-        if self.step_without_opt_training==5:
+        if self.step_without_opt_training==20:
             self.step_without_opt_training=0
             self.population.agents[agent_sender.optimal_listener] = get_agent(
                 agent_name=agent_sender.optimal_listener,
