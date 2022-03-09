@@ -323,30 +323,34 @@ class TrainerBis:
 
         if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
             mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
-            continue_optimal_listener_training=False
+            continue_optimal_listener_training=True
             self.step_without_opt_training+=1
+
+        if self.step_without_opt_training>10:
+            continue_optimal_listener_training = False
 
         if self.step_without_opt_training==20:
             self.step_without_opt_training=0
-            self.population.agents[agent_sender.optimal_listener] = get_agent(
-                agent_name=agent_sender.optimal_listener,
-                agent_repertory=self.agent_repertory,
-                game_params=self.game_params,
-                device=self.device)
+            #self.population.agents[agent_sender.optimal_listener] = get_agent(
+            #    agent_name=agent_sender.optimal_listener,
+            #    agent_repertory=self.agent_repertory,
+            #    game_params=self.game_params,
+            #    device=self.device)
 
-            with th.no_grad():
+            #with th.no_grad():
 
-                n_batch = 0
-                mean_val_loss = 0.
-                for batch in self.val_loader:
-                    batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+            #    n_batch = 0
+            #    mean_val_loss = 0.
+            #    for batch in self.val_loader:
+            #        batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    metrics = self.game(batch, compute_metrics=True)
+            #        metrics = self.game(batch, compute_metrics=True)
 
-                    mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
-                    n_batch += 1
+            #        mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+            #        n_batch += 1
 
-            self.val_loss_optimal_listener=[mean_val_loss/n_batch]
+            #self.val_loss_optimal_listener=[mean_val_loss/n_batch]
+            
             continue_optimal_listener_training = True
 
         while continue_optimal_listener_training:
