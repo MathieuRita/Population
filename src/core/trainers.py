@@ -326,7 +326,7 @@ class TrainerBis:
             continue_optimal_listener_training=False
             self.step_without_opt_training+=1
 
-        if self.step_without_opt_training==50:
+        if self.step_without_opt_training==5:
             self.step_without_opt_training=0
             continue_optimal_listener_training = True
 
