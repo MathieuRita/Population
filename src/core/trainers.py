@@ -318,6 +318,11 @@ class TrainerBis:
 
                 mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                 n_batch += 1
+
+            self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
+
+            if len(self.val_loss_optimal_listener) > 10:
+                self.val_loss_optimal_listener.pop(0)
                 
         print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
@@ -325,6 +330,9 @@ class TrainerBis:
             mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
             continue_optimal_listener_training=True
             self.step_without_opt_training+=1
+        else:
+            continue_optimal_listener_training = True
+            self.step_without_opt_training=0
 
         if self.step_without_opt_training>10:
             continue_optimal_listener_training = False
@@ -350,7 +358,7 @@ class TrainerBis:
             #        n_batch += 1
 
             #self.val_loss_optimal_listener=[mean_val_loss/n_batch]
-            
+
             continue_optimal_listener_training = True
 
         while continue_optimal_listener_training:
