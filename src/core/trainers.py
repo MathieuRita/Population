@@ -320,7 +320,7 @@ class TrainerBis:
                 mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
                 n_batch += 1
                 
-        print(mean_val_loss / n_batch)
+        print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
         if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
             mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
