@@ -262,7 +262,7 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def pretrain_optimal_listener(self, epoch: int, reset: bool = True, threshold=1e-3):
+    def pretrain_optimal_listener(self, epoch: int, reset: bool = False, threshold=1e-3):
 
         # Reset optimal listener
         if reset:
@@ -412,7 +412,7 @@ class TrainerBis:
 
             #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==100:
+            if step==20:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
