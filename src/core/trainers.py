@@ -327,7 +327,7 @@ class TrainerBis:
             if len(self.val_loss_optimal_listener) > 10:
                 self.val_loss_optimal_listener.pop(0)
                 
-        print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
+        #print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
         if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
             mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
@@ -410,9 +410,9 @@ class TrainerBis:
             self.mi_step += 1
             step+=1
 
-            print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
+            #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==200:
+            if step==1000:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
