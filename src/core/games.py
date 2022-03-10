@@ -127,7 +127,7 @@ class ReconstructionGame(nn.Module):
         average_reward /= sum([v for _, v in weight_receivers.items()])
 
         if reward_noise:
-            average_reward+=th.normal(th.zeros(average_reward.size(0))).to(average_reward.device)
+            average_reward+=0.5*th.normal(th.zeros(average_reward.size(0))).to(average_reward.device)
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=average_reward,
                                                                sender_log_prob=log_prob_sender,
