@@ -412,7 +412,7 @@ class TrainerBis:
 
             #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==20:
+            if step==10:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
