@@ -100,7 +100,7 @@ class Evaluator:
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def evaluate_external_receiver(self,n_step_train:int=100):
+    def evaluate_external_receiver(self,n_step_train:int=200):
 
         train_accs = np.zeros(len(self.population.sender_names))
         top_val_accs = np.zeros(len(self.population.sender_names))
