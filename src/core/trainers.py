@@ -268,6 +268,7 @@ class TrainerBis:
         if reset:
             for sender_id in self.population.sender_names:
                 agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
                 self.population.agents[agent_sender.optimal_listener] = get_agent(
                     agent_name=agent_sender.optimal_listener,
                     agent_repertory=self.agent_repertory,
