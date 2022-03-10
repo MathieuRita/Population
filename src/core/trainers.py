@@ -275,6 +275,8 @@ class TrainerBis:
                     game_params=self.game_params,
                     device=self.device)
 
+                optimal_listener = self.population.agents[optimal_listener_id]
+
         if not reset: # reset optimizer
             for sender_id in self.population.sender_names:
                 agent_sender = self.population.agents[sender_id]
