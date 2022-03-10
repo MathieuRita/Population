@@ -290,7 +290,7 @@ class TrainerBis:
         continue_optimal_listener_training = True
         task = "communication"
 
-
+        """
         while len(self.val_loss_optimal_listener)<10:
 
             mean_val_loss = 0.
@@ -357,6 +357,7 @@ class TrainerBis:
             #self.val_loss_optimal_listener=[mean_val_loss/n_batch]
 
             continue_optimal_listener_training = True
+        """
 
         while continue_optimal_listener_training:
 
@@ -408,8 +409,9 @@ class TrainerBis:
 
             print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
-                    mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
+            if step==50:
+            #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
+            #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
                 self.val_loss_optimal_listener.pop(0)
             else:
