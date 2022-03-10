@@ -328,16 +328,13 @@ class TrainerBis:
 
         if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
             mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
-            continue_optimal_listener_training=True
+            continue_optimal_listener_training=False
             self.step_without_opt_training+=1
         else:
             continue_optimal_listener_training = True
             self.step_without_opt_training=0
 
-        if self.step_without_opt_training>10:
-            continue_optimal_listener_training = False
-
-        if self.step_without_opt_training==20:
+        if self.step_without_opt_training==10:
             self.step_without_opt_training=0
             #self.population.agents[agent_sender.optimal_listener] = get_agent(
             #    agent_name=agent_sender.optimal_listener,
