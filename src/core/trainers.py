@@ -279,36 +279,6 @@ class TrainerBis:
 
         noise_attack = True
 
-        # Noise attack
-        if noise_attack:
-
-            for sender_id in self.population.sender_names:
-                agent_sender = self.population.agents[sender_id]
-                optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
-
-                model_parameters = list(optimal_listener.receiver.parameters()) + \
-                                   list(optimal_listener.object_decoder.parameters())
-                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                                     lr=0.0005)
-
-            self.game.train()
-            for _ in range(200):
-                batch = next(iter(self.mi_loader))
-                inputs, sender_id = batch.data, batch.sender_id
-                agent_sender = self.population.agents[sender_id]
-                optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
-
-                _ = self.game(batch, random_messages=True)
-                
-                task="communication"
-
-                optimal_listener.tasks[task]["optimizer"].zero_grad()
-                optimal_listener.tasks[task]["loss_value"].backward()
-                optimal_listener.tasks[task]["optimizer"].step()
-
 
         if not reset: # reset optimizer
             for sender_id in self.population.sender_names:
@@ -456,6 +426,35 @@ class TrainerBis:
                 if len(self.val_loss_optimal_listener) > 10:
                     self.val_loss_optimal_listener.pop(0)
 
+        # Noise attack
+        if noise_attack:
+
+            for sender_id in self.population.sender_names:
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                                     lr=0.0005)
+
+            self.game.train()
+            for _ in range(200):
+                batch = next(iter(self.mi_loader))
+                inputs, sender_id = batch.data, batch.sender_id
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+                _ = self.game(batch, random_messages=True)
+
+                task = "communication"
+
+                optimal_listener.tasks[task]["optimizer"].zero_grad()
+                optimal_listener.tasks[task]["loss_value"].backward()
+                optimal_listener.tasks[task]["optimizer"].step()
 
 
         # Mean loss
