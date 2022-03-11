@@ -302,6 +302,8 @@ class TrainerBis:
                 batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
                 _ = self.game(batch, random_messages=True)
+                
+                task="communication"
 
                 optimal_listener.tasks[task]["optimizer"].zero_grad()
                 optimal_listener.tasks[task]["loss_value"].backward()
