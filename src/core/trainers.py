@@ -359,34 +359,34 @@ class TrainerBis:
 
             #self.val_loss_optimal_listener=[mean_val_loss/n_batch]
 
-            # Noise attack
-            if noise_attack:
+        # Noise attack
+        if noise_attack:
 
-                for sender_id in self.population.sender_names:
-                    agent_sender = self.population.agents[sender_id]
-                    optimal_listener_id = agent_sender.optimal_listener
-                    optimal_listener = self.population.agents[optimal_listener_id]
+            for sender_id in self.population.sender_names:
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
 
-                    model_parameters = list(optimal_listener.receiver.parameters()) + \
-                                       list(optimal_listener.object_decoder.parameters())
-                    optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                                         lr=0.0005)
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                                     lr=0.0005)
 
-                for _ in range(10):
-                    self.game.train()
+            for _ in range(10):
+                self.game.train()
 
-                    batch = next(iter(self.mi_loader))
-                    inputs, sender_id = batch.data, batch.sender_id
-                    agent_sender = self.population.agents[sender_id]
-                    optimal_listener_id = agent_sender.optimal_listener
-                    optimal_listener = self.population.agents[optimal_listener_id]
-                    batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+                batch = next(iter(self.mi_loader))
+                inputs, sender_id = batch.data, batch.sender_id
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
-                    _ = self.game(batch, random_messages=True)
+                _ = self.game(batch, random_messages=True)
 
-                    optimal_listener.tasks[task]["optimizer"].zero_grad()
-                    optimal_listener.tasks[task]["loss_value"].backward()
-                    optimal_listener.tasks[task]["optimizer"].step()
+                optimal_listener.tasks[task]["optimizer"].zero_grad()
+                optimal_listener.tasks[task]["loss_value"].backward()
+                optimal_listener.tasks[task]["optimizer"].step()
 
         continue_optimal_listener_training = True
 
