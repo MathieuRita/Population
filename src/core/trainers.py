@@ -426,6 +426,16 @@ class TrainerBis:
 
         # Noise attack
         if noise_attack:
+
+            for sender_id in self.population.sender_names:
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+
             for _ in range(5):
                 self.game.train()
 
