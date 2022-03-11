@@ -16,7 +16,8 @@ class ReconstructionGame(nn.Module):
                                inputs: th.Tensor,
                                sender_id: th.Tensor,
                                receiver_id: th.Tensor,
-                               compute_metrics: bool = False):
+                               compute_metrics: bool = False,
+                               random_messages: bool = False):
 
         """
         :param compute_metrics:
@@ -33,6 +34,9 @@ class ReconstructionGame(nn.Module):
         # Agent Sender sends message based on input
         inputs_embedding = agent_sender.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+
+        if random_messages:
+            messages=th.randint(low=0,high=10,size=messages.size(),device=messages.device)
 
         # Agent receiver encodes message and predict the reconstructed object
         message_embedding = agent_receiver.receive(messages)
@@ -73,9 +77,9 @@ class ReconstructionGame(nn.Module):
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False):
+    def forward(self, batch, compute_metrics: bool = False, random_messages : bool = False):
 
-        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, random_messages=random_messages)
 
         return metrics
 
@@ -84,7 +88,7 @@ class ReconstructionGame(nn.Module):
                                               sender_id: th.Tensor,
                                               receiver_ids: list,
                                               weight_receivers: dict,
-                                              reward_noise : bool = True,
+                                              reward_noise : bool = False,
                                               compute_metrics: bool = False):
 
         """

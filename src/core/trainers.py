@@ -290,7 +290,7 @@ class TrainerBis:
 
         prev_loss_value = [0.]
         step=0
-        continue_optimal_listener_training = True
+        noise_attack=True
         task = "communication"
 
 
@@ -412,7 +412,7 @@ class TrainerBis:
 
             #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==40:
+            if step==100:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
@@ -423,6 +423,24 @@ class TrainerBis:
                     prev_loss_value.pop(0)
                 if len(self.val_loss_optimal_listener) > 10:
                     self.val_loss_optimal_listener.pop(0)
+
+        # Noise attack
+        if noise_attack:
+            for _ in range(4):
+                self.game.train()
+
+                batch = next(iter(self.mi_loader))
+                inputs, sender_id = batch.data, batch.sender_id
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+                _ = self.game(batch,random_messages=True)
+
+                optimal_listener.tasks[task]["optimizer"].zero_grad()
+                optimal_listener.tasks[task]["loss_value"].backward()
+                optimal_listener.tasks[task]["optimizer"].step()
 
         # Mean loss
         mean_train_loss=0.
@@ -590,7 +608,6 @@ class TrainerBis:
             batch = move_to((batch.data, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
 
             metrics = self.game.communication_multi_listener_instance(*batch,
-                                                                      reward_noise=True,
                                                                       compute_metrics=compute_metrics)
 
             # Sender
