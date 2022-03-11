@@ -293,7 +293,7 @@ class TrainerBis:
                                                                                      lr=0.0005)
 
             self.game.train()
-            for _ in range(10):
+            for _ in range(20):
                 batch = next(iter(self.mi_loader))
                 inputs, sender_id = batch.data, batch.sender_id
                 agent_sender = self.population.agents[sender_id]
