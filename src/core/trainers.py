@@ -412,7 +412,7 @@ class TrainerBis:
 
             #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==100:
+            if step==50:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
@@ -426,7 +426,7 @@ class TrainerBis:
 
         # Noise attack
         if noise_attack:
-            for _ in range(20):
+            for _ in range(5):
                 self.game.train()
 
                 batch = next(iter(self.mi_loader))
