@@ -426,7 +426,7 @@ class TrainerBis:
 
         # Noise attack
         if noise_attack:
-            for _ in range(4):
+            for _ in range(20):
                 self.game.train()
 
                 batch = next(iter(self.mi_loader))
