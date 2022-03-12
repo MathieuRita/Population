@@ -396,7 +396,7 @@ class TrainerBis:
                 for batch in self.val_loader:
                     batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    if np.random.randint()<0.3:
+                    if th.rand(1)[0]<0.3:
                         random_messages=True
 
                     metrics = self.game(batch,compute_metrics=True, random_messages=random_messages)
