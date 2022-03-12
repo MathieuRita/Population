@@ -398,6 +398,8 @@ class TrainerBis:
 
                     if th.rand(1)[0]<0.3:
                         random_messages=True
+                    else:
+                        random_messages=False
 
                     metrics = self.game(batch,compute_metrics=True, random_messages=random_messages)
 
