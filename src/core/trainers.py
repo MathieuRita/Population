@@ -396,7 +396,10 @@ class TrainerBis:
                 for batch in self.val_loader:
                     batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    metrics = self.game(batch,compute_metrics=True)
+                    if np.random.randint()<0.3:
+                        random_messages=True
+
+                    metrics = self.game(batch,compute_metrics=True, random_messages=random_messages)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
@@ -438,23 +441,6 @@ class TrainerBis:
                                    list(optimal_listener.object_decoder.parameters())
                 optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
                                                                                      lr=0.0005)
-
-            self.game.train()
-            for _ in range(50):
-                batch = next(iter(self.mi_loader))
-                inputs, sender_id = batch.data, batch.sender_id
-                agent_sender = self.population.agents[sender_id]
-                optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
-
-                _ = self.game(batch, random_messages=True)
-
-                task = "communication"
-
-                optimal_listener.tasks[task]["optimizer"].zero_grad()
-                optimal_listener.tasks[task]["loss_value"].backward()
-                optimal_listener.tasks[task]["optimizer"].step()
 
 
         # Mean loss
