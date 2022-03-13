@@ -396,11 +396,6 @@ class TrainerBis:
                 for batch in self.val_loader:
                     batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    if th.rand(1)[0]<0.3:
-                        random_messages=True
-                    else:
-                        random_messages=False
-
                     metrics = self.game(batch,compute_metrics=True)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
@@ -419,7 +414,7 @@ class TrainerBis:
 
             #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==20:
+            if step==200:
             #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
             #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
