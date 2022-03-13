@@ -287,9 +287,9 @@ class TrainerBis:
                 optimal_listener = self.population.agents[optimal_listener_id]
                 
                 
-                #model_parameters = list(optimal_listener.receiver.parameters()) + \
-                #                   list(optimal_listener.object_decoder.parameters())
-                #optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
         prev_loss_value = [0.]
         step=0
