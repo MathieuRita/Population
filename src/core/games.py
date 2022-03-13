@@ -86,9 +86,9 @@ class ReconstructionGame(nn.Module):
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False, random_messages : bool = False):
+    def forward(self, batch, compute_metrics: bool = False):
 
-        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, random_messages=random_messages)
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
 
         return metrics
 
