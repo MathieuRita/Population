@@ -401,7 +401,7 @@ class TrainerBis:
                     else:
                         random_messages=False
 
-                    metrics = self.game(batch,compute_metrics=True, random_messages=random_messages)
+                    metrics = self.game(batch,compute_metrics=True, noise_thresold=noise_threshold)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
