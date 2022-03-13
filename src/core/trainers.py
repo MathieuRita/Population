@@ -280,7 +280,7 @@ class TrainerBis:
         noise_attack = False
 
 
-        if not reset: # reset optimizer
+        if reset: # reset optimizer
             for sender_id in self.population.sender_names:
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
