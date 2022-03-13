@@ -277,7 +277,7 @@ class TrainerBis:
 
                 optimal_listener = self.population.agents[optimal_listener_id]
 
-        noise_attack = True
+        noise_attack = False
 
 
         if not reset: # reset optimizer
@@ -401,7 +401,7 @@ class TrainerBis:
                     else:
                         random_messages=False
 
-                    metrics = self.game(batch,compute_metrics=True, random_messages=random_messages)
+                    metrics = self.game(batch,compute_metrics=True)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()

@@ -7,19 +7,25 @@ from .losses import accuracy, find_lengths, cross_entropy_imitation
 class ReconstructionGame(nn.Module):
 
     def __init__(self,
-                 population: object):
+                 population: object,
+                 voc_size : int,
+                 max_len : int,
+                 noise_level : float = 0.):
 
         super(ReconstructionGame, self).__init__()
         self.population = population
+        self.voc_size=voc_size
+        self.max_len = max_len
+        self.noise_level = noise_level
 
     def communication_instance(self,
                                inputs: th.Tensor,
                                sender_id: th.Tensor,
                                receiver_id: th.Tensor,
-                               compute_metrics: bool = False,
-                               random_messages: bool = False):
+                               compute_metrics: bool = False):
 
         """
+        :param noise_threshold: 0 -> no noise
         :param compute_metrics:
         :param receiver_id:
         :param sender_id:
@@ -35,8 +41,11 @@ class ReconstructionGame(nn.Module):
         inputs_embedding = agent_sender.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
-        if random_messages:
-            messages=th.randint(low=0,high=10,size=messages.size(),device=messages.device)
+        # Noise in communication channel
+        random_messages = th.randint(low=1, high=self.voc_size, size=messages.size(),device=messages.device)
+        probs = th.rand(messages.size(), device=messages.device)
+        mask = 1 * (probs < self.noise_level)
+        messages = (1 - mask) * messages + mask * random_messages
 
         # Agent receiver encodes message and predict the reconstructed object
         message_embedding = agent_receiver.receive(messages)
@@ -578,7 +587,14 @@ def build_game(game_params: dict,
                agent: object = None):
     if game_params["game_type"] == "reconstruction":
         assert population is not None, "Specify a population to play the game"
-        game = ReconstructionGame(population=population)
+        if "noise_level" in game_params["channel"]:
+            noise_level = game_params["channel"]["noise_level"]
+        else:
+            noise_level=0.
+        game = ReconstructionGame(population=population,
+                                  voc_size=game_params["channel"]["voc_size"],
+                                  max_len=game_params["channel"]["max_len"],
+                                  noise_level=noise_level)
     elif game_params["game_type"] == "reconstruction_imitation":
         assert population is not None, "Specify a population to play the game"
         game = ReconstructionImitationGame(population=population)
