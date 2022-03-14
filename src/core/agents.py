@@ -23,6 +23,7 @@ class Agent(object):
                  language_model,
                  tasks:dict,
                  weights:dict,
+                 prob_reset : float = 0.,
                  optimal_listener : str = None,
                  optimal_lm: str = None,
                  device: str = "cpu")->None:
@@ -36,6 +37,7 @@ class Agent(object):
         self.optimal_lm = optimal_lm
         self.tasks = tasks
         self.weights = weights
+        self.prob_reset = prob_reset
         self.device = device
 
     def encode_object(self, x):
@@ -252,6 +254,11 @@ def get_agent(agent_name: str,
     else:
         weights = None
 
+    if "prob_reset" in agent_params:
+        prob_reset = agent_params["prob_reset"]
+    else:
+        prob_reset=0
+
     agent = Agent(agent_name=agent_name,
                   object_encoder=object_encoder,
                   object_decoder=object_decoder,
@@ -262,6 +269,7 @@ def get_agent(agent_name: str,
                   weights = weights,
                   optimal_listener = optimal_listener,
                   optimal_lm = optimal_lm,
+                  prob_rest = prob_reset,
                   device=device)
 
     return agent
