@@ -54,7 +54,8 @@ class TrainerBis:
               train_kl_freq: int = 100000,
               train_broadcasting_freq: int = 1000000,
               evaluator_freq: int = 1000000,
-              print_evolution: bool = True):
+              print_evolution: bool = True,
+              custom_steps : int = 0):
 
         for epoch in range(self.start_epoch, n_epochs):
 
@@ -79,14 +80,14 @@ class TrainerBis:
 
                 self.reset_agents()
                 self.pretrain_optimal_listener(epoch=epoch)
-                #self.custom_train_communication(epoch=epoch)
+                self.custom_train_communication(epoch=epoch,custom_steps=custom_steps)
 
                 self.save_error(epoch=epoch, save=False)
 
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
 
-                if epoch%1==0:
+                if epoch%100==0:
                     self.save_error(epoch=epoch,save=True)
                 else:
                     self.save_error(epoch=epoch,save=False)
@@ -213,14 +214,20 @@ class TrainerBis:
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
 
-    def custom_train_communication(self, compute_metrics: bool = False, epoch : int = 0):
+    def custom_train_communication(self,
+                                   compute_metrics: bool = False,
+                                   epoch : int = 0,
+                                   custom_steps : int = 0):
 
 
         prev_loss_value = [0.]
         step = 0
         task = "communication"
 
-        continue_training = True
+        if custom_steps>0:
+            continue_training = True
+        else:
+            continue_training = False
 
         while continue_training:
 
@@ -269,7 +276,7 @@ class TrainerBis:
             self.mi_step += 1
             step += 1
 
-            if step == 100:
+            if step == custom_steps:
                 continue_training = False
                 self.val_loss_optimal_listener.pop(0)
             else:
