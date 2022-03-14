@@ -42,10 +42,10 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Noise in communication channel
-        random_messages = th.randint(low=1, high=self.voc_size, size=messages.size(),device=messages.device)
-        probs = th.rand(messages.size(), device=messages.device)
-        mask = 1 * (probs < self.noise_level)
-        messages = (1 - mask) * messages + mask * random_messages
+        #random_messages = th.randint(low=1, high=self.voc_size, size=messages.size(),device=messages.device)
+        #probs = th.rand(messages.size(), device=messages.device)
+        #mask = 1 * (probs < self.noise_level)
+        #messages = (1 - mask) * messages + mask * random_messages
 
         # Agent receiver encodes message and predict the reconstructed object
         message_embedding = agent_receiver.receive(messages)
