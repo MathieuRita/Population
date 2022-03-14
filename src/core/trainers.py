@@ -287,15 +287,15 @@ class TrainerBis:
 
         noise_attack = False
 
-        # if not reset: # reset optimizer
-        #    for sender_id in self.population.sender_names:
-        #        agent_sender = self.population.agents[sender_id]
-        #        optimal_listener_id = agent_sender.optimal_listener
-        #        optimal_listener = self.population.agents[optimal_listener_id]
+        if not reset: # reset optimizer
+            for sender_id in self.population.sender_names:
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
 
-        #        model_parameters = list(optimal_listener.receiver.parameters()) + \
-        #                           list(optimal_listener.object_decoder.parameters())
-        #        optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
         cloning = False
 
@@ -442,7 +442,7 @@ class TrainerBis:
 
             # print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step == 20:
+            if step == 100:
                 # if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
                 #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
