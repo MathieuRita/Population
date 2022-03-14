@@ -126,7 +126,9 @@ class Evaluator:
                 mean_train_acc=0.
                 n_batch=0
 
-                for batch in self.train_loader: # Eval data only composed of inputs
+                # for batch in self.train_loader:
+                for _ in range(1):
+                    batch = next(iter(self.mi_loader))
 
                     eval_receiver = self.population.agents[self.eval_receiver_id]
 
