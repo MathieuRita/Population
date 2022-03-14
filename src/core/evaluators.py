@@ -128,7 +128,7 @@ class Evaluator:
 
                 # for batch in self.train_loader:
                 for _ in range(1):
-                    batch = next(iter(self.mi_loader))
+                    batch = next(iter(self.train_loader))
 
                     eval_receiver = self.population.agents[self.eval_receiver_id]
 
