@@ -149,9 +149,10 @@ class Agent(object):
 
 
 def get_agent(agent_name: str,
-                agent_repertory: dict,
-                game_params: dict,
-                device: str = "cpu"):
+              agent_repertory: dict,
+              game_params: dict,
+              device: str = "cpu") -> object:
+
     agent_params = agent_repertory[agent_name]
     pretrained_modules = agent_params["pretrained_modules"] if "pretrained_modules" in agent_params else {}
 
@@ -269,7 +270,7 @@ def get_agent(agent_name: str,
                   weights = weights,
                   optimal_listener = optimal_listener,
                   optimal_lm = optimal_lm,
-                  prob_rest = prob_reset,
+                  prob_reset = prob_reset,
                   device=device)
 
     return agent
