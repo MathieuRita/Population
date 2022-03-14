@@ -473,13 +473,15 @@ class TrainerBis:
                 inputs, sender_id = batch.data, batch.sender_id
                 inputs = inputs[th.randperm(inputs.size()[0])]
                 agent_sender = self.population.agents[sender_id]
+                agent_receiver = self.population.agents[batch.receiver_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
                 batch = move_to((inputs, sender_id, batch.receiver_id), self.device)
 
                 _ = self.game(batch)
 
-                mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
+                #mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
+                mean_train_loss += agent_receiver.tasks[task]["loss_value"].item()
 
         self.writer.add_scalar(f'{optimal_listener_id}/Loss sp',
                                mean_train_loss, epoch)
@@ -491,11 +493,11 @@ class TrainerBis:
             with th.no_grad():
 
                 batch = next(iter(self.val_loader))
-                inputs, sender_id,receiver_id = batch.data, batch.sender_id,batch.receiver_id
+                inputs, sender_id = batch.data, batch.sender_id
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, receiver_id), self.device)
+                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
                 _ = self.game(batch)
 
