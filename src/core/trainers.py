@@ -21,6 +21,7 @@ class TrainerBis:
                  mi_loader: th.utils.data.DataLoader = None,
                  val_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
+                 metrics_save_dir : str = "",
                  device: str = "cpu") -> None:
 
         self.game = game
@@ -42,6 +43,7 @@ class TrainerBis:
         self.reward_distrib = []
         self.mi_distrib = []
         self.input_batch = []
+        self.metrics_save_dir = metrics_save_dir
 
     def train(self,
               n_epochs,
@@ -84,7 +86,7 @@ class TrainerBis:
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
 
-                if epoch%10==0:
+                if epoch%1==0:
                     self.save_error(epoch=epoch,save=True)
                 else:
                     self.save_error(epoch=epoch,save=False)
@@ -334,13 +336,13 @@ class TrainerBis:
             optimal_listener = self.population.agents[optimal_listener_id]
             batch = move_to((inputs,sender_id,receiver_id), self.device)
 
-            _ = self.game(batch)
+            _ = self.game(batch,reduce=False)
 
             reward_distrib = -1*agent_receiver.tasks[task]["loss_value"].cpu()
 
             batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
-            _ = self.game(batch)
+            _ = self.game(batch,reduce=False)
 
             mi_distrib = -1 * optimal_listener.tasks[task]["loss_value"].cpu()
 
@@ -349,10 +351,9 @@ class TrainerBis:
         self.input_batch.append(inputs)
 
         if save:
-            save_dir = "/gpfswork/rech/nlt/uqm82td/IT_project/Population_2/experiments/15_03_2022/0-1_no_reset/metrics"
-            np.save("{}/reward_distrib_{}".format(save_dir,epoch),th.stack(self.reward_distrib))
-            np.save("{}/mi_distrib_{}".format(save_dir,epoch), th.stack(self.mi_distrib))
-            np.save("{}/reward_distrib_{}".format(save_dir,epoch), th.stack(self.input_batch))
+            np.save("{}/reward_distrib_{}".format(self.metrics_save_dir,epoch),th.stack(self.reward_distrib))
+            np.save("{}/mi_distrib_{}".format(self.metrics_save_dir,epoch), th.stack(self.mi_distrib))
+            np.save("{}/inputs_{}".format(self.metrics_save_dir,epoch), th.stack(self.input_batch))
 
 
     def train_communication_broadcasting(self, compute_metrics=True):
@@ -1447,6 +1448,7 @@ def build_trainer(game,
                   logger: th.utils.tensorboard.SummaryWriter = None,
                   compute_metrics: bool = False,
                   pretraining: bool = False,
+                  metrics_save_dir : str = "",
                   device: str = "cpu"):
     if not pretraining:
         trainer = TrainerBis(game=game,
@@ -1458,6 +1460,7 @@ def build_trainer(game,
                              game_params=game_params,
                              agent_repertory=agent_repertory,
                              logger=logger,
+                             metrics_save_dir=metrics_save_dir,
                              device=device)
     else:
         trainer = PretrainingTrainer(game=game,

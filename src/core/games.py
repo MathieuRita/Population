@@ -22,7 +22,8 @@ class ReconstructionGame(nn.Module):
                                inputs: th.Tensor,
                                sender_id: th.Tensor,
                                receiver_id: th.Tensor,
-                               compute_metrics: bool = False):
+                               compute_metrics: bool = False,
+                               reduce : bool = True):
 
         """
         :param noise_threshold: 0 -> no noise
@@ -60,12 +61,17 @@ class ReconstructionGame(nn.Module):
                                                         sender_entropy=entropy_sender,
                                                         message=messages
                                                         )
-        agent_sender.tasks[task]["loss_value"] = loss.mean()
+
+        if reduce: loss=loss.mean()
+
+        agent_sender.tasks[task]["loss_value"] = loss
 
         loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
                                                           receiver_output=output_receiver)
 
-        agent_receiver.tasks[task]["loss_value"] = loss.mean()
+        if reduce: loss = loss.mean()
+
+        agent_receiver.tasks[task]["loss_value"] = loss
 
         # Compute additional metrics
         metrics = {}
@@ -86,9 +92,9 @@ class ReconstructionGame(nn.Module):
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False):
+    def forward(self, batch, compute_metrics: bool = False, reduce : bool = True):
 
-        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics)
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, reduce = reduce)
 
         return metrics
 
