@@ -1,9 +1,12 @@
 import torch as th
+import copy
 import numpy as np
 import torch.utils.tensorboard
 from torch.utils.tensorboard import SummaryWriter
 from .utils import _div_dict, move_to
 from .agents import get_agent
+from .receivers import build_receiver
+from .object_encoders import build_decoder
 
 
 class TrainerBis:
@@ -33,7 +36,7 @@ class TrainerBis:
         self.device = th.device(device)
         self.writer = logger
         self.mi_step = 0
-        self.val_loss_optimal_listener=[]
+        self.val_loss_optimal_listener = []
         self.step_without_opt_training = 0
 
     def train(self,
@@ -279,24 +282,43 @@ class TrainerBis:
 
         noise_attack = False
 
+        # if not reset: # reset optimizer
+        #    for sender_id in self.population.sender_names:
+        #        agent_sender = self.population.agents[sender_id]
+        #        optimal_listener_id = agent_sender.optimal_listener
+        #        optimal_listener = self.population.agents[optimal_listener_id]
 
-        if not reset: # reset optimizer
+        #        model_parameters = list(optimal_listener.receiver.parameters()) + \
+        #                           list(optimal_listener.object_decoder.parameters())
+        #        optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
+
+        cloning = True
+
+        if cloning:
+            pivot_listener = self.population.agents["receiver_default_reco"]
             for sender_id in self.population.sender_names:
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
-                
-                
+                optimal_listener = self.population.agents[agent_sender.optimal_listener]
+                optimal_listener.receiver = build_receiver(
+                    receiver_params=self.agent_repertory[optimal_listener_id]["receiver_params"],
+                    game_params=self.game_params)
+                optimal_listener.receiver.load_state_dict(copy.deepcopy(pivot_listener.receiver.state_dict()))
+
+                optimal_listener.object_decoder = build_decoder(object_params=self.game_params["objects"],
+                                                                embedding_size=128)
+                optimal_listener.object_decoder.load_state_dict(
+                    copy.deepcopy(pivot_listener.object_decoder.state_dict()))
+
                 model_parameters = list(optimal_listener.receiver.parameters()) + \
                                    list(optimal_listener.object_decoder.parameters())
                 optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
         prev_loss_value = [0.]
-        step=0
+        step = 0
         task = "communication"
 
-
-        while len(self.val_loss_optimal_listener)<10:
+        while len(self.val_loss_optimal_listener) < 10:
 
             mean_val_loss = 0.
             n_batch = 0
@@ -328,41 +350,40 @@ class TrainerBis:
 
             if len(self.val_loss_optimal_listener) > 10:
                 self.val_loss_optimal_listener.pop(0)
-                
-        #print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
-        #if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
+        # print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
+
+        # if abs(mean_val_loss / n_batch-np.mean(self.val_loss_optimal_listener[:-1]))<10e-3 or \
         #    mean_val_loss / n_batch>np.mean(self.val_loss_optimal_listener[:-1]):
         #   continue_optimal_listener_training=False
         #    self.step_without_opt_training+=1
-        #else:
+        # else:
         #    continue_optimal_listener_training = True
         #    self.step_without_opt_training=0
 
-        #if self.step_without_opt_training==1:
+        # if self.step_without_opt_training==1:
         #    self.step_without_opt_training=0
-            #self.population.agents[agent_sender.optimal_listener] = get_agent(
-            #    agent_name=agent_sender.optimal_listener,
-            #    agent_repertory=self.agent_repertory,
-            #    game_params=self.game_params,
-            #    device=self.device)
+        # self.population.agents[agent_sender.optimal_listener] = get_agent(
+        #    agent_name=agent_sender.optimal_listener,
+        #    agent_repertory=self.agent_repertory,
+        #    game_params=self.game_params,
+        #    device=self.device)
 
-            #with th.no_grad():
+        # with th.no_grad():
 
-            #    n_batch = 0
-            #    mean_val_loss = 0.
-            #    for batch in self.val_loader:
-            #        batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+        #    n_batch = 0
+        #    mean_val_loss = 0.
+        #    for batch in self.val_loader:
+        #        batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-            #        metrics = self.game(batch, compute_metrics=True)
+        #        metrics = self.game(batch, compute_metrics=True)
 
-            #        mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
-            #        n_batch += 1
+        #        mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+        #        n_batch += 1
 
-            #self.val_loss_optimal_listener=[mean_val_loss/n_batch]
+        # self.val_loss_optimal_listener=[mean_val_loss/n_batch]
 
         continue_optimal_listener_training = True
-
 
         while continue_optimal_listener_training:
 
@@ -381,22 +402,22 @@ class TrainerBis:
             optimal_listener.tasks[task]["loss_value"].backward()
             optimal_listener.tasks[task]["optimizer"].step()
 
-            #if (len(prev_loss_value) > 9 and \
+            # if (len(prev_loss_value) > 9 and \
             #        abs(optimal_listener.tasks[task]["loss_value"].item() - np.mean(prev_loss_value)) < threshold) or \
             #        step==300:
 
             self.writer.add_scalar(f'{optimal_listener_id}/loss',
                                    optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
 
-            mean_val_acc=0.
-            mean_val_loss=0.
-            n_batch=0
+            mean_val_acc = 0.
+            mean_val_loss = 0.
+            n_batch = 0
 
             with th.no_grad():
                 for batch in self.val_loader:
                     batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    metrics = self.game(batch,compute_metrics=True)
+                    metrics = self.game(batch, compute_metrics=True)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
                     mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
@@ -410,13 +431,13 @@ class TrainerBis:
                                    mean_val_loss / n_batch, self.mi_step)
 
             self.mi_step += 1
-            step+=1
+            step += 1
 
-            #print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
+            # print(mean_val_loss / n_batch,np.mean(self.val_loss_optimal_listener[:-1]))
 
-            if step==200:
-            #if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
-            #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
+            if step == 20:
+                # if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
+                #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False
                 self.val_loss_optimal_listener.pop(0)
             else:
@@ -427,21 +448,20 @@ class TrainerBis:
                     self.val_loss_optimal_listener.pop(0)
 
         # Noise attack
-        if noise_attack:
+        # if noise_attack:
 
-            for sender_id in self.population.sender_names:
-                agent_sender = self.population.agents[sender_id]
-                optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
+        #    for sender_id in self.population.sender_names:
+        #        agent_sender = self.population.agents[sender_id]
+        #        optimal_listener_id = agent_sender.optimal_listener
+        #        optimal_listener = self.population.agents[optimal_listener_id]
 
-                model_parameters = list(optimal_listener.receiver.parameters()) + \
-                                   list(optimal_listener.object_decoder.parameters())
-                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                                     lr=0.0005)
-
+        #        model_parameters = list(optimal_listener.receiver.parameters()) + \
+        #                           list(optimal_listener.object_decoder.parameters())
+        #        optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+        #                                                                             lr=0.0005)
 
         # Mean loss
-        mean_train_loss=0.
+        mean_train_loss = 0.
         for _ in range(5):
             self.game.train()
 
@@ -455,10 +475,10 @@ class TrainerBis:
 
                 _ = self.game(batch)
 
-                mean_train_loss+=optimal_listener.tasks[task]["loss_value"].item()
+                mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
 
         self.writer.add_scalar(f'{optimal_listener_id}/Loss sp',
-                               mean_train_loss/5, epoch)
+                               mean_train_loss / 5, epoch)
 
         # Mean loss
         mean_train_loss = 0.
@@ -1302,7 +1322,6 @@ class PretrainingTrainer:
 
             batch = move_to(batch, self.device)
             loss_sender, metrics = self.game(batch, compute_metrics=compute_metrics)
-
 
             self.agent.tasks["communication"]["optimizer"].zero_grad()
             loss_sender.backward()
