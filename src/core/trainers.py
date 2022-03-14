@@ -611,6 +611,8 @@ class TrainerBis:
 
             batch = next(iter(self.train_loader))
 
+            print(batch.data)
+
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
             agent_receiver = self.population.agents[receiver_id]
