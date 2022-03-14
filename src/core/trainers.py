@@ -482,7 +482,7 @@ class TrainerBis:
                 mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
 
         self.writer.add_scalar(f'{optimal_listener_id}/Loss sp',
-                               mean_train_loss / 5, epoch)
+                               mean_train_loss, epoch)
 
         # Mean loss
         mean_train_loss = 0.
