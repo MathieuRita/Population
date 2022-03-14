@@ -302,11 +302,11 @@ class TrainerBis:
                 optimal_listener = self.population.agents[agent_sender.optimal_listener]
                 optimal_listener.receiver = build_receiver(
                     receiver_params=self.agent_repertory[optimal_listener_id]["receiver_params"],
-                    game_params=self.game_params).to(pivot_listener.receiver.device)
+                    game_params=self.game_params).to(self.device)
                 optimal_listener.receiver.load_state_dict(copy.deepcopy(pivot_listener.receiver.state_dict()))
 
                 optimal_listener.object_decoder = build_decoder(object_params=self.game_params["objects"],
-                                                                embedding_size=128).to(pivot_listener.object_decoder.device)
+                                                                embedding_size=128).to(self.device)
                 optimal_listener.object_decoder.load_state_dict(
                     copy.deepcopy(pivot_listener.object_decoder.state_dict()))
 
