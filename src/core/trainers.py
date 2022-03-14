@@ -120,7 +120,7 @@ class TrainerBis:
         #for batch in self.train_loader:
         for _ in range(1):
 
-            batch = next(iter(self.mi_loader))
+            batch = next(iter(self.train_loader))
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
@@ -609,7 +609,7 @@ class TrainerBis:
         # for batch in self.train_loader:
         for _ in range(1):
 
-            batch = next(iter(self.mi_loader))
+            batch = next(iter(self.train_loader))
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
