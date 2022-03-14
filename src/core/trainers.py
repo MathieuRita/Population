@@ -383,7 +383,7 @@ class TrainerBis:
 
         # self.val_loss_optimal_listener=[mean_val_loss/n_batch]
 
-        continue_optimal_listener_training = True
+        continue_optimal_listener_training = False
 
         while continue_optimal_listener_training:
 
