@@ -142,7 +142,7 @@ class TrainerBis:
             # Sender
             if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
                 agent_sender.tasks[task]["optimizer"].zero_grad()
-                agent_sender.tasks[task]["loss_value"].backward(x)
+                agent_sender.tasks[task]["loss_value"].backward()
                 agent_sender.tasks[task]["optimizer"].step()
 
             mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
@@ -614,12 +614,12 @@ class TrainerBis:
 
         # for batch in self.train_loader:
 
-        for _ in range(np.random.randint(700)):
-            batch = next(iter(self.train_loader))
-
         for _ in range(1):
+            
+            i=np.random.randint(850)
+            batch = self.train_loader.__getitem__(i)
 
-            batch = next(iter(self.train_loader))
+            #batch = next(iter(self.train_loader))
 
             print(batch.data)
 
