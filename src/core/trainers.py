@@ -470,7 +470,6 @@ class TrainerBis:
 
             with th.no_grad():
                 batch = next(iter(self.mi_loader))
-                print(batch.data)
                 inputs, sender_id = batch.data, batch.sender_id
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
