@@ -491,7 +491,7 @@ class TrainerBis:
             with th.no_grad():
 
                 batch = next(iter(self.val_loader))
-                inputs, sender_id,receiver_id = batch.data, batch.sender_id,, batch.receiver_id
+                inputs, sender_id,receiver_id = batch.data, batch.sender_id,batch.receiver_id
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
