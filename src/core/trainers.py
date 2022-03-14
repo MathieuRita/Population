@@ -70,9 +70,11 @@ class TrainerBis:
 
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
-                self.pretrain_optimal_listener(epoch=epoch)
+
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
+
+                self.pretrain_optimal_listener(epoch=epoch)
             else:
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     None, None, None
@@ -618,7 +620,6 @@ class TrainerBis:
 
             inputs=batch.data
             inputs = inputs[th.randperm(inputs.size()[0])]
-            print(inputs)
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
