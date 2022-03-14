@@ -172,7 +172,8 @@ def main(params):
                   train_mi_freq=training_params["train_mi_freq"],
                   train_kl_freq=training_params["train_kl_freq"],
                   validation_freq=training_params["validation_freq"],
-                  evaluator_freq=training_params["evaluator_freq"])
+                  evaluator_freq=training_params["evaluator_freq"],
+                  metrics_save_dir = opts.metrics_save_dir)
 
     if opts.model_save_dir:
         population.save_models(save_dir=opts.model_save_dir)
