@@ -39,6 +39,10 @@ class TrainerBis:
         self.val_loss_optimal_listener = []
         self.step_without_opt_training = 0
 
+        self.reward_distrib = []
+        self.mi_distrib = []
+        self.input_batch = []
+
     def train(self,
               n_epochs,
               train_communication_freq: int = 1000000,
@@ -73,10 +77,17 @@ class TrainerBis:
 
                 self.reset_agents()
                 self.pretrain_optimal_listener(epoch=epoch)
-                self.custom_train_communication(epoch=epoch)
+                #self.custom_train_communication(epoch=epoch)
+
+                self.save_error(epoch=epoch, save=False)
 
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
+
+                if epoch%10==0:
+                    self.save_error(epoch=epoch,save=True)
+                else:
+                    self.save_error(epoch=epoch,save=False)
 
 
             else:
@@ -230,7 +241,7 @@ class TrainerBis:
             agent_receiver.tasks[task]["optimizer"].step()
 
             self.writer.add_scalar(f'{receiver_id}_reset/loss',
-                                   optimal_listener.tasks[task]["loss_value"].item(), self.mi_step)
+                                   agent_receiver.tasks[task]["loss_value"].item(), self.mi_step)
 
             mean_val_acc = 0.
             mean_val_loss = 0.
@@ -243,14 +254,14 @@ class TrainerBis:
                     metrics = self.game(batch, compute_metrics=True)
 
                     mean_val_acc += metrics["accuracy"].detach().item()
-                    mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+                    mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
                     n_batch += 1
 
             self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
-            self.writer.add_scalar(f'{receiver_id}_reset//val_accuracy',
+            self.writer.add_scalar(f'{receiver_id}_reset/val_accuracy',
                                    mean_val_acc / n_batch, self.mi_step)
-            self.writer.add_scalar(f'{receiver_id}_reset//val_loss',
+            self.writer.add_scalar(f'{receiver_id}_reset/val_loss',
                                    mean_val_loss / n_batch, self.mi_step)
 
             self.mi_step += 1
@@ -285,7 +296,7 @@ class TrainerBis:
 
                 mean_train_loss += agent_receiver.tasks[task]["loss_value"].item()
 
-        self.writer.add_scalar(f'{receiver_id}_reset//Loss sp',
+        self.writer.add_scalar(f'{receiver_id}_reset/Loss sp',
                                mean_train_loss, epoch)
 
         # Mean loss
@@ -307,6 +318,42 @@ class TrainerBis:
 
         self.writer.add_scalar(f'{receiver_id}_reset/Loss val sp',
                                mean_train_loss / 5, epoch)
+
+    def save_error(self, epoch : int, save : bool = False):
+
+        task = "communication"
+
+        self.game.train()
+
+        with th.no_grad():
+            batch = next(iter(self.train_loader))
+            inputs, sender_id,receiver_id = batch.data, batch.sender_id, batch.receiver_id
+            agent_sender = self.population.agents[sender_id]
+            agent_receiver = self.population.agents[batch.receiver_id]
+            optimal_listener_id = agent_sender.optimal_listener
+            optimal_listener = self.population.agents[optimal_listener_id]
+            batch = move_to((inputs,sender_id,receiver_id), self.device)
+
+            _ = self.game(batch)
+
+            reward_distrib = -1*agent_receiver.tasks[task]["loss_value"].cpu()
+
+            batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+            _ = self.game(batch)
+
+            mi_distrib = -1 * optimal_listener.tasks[task]["loss_value"].cpu()
+
+        self.reward_distrib.append(reward_distrib)
+        self.mi_distrib.append(mi_distrib)
+        self.input_batch.append(inputs)
+
+        if save:
+            save_dir = "/gpfswork/rech/nlt/uqm82td/IT_project/Population_2/experiments/15_03_2022/0-1_no_reset/metrics"
+            np.save("{}/reward_distrib_{}".format(save_dir,epoch),th.stack(self.reward_distrib))
+            np.save("{}/mi_distrib_{}".format(save_dir,epoch), th.stack(self.mi_distrib))
+            np.save("{}/reward_distrib_{}".format(save_dir,epoch), th.stack(self.input_batch))
+
 
     def train_communication_broadcasting(self, compute_metrics=True):
 
