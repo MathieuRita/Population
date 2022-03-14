@@ -390,9 +390,6 @@ class TrainerBis:
 
         while continue_optimal_listener_training:
 
-            for _ in range(np.random.randint(700)):
-                batch = next(iter(self.train_loader))
-
             self.game.train()
 
             batch = next(iter(self.mi_loader))
@@ -468,14 +465,13 @@ class TrainerBis:
 
         # Mean loss
         mean_train_loss = 0.
-        for _ in range(5):
+        for _ in range(1):
             self.game.train()
 
             with th.no_grad():
-                for _ in range(np.random.randint(700)):
-                    batch = next(iter(self.mi_loader))
-                batch = next(iter(self.mi_loader))
+                batch = next(iter(self.train_loader))
                 inputs, sender_id = batch.data, batch.sender_id
+                inputs = inputs[th.randperm(inputs.size()[0])]
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
@@ -615,13 +611,11 @@ class TrainerBis:
         # for batch in self.train_loader:
 
         for _ in range(1):
-            
-            i=np.random.randint(850)
-            batch = self.train_loader.__getitem__(i)
 
-            #batch = next(iter(self.train_loader))
+            batch = next(iter(self.train_loader))
 
-            print(batch.data)
+            inputs=batch.data
+            inputs = inputs[th.randperm(inputs.size()[0])]
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
@@ -641,7 +635,7 @@ class TrainerBis:
                 mean_loss_receivers[receiver_id] = {task: 0.}
                 n_batches[receiver_id] = {task: 0}
 
-            batch = move_to((batch.data, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
+            batch = move_to((inputs, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
 
             metrics = self.game.communication_multi_listener_instance(*batch,
                                                                       compute_metrics=compute_metrics)
