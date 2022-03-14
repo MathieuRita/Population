@@ -139,7 +139,7 @@ class TrainerBis:
             # Sender
             if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
                 agent_sender.tasks[task]["optimizer"].zero_grad()
-                agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
+                agent_sender.tasks[task]["loss_value"].backward(x)
                 agent_sender.tasks[task]["optimizer"].step()
 
             mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
@@ -467,6 +467,7 @@ class TrainerBis:
 
             with th.no_grad():
                 batch = next(iter(self.train_loader))
+                print(batch.data)
                 inputs, sender_id = batch.data, batch.sender_id
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
