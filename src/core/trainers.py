@@ -117,7 +117,10 @@ class TrainerBis:
 
         self.game.train()
 
-        for batch in self.train_loader:
+        #for batch in self.train_loader:
+        for _ in range(1):
+
+            batch = next(iter(self.mi_loader))
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
@@ -389,7 +392,7 @@ class TrainerBis:
 
             self.game.train()
 
-            batch = next(iter(self.train_loader))
+            batch = next(iter(self.mi_loader))
             inputs, sender_id = batch.data, batch.sender_id
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener
@@ -466,7 +469,7 @@ class TrainerBis:
             self.game.train()
 
             with th.no_grad():
-                batch = next(iter(self.train_loader))
+                batch = next(iter(self.mi_loader))
                 print(batch.data)
                 inputs, sender_id = batch.data, batch.sender_id
                 agent_sender = self.population.agents[sender_id]
