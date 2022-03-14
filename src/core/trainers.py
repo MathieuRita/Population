@@ -84,7 +84,7 @@ class TrainerBis:
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
 
-                if epoch%100==0:
+                if epoch%10==0:
                     self.save_error(epoch=epoch,save=True)
                 else:
                     self.save_error(epoch=epoch,save=False)
@@ -349,9 +349,10 @@ class TrainerBis:
         self.input_batch.append(inputs)
 
         if save:
-            np.save("reward_distrib_{}".format(epoch),th.stack(self.reward_distrib))
-            np.save("mi_distrib_{}".format(epoch), th.stack(self.mi_distrib))
-            np.save("reward_distrib_{}".format(epoch), th.stack(self.input_batch))
+            save_dir = "/gpfswork/rech/nlt/uqm82td/IT_project/Population_2/experiments/15_03_2022/0-1_no_reset/metrics"
+            np.save("{}/reward_distrib_{}".format(save_dir,epoch),th.stack(self.reward_distrib))
+            np.save("{}/mi_distrib_{}".format(save_dir,epoch), th.stack(self.mi_distrib))
+            np.save("{}/reward_distrib_{}".format(save_dir,epoch), th.stack(self.input_batch))
 
 
     def train_communication_broadcasting(self, compute_metrics=True):
