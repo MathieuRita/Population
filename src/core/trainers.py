@@ -616,6 +616,7 @@ class TrainerBis:
 
             inputs=batch.data
             inputs = inputs[th.randperm(inputs.size()[0])]
+            print(inputs)
 
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
