@@ -321,38 +321,38 @@ class TrainerBis:
         step = 0
         task = "communication"
 
-        while len(self.val_loss_optimal_listener) < 10:
+        #while len(self.val_loss_optimal_listener) < 10:
 
-            mean_val_loss = 0.
-            n_batch = 0
+        #    mean_val_loss = 0.
+        #    n_batch = 0
 
-            with th.no_grad():
-                for batch in self.val_loader:
-                    batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+        #    with th.no_grad():
+        #        for batch in self.val_loader:
+        #            batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                    metrics = self.game(batch, compute_metrics=True)
+        #            metrics = self.game(batch, compute_metrics=True)
 
-                    mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
-                    n_batch += 1
+        #            mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+        #            n_batch += 1
 
-                self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
+        #        self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
-        with th.no_grad():
+        #with th.no_grad():
 
-            n_batch = 0
-            mean_val_loss = 0.
-            for batch in self.val_loader:
-                batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
+        #    n_batch = 0
+        #    mean_val_loss = 0.
+        #    for batch in self.val_loader:
+        #        batch = move_to((batch.data, sender_id, optimal_listener_id), self.device)
 
-                metrics = self.game(batch, compute_metrics=True)
+        #        metrics = self.game(batch, compute_metrics=True)
 
-                mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
-                n_batch += 1
+        #        mean_val_loss += optimal_listener.tasks[task]["loss_value"].item()
+        #        n_batch += 1
 
-            self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
+        #    self.val_loss_optimal_listener.append(mean_val_loss / n_batch)
 
-            if len(self.val_loss_optimal_listener) > 10:
-                self.val_loss_optimal_listener.pop(0)
+        #    if len(self.val_loss_optimal_listener) > 10:
+        #        self.val_loss_optimal_listener.pop(0)
 
         # print(mean_val_loss / n_batch, np.mean(self.val_loss_optimal_listener[:-1]))
 
@@ -491,11 +491,11 @@ class TrainerBis:
             with th.no_grad():
 
                 batch = next(iter(self.val_loader))
-                inputs, sender_id = batch.data, batch.sender_id
+                inputs, sender_id,receiver_id = batch.data, batch.sender_id,, batch.receiver_id
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+                batch = move_to((inputs, sender_id, receiver_id), self.device)
 
                 _ = self.game(batch)
 
