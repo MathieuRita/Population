@@ -475,7 +475,7 @@ class TrainerBis:
                 agent_sender = self.population.agents[sender_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+                batch = move_to((inputs, sender_id, batch.receiver_id), self.device)
 
                 _ = self.game(batch)
 
