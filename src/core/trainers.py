@@ -297,7 +297,7 @@ class TrainerBis:
         #                           list(optimal_listener.object_decoder.parameters())
         #        optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters, lr=0.0005)
 
-        cloning = True
+        cloning = False
 
         if cloning:
             pivot_listener = self.population.agents["receiver_default_reco"]
@@ -388,14 +388,16 @@ class TrainerBis:
 
         # self.val_loss_optimal_listener=[mean_val_loss/n_batch]
 
-        continue_optimal_listener_training = False
+        continue_optimal_listener_training = True
 
         while continue_optimal_listener_training:
 
             self.game.train()
 
-            batch = next(iter(self.mi_loader))
+            batch = next(iter(self.train_loader))
+
             inputs, sender_id = batch.data, batch.sender_id
+            inputs = inputs[th.randperm(inputs.size()[0])]
             agent_sender = self.population.agents[sender_id]
             optimal_listener_id = agent_sender.optimal_listener
             optimal_listener = self.population.agents[optimal_listener_id]
@@ -478,12 +480,12 @@ class TrainerBis:
                 agent_receiver = self.population.agents[batch.receiver_id]
                 optimal_listener_id = agent_sender.optimal_listener
                 optimal_listener = self.population.agents[optimal_listener_id]
-                batch = move_to((inputs, sender_id, batch.receiver_id), self.device)
+                batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
                 _ = self.game(batch)
 
-                #mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
-                mean_train_loss += agent_receiver.tasks[task]["loss_value"].item()
+                mean_train_loss += optimal_listener.tasks[task]["loss_value"].item()
+                #mean_train_loss += agent_receiver.tasks[task]["loss_value"].item()
 
         self.writer.add_scalar(f'{optimal_listener_id}/Loss sp',
                                mean_train_loss, epoch)
