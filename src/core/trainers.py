@@ -43,6 +43,7 @@ class TrainerBis:
         self.reward_distrib = []
         self.mi_distrib = []
         self.input_batch = []
+        self.pi_x_m = []
         self.metrics_save_dir = metrics_save_dir
 
     def train(self,
@@ -343,24 +344,26 @@ class TrainerBis:
             optimal_listener = self.population.agents[optimal_listener_id]
             batch = move_to((inputs,sender_id,receiver_id), self.device)
 
-            _ = self.game(batch,reduce=False)
+            metrics = self.game(batch,reduce=False)
 
             reward_distrib = -1*agent_receiver.tasks[task]["loss_value"].cpu()
 
             batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
-            _ = self.game(batch,reduce=False)
+            metrics = self.game(batch,reduce=False)
 
             mi_distrib = -1 * optimal_listener.tasks[task]["loss_value"].cpu()
 
         self.reward_distrib.append(reward_distrib)
         self.mi_distrib.append(mi_distrib)
         self.input_batch.append(inputs)
+        self.pi_x_m.append(metrics["sender_log_prob"].cpu())
 
         if save:
             np.save("{}/reward_distrib_{}".format(self.metrics_save_dir,epoch),th.stack(self.reward_distrib))
             np.save("{}/mi_distrib_{}".format(self.metrics_save_dir,epoch), th.stack(self.mi_distrib))
             np.save("{}/inputs_{}".format(self.metrics_save_dir,epoch), th.stack(self.input_batch))
+            np.save("{}/inputs_{}".format(self.metrics_save_dir, epoch), th.stack(self.pi_x_m))
 
 
     def train_communication_broadcasting(self, compute_metrics=True):
