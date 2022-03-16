@@ -344,13 +344,13 @@ class TrainerBis:
             optimal_listener = self.population.agents[optimal_listener_id]
             batch = move_to((inputs,sender_id,receiver_id), self.device)
 
-            metrics = self.game(batch,reduce=False)
+            metrics = self.game(batch,reduce=False,compute_metrics=True)
 
             reward_distrib = -1*agent_receiver.tasks[task]["loss_value"].cpu()
 
             batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 
-            metrics = self.game(batch,reduce=False)
+            metrics = self.game(batch,reduce=False,compute_metrics=True)
 
             mi_distrib = -1 * optimal_listener.tasks[task]["loss_value"].cpu()
 
