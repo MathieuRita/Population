@@ -106,10 +106,10 @@ class Agent(object):
             reset_weights = self.object_encoder.state_dict().copy()
 
             for el in self.object_encoder.state_dict():
-                probs = torch.rand(size=self.object_encoder.state_dict()[el].size())
+                probs = th.rand(size=self.object_encoder.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_encoder.state_dict()[el] + \
-                                    M * torch.normal(size=reset_weights[el].size(),mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(),mean=0.0, std=1.)
 
             self.object_encoder.load_state_dict(reset_weights)
 
@@ -117,10 +117,10 @@ class Agent(object):
             reset_weights = self.object_decoder.state_dict().copy()
 
             for el in self.object_decoder.state_dict():
-                probs = torch.rand(size=self.object_decoder.state_dict()[el].size())
+                probs = th.rand(size=self.object_decoder.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_decoder.state_dict()[el] + \
-                                    M * torch.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
 
             self.object_decoder.load_state_dict(reset_weights)
 
@@ -128,10 +128,10 @@ class Agent(object):
             reset_weights = self.sender.state_dict().copy()
 
             for el in self.sender.state_dict():
-                probs = torch.rand(size=self.sender.state_dict()[el].size())
+                probs = th.rand(size=self.sender.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.sender.state_dict()[el] + \
-                                    M * torch.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
 
             self.sender.load_state_dict(reset_weights)
 
@@ -139,10 +139,10 @@ class Agent(object):
             reset_weights = self.decoder.state_dict().copy()
 
             for el in self.decoder.state_dict():
-                probs = torch.rand(size=self.decoder.state_dict()[el].size())
+                probs = th.rand(size=self.decoder.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.decoder.state_dict()[el] + \
-                                    M * torch.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
 
             self.decoder.load_state_dict(reset_weights)
 
