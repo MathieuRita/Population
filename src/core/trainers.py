@@ -79,8 +79,8 @@ class TrainerBis:
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
 
-                #self.reset_agents()
-                self.partial_reset_agents()
+                self.reset_agents()
+                #self.partial_reset_agents()
                 self.pretrain_optimal_listener(epoch=epoch)
                 self.custom_train_communication(epoch=epoch,custom_steps=custom_steps)
 
@@ -549,7 +549,7 @@ class TrainerBis:
             self.mi_step += 1
             step += 1
 
-            if step == 10:
+            if step == 100:
                 # if abs(mean_val_loss / n_batch - np.mean(self.val_loss_optimal_listener[:-1])) < 10e-3 or \
                 #        mean_val_loss / n_batch > np.mean(self.val_loss_optimal_listener[:-1]):
                 continue_optimal_listener_training = False

@@ -118,16 +118,16 @@ class Agent(object):
 
             self.object_encoder.load_state_dict(reset_weights)
 
-        if self.object_decoder is not None:
-            reset_weights = self.object_decoder.state_dict().copy()
+        #if self.object_decoder is not None:
+        #    reset_weights = self.object_decoder.state_dict().copy()
 
-            for el in self.object_decoder.state_dict():
-                probs = th.rand(size=self.object_decoder.state_dict()[el].size(),
-                                device=self.object_decoder.state_dict()[el].device)
-                M = 1 * (probs < reset_level)
-                reset_weights[el] = (1 - M) * self.object_decoder.state_dict()[el] + \
-                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
-                                                  device=self.object_decoder.state_dict()[el].device)
+        #    for el in self.object_decoder.state_dict():
+        #        probs = th.rand(size=self.object_decoder.state_dict()[el].size(),
+        #                        device=self.object_decoder.state_dict()[el].device)
+        #        M = 1 * (probs < reset_level)
+        #        reset_weights[el] = (1 - M) * self.object_decoder.state_dict()[el] + \
+        #                            M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
+        #                                          device=self.object_decoder.state_dict()[el].device)
 
             self.object_decoder.load_state_dict(reset_weights)
 
