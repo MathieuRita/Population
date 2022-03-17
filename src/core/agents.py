@@ -110,7 +110,7 @@ class Agent(object):
                                 device=self.object_encoder.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_encoder.state_dict()[el] + \
-                                    M * th.normal(size=self.object_encoder.state_dict()[el].mean(), mean=0.0, std=1.,
+                                    M * th.normal(size=reset_weights[el].size(), mean=self.sender.state_dict()[el].mean(), std=1.,
                                                   device=self.object_encoder.state_dict()[el].device)
                 # M * th.normal(size=reset_weights[el].size(),mean=0.0, std=1.,
 
@@ -137,7 +137,7 @@ class Agent(object):
                                 device=self.sender.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.sender.state_dict()[el] + \
-                                    M * th.normal(size=self.sender.state_dict()[el].mean(), mean=0.0, std=1.,
+                                    M * th.normal(size=reset_weights[el].size(), mean=self.sender.state_dict()[el].mean(), std=1.,
                                     #M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
                                                   device=self.sender.state_dict()[el].device)
 
@@ -151,8 +151,8 @@ class Agent(object):
                                 device=self.receiver.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.receiver.state_dict()[el] + \
-                                    M * th.normal(size=self.receiver.state_dict()[el].mean(), mean=0.0, std=1.,
-                                    #M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
+                                    M * th.normal(size=reset_weights[el].size(), mean=self.receiver.state_dict()[el].mean(), std=1.,
+                                    #M * th.normal(size=, mean=0.0, std=1.,
                                                   device=self.receiver.state_dict()[el].device)
 
             self.receiver.load_state_dict(reset_weights)
