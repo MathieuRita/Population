@@ -109,7 +109,8 @@ class Agent(object):
                 probs = th.rand(size=self.object_encoder.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_encoder.state_dict()[el] + \
-                                    M * th.normal(size=reset_weights[el].size(),mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(),mean=0.0, std=1.,
+                                                  device=self.decoder.state_dict()[el].device)
 
             self.object_encoder.load_state_dict(reset_weights)
 
@@ -120,7 +121,8 @@ class Agent(object):
                 probs = th.rand(size=self.object_decoder.state_dict()[el].size())
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_decoder.state_dict()[el] + \
-                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
+                                                  device=self.decoder.state_dict()[el].device)
 
             self.object_decoder.load_state_dict(reset_weights)
 
@@ -128,10 +130,11 @@ class Agent(object):
             reset_weights = self.sender.state_dict().copy()
 
             for el in self.sender.state_dict():
-                probs = th.rand(size=self.sender.state_dict()[el].size())
+                probs = th.rand(size=self.sender.state_dict()[el].size(),device=self.decoder.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.sender.state_dict()[el] + \
-                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
+                                                  device=self.decoder.state_dict()[el].device)
 
             self.sender.load_state_dict(reset_weights)
 
@@ -139,10 +142,11 @@ class Agent(object):
             reset_weights = self.decoder.state_dict().copy()
 
             for el in self.decoder.state_dict():
-                probs = th.rand(size=self.decoder.state_dict()[el].size())
+                probs = th.rand(size=self.decoder.state_dict()[el].size(),device=self.decoder.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.decoder.state_dict()[el] + \
-                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.)
+                                    M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
+                                                  device=self.decoder.state_dict()[el].device)
 
             self.decoder.load_state_dict(reset_weights)
 
