@@ -79,7 +79,8 @@ class TrainerBis:
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
 
-                self.reset_agents()
+                #self.reset_agents()
+                self.partial_reset_agents()
                 self.pretrain_optimal_listener(epoch=epoch)
                 self.custom_train_communication(epoch=epoch,custom_steps=custom_steps)
 
@@ -138,6 +139,12 @@ class TrainerBis:
                                                              agent_repertory=self.agent_repertory,
                                                              game_params=self.game_params,
                                                              device=self.device)
+
+    def partial_reset_agents(self):
+
+        for agent_id in self.population.agents:
+            agent = self.population.agents[agent_id]
+            agent.random_reset(reset_level=agent.prob_reset)
 
     def train_communication(self, compute_metrics: bool = False):
 
@@ -363,7 +370,7 @@ class TrainerBis:
             np.save("{}/reward_distrib_{}".format(self.metrics_save_dir,epoch),th.stack(self.reward_distrib))
             np.save("{}/mi_distrib_{}".format(self.metrics_save_dir,epoch), th.stack(self.mi_distrib))
             np.save("{}/inputs_{}".format(self.metrics_save_dir,epoch), th.stack(self.input_batch))
-            np.save("{}/inputs_{}".format(self.metrics_save_dir, epoch), th.stack(self.pi_x_m))
+            np.save("{}/pi_x_m_{}".format(self.metrics_save_dir, epoch), th.stack(self.pi_x_m))
 
 
     def train_communication_broadcasting(self, compute_metrics=True):
