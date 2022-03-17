@@ -106,11 +106,12 @@ class Agent(object):
             reset_weights = self.object_encoder.state_dict().copy()
 
             for el in self.object_encoder.state_dict():
-                probs = th.rand(size=self.object_encoder.state_dict()[el].size())
+                probs = th.rand(size=self.object_encoder.state_dict()[el].size(),
+                                device=self.object_encoder.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_encoder.state_dict()[el] + \
                                     M * th.normal(size=reset_weights[el].size(),mean=0.0, std=1.,
-                                                  device=self.decoder.state_dict()[el].device)
+                                                  device=self.object_encoder.state_dict()[el].device)
 
             self.object_encoder.load_state_dict(reset_weights)
 
@@ -118,11 +119,12 @@ class Agent(object):
             reset_weights = self.object_decoder.state_dict().copy()
 
             for el in self.object_decoder.state_dict():
-                probs = th.rand(size=self.object_decoder.state_dict()[el].size())
+                probs = th.rand(size=self.object_decoder.state_dict()[el].size(),
+                                device=self.object_decoder.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.object_decoder.state_dict()[el] + \
                                     M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
-                                                  device=self.decoder.state_dict()[el].device)
+                                                  device=self.object_decoder.state_dict()[el].device)
 
             self.object_decoder.load_state_dict(reset_weights)
 
@@ -130,25 +132,27 @@ class Agent(object):
             reset_weights = self.sender.state_dict().copy()
 
             for el in self.sender.state_dict():
-                probs = th.rand(size=self.sender.state_dict()[el].size(),device=self.decoder.state_dict()[el].device)
+                probs = th.rand(size=self.sender.state_dict()[el].size(),
+                                device=self.sender.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
                 reset_weights[el] = (1 - M) * self.sender.state_dict()[el] + \
                                     M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
-                                                  device=self.decoder.state_dict()[el].device)
+                                                  device=self.sender.state_dict()[el].device)
 
             self.sender.load_state_dict(reset_weights)
 
-        if self.decoder is not None:
-            reset_weights = self.decoder.state_dict().copy()
+        if self.receiver is not None:
+            reset_weights = self.receiver.state_dict().copy()
 
-            for el in self.decoder.state_dict():
-                probs = th.rand(size=self.decoder.state_dict()[el].size(),device=self.decoder.state_dict()[el].device)
+            for el in self.receiver.state_dict():
+                probs = th.rand(size=self.receiver.state_dict()[el].size(),
+                                device=self.receiver.state_dict()[el].device)
                 M = 1 * (probs < reset_level)
-                reset_weights[el] = (1 - M) * self.decoder.state_dict()[el] + \
+                reset_weights[el] = (1 - M) * self.receiver.state_dict()[el] + \
                                     M * th.normal(size=reset_weights[el].size(), mean=0.0, std=1.,
-                                                  device=self.decoder.state_dict()[el].device)
+                                                  device=self.receiver.state_dict()[el].device)
 
-            self.decoder.load_state_dict(reset_weights)
+            self.receiver.load_state_dict(reset_weights)
 
     def compute_mutual_information(self,inputs):
 
