@@ -174,7 +174,8 @@ def main(params):
                   train_kl_freq=training_params["train_kl_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],
-                  custom_steps=training_params["custom_steps"])
+                  custom_steps=training_params["custom_steps"],
+                  custom_early_stopping=training_params["custom_early_stopping"])
 
     if opts.model_save_dir:
         population.save_models(save_dir=opts.model_save_dir)

@@ -56,7 +56,8 @@ class TrainerBis:
               train_broadcasting_freq: int = 1000000,
               evaluator_freq: int = 1000000,
               print_evolution: bool = True,
-              custom_steps : int = 0):
+              custom_steps : int = 0,
+              custom_early_stopping : bool = False):
 
         for epoch in range(self.start_epoch, n_epochs):
 
@@ -82,7 +83,9 @@ class TrainerBis:
                 self.reset_agents()
                 #self.partial_reset_agents()
                 #self.pretrain_optimal_listener(epoch=epoch)
-                self.custom_train_communication(epoch=epoch,custom_steps=custom_steps)
+                self.custom_train_communication(epoch=epoch,
+                                                custom_steps=custom_steps,
+                                                early_stopping = custom_early_stopping)
 
                 self.save_error(epoch=epoch, save=False)
 
@@ -227,9 +230,6 @@ class TrainerBis:
                                    early_stopping : bool = False,
                                    epoch : int = 0,
                                    custom_steps : int = 0):
-
-
-        prev_loss_value = [0.]
         task = "communication"
 
         if early_stopping:
@@ -246,7 +246,6 @@ class TrainerBis:
 
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
                 inputs = inputs[th.randperm(inputs.size()[0])]
-                agent_sender = self.population.agents[sender_id]
                 agent_receiver = self.population.agents[receiver_id]
                 batch = move_to((inputs, sender_id, receiver_id), self.device)
 

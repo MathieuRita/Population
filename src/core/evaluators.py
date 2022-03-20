@@ -100,7 +100,7 @@ class Evaluator:
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def evaluate_external_receiver(self,n_step_train:int=200,early_stopping:bool=False):
+    def evaluate_external_receiver(self,n_step_train:int=200,early_stopping:bool=True):
 
         train_accs = np.zeros(len(self.population.sender_names))
         top_val_accs = np.zeros(len(self.population.sender_names))
@@ -173,7 +173,7 @@ class Evaluator:
                     continue_training = not (len(val_losses)>10 and (val_losses[-1]>val_losses[-10]-0.0001) \
                                         or step==1000)
                 else:
-                    continue_training = (step!=n_step_train)
+                    continue_training = (step>n_step_train)
 
             train_acc = np.min(train_accuracies[-5:])
             top_val_acc = np.max(val_accuracies[-5:])
