@@ -100,7 +100,7 @@ class Evaluator:
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def evaluate_external_receiver(self,n_step_train:int=200):
+    def evaluate_external_receiver(self,n_step_train:int=200,early_stopping:bool=True):
 
         train_accs = np.zeros(len(self.population.sender_names))
         top_val_accs = np.zeros(len(self.population.sender_names))
@@ -116,8 +116,11 @@ class Evaluator:
 
             train_accuracies = []
             val_accuracies = []
+            val_losses = []
+            step = 0
+            continue_training = True
 
-            for epoch in range(n_step_train):
+            while continue_training:
 
                 # Train
 
@@ -147,18 +150,30 @@ class Evaluator:
                 train_accuracies.append(mean_train_acc/n_batch)
 
                 mean_val_acc = 0.
+                mean_val_loss = 0.
                 n_batch = 0
 
                 # Eval
                 with th.no_grad():
                     for batch in self.val_loader:
                         batch = move_to((batch.data, sender_id, self.eval_receiver_id), self.device)
+                        agent_receiver = agent_receiver = self.population.agents[self.eval_receiver_id]
                         metrics = self.game(batch, compute_metrics=True)
 
                         mean_val_acc += metrics["accuracy"].detach().item()
+                        mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
                         n_batch += 1
 
                 val_accuracies.append(mean_val_acc/n_batch)
+                val_losses.append(mean_val_acc/n_batch)
+
+                step+=1
+
+                if early_stopping:
+                    continue_training = not (len(val_losses)>10 and (val_losses[-1]>val_losses[-10]-0.0001) \
+                                        or step==1000)
+                else:
+                    continue_training = (step>n_step_train)
 
             train_acc = np.min(train_accuracies[-5:])
             top_val_acc = np.max(val_accuracies[-5:])
