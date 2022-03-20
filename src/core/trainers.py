@@ -272,7 +272,7 @@ class TrainerBis:
                         mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
                         n_batch += 1
 
-                val_losses.append(mean_val_loss.item() / n_batch)
+                val_losses.append(mean_val_loss / n_batch)
 
                 self.writer.add_scalar(f'{receiver_id}_reset/val_accuracy',
                                        mean_val_acc / n_batch, self.mi_step)
@@ -367,7 +367,6 @@ class TrainerBis:
             with th.no_grad():
                 batch = next(iter(self.val_loader))
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
-                agent_sender = self.population.agents[sender_id]
                 agent_receiver = self.population.agents[receiver_id]
                 batch = move_to((inputs, sender_id, receiver_id), self.device)
 
