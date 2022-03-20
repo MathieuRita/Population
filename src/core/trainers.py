@@ -287,6 +287,9 @@ class TrainerBis:
                 if cond:
                     continue_training = False
 
+            self.writer.add_scalar(f'{receiver_id}_reset/early_stop_steps',
+                                   early_stop_step, self.mi_step)
+
         if custom_steps>0:
 
             step=0
