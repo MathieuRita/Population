@@ -149,6 +149,8 @@ class Evaluator:
 
                 train_accuracies.append(mean_train_acc/n_batch)
 
+                self.game.eval()
+
                 mean_val_acc = 0.
                 mean_val_loss = 0.
                 n_batch = 0

@@ -262,6 +262,8 @@ class TrainerBis:
                 mean_val_loss = 0.
                 n_batch = 0
 
+                self.game.eval()
+
                 with th.no_grad():
                     for batch in self.val_loader:
                         batch = move_to(batch, self.device)
@@ -364,7 +366,7 @@ class TrainerBis:
         # Mean val loss
         mean_val_loss = 0.
         for _ in range(1):
-            self.game.train()
+            self.game.eval()
             with th.no_grad():
                 batch = next(iter(self.val_loader))
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
