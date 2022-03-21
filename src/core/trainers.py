@@ -99,8 +99,8 @@ class TrainerBis:
 
 
             else:
-                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
-                    None, None, None
+                train_communication_mi_loss_senders, train_communication_loss_receivers = \
+                    None, None
 
             if epoch % train_broadcasting_freq == 0:
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
