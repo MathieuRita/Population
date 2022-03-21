@@ -80,7 +80,7 @@ class TrainerBis:
             # Train Mutual information
             if epoch % train_mi_freq == 0 and self.mi_loader is not None:
 
-                self.reset_agents()
+                #self.reset_agents()
                 #self.partial_reset_agents()
                 #self.pretrain_optimal_listener(epoch=epoch)
                 self.custom_train_communication(epoch=epoch,
@@ -99,8 +99,7 @@ class TrainerBis:
 
 
             else:
-                train_communication_mi_loss_senders, train_communication_loss_receivers = \
-                    None, None
+                train_communication_mi_loss_senders = None
 
             if epoch % train_broadcasting_freq == 0:
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
