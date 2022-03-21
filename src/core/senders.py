@@ -116,7 +116,8 @@ class RecurrentGenerator(nn.Module):
             if self.training:
                 x = distr.sample()
             else:
-                x = step_logits.argmax(dim=1)
+                x = distr.sample()
+                #x = step_logits.argmax(dim=1)
 
             logits.append(distr.log_prob(x))
 
