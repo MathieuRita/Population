@@ -157,7 +157,7 @@ class Evaluator:
                 with th.no_grad():
                     for batch in self.val_loader:
                         batch = move_to((batch.data, sender_id, self.eval_receiver_id), self.device)
-                        agent_receiver = agent_receiver = self.population.agents[self.eval_receiver_id]
+                        agent_receiver = self.population.agents[self.eval_receiver_id]
                         metrics = self.game(batch, compute_metrics=True)
 
                         mean_val_acc += metrics["accuracy"].detach().item()
@@ -165,12 +165,12 @@ class Evaluator:
                         n_batch += 1
 
                 val_accuracies.append(mean_val_acc/n_batch)
-                val_losses.append(mean_val_acc/n_batch)
+                val_losses.append(mean_val_loss/n_batch)
 
                 step+=1
 
                 if early_stopping:
-                    continue_training = not (len(val_losses)>10 and (val_losses[-1]>val_losses[-10]-0.0001) \
+                    continue_training = not (len(val_losses)>20 and (val_losses[-1]>np.mean(val_losses[-20:])-0.0001) \
                                         or step==1000)
                 else:
                     continue_training = (step>n_step_train)
