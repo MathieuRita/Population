@@ -282,7 +282,7 @@ class TrainerBis:
                 self.mi_step += 1
                 early_stop_step += 1
 
-                cond = (len(val_losses)>10 and (val_losses[-1]>val_losses[-10]-0.0001) or early_stop_step==1000)
+                cond = (len(val_losses)>10 and (val_losses[-1]>np.mean(val_losses[-10:])-0.0001) or early_stop_step==1000)
 
                 if cond:
                     continue_training = False
