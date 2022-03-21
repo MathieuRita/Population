@@ -288,7 +288,7 @@ class TrainerBis:
                     continue_training = False
 
             self.writer.add_scalar(f'{receiver_id}_reset/early_stop_steps',
-                                   early_stop_step, self.mi_step)
+                                   early_stop_step, epoch)
 
         if custom_steps>0:
 
@@ -343,7 +343,8 @@ class TrainerBis:
 
         # Mean loss
         mean_train_loss = 0.
-        for _ in range(5):
+        n_batch=5
+        for _ in range(n_batch):
             self.game.train()
 
             with th.no_grad():
@@ -358,7 +359,7 @@ class TrainerBis:
                 mean_train_loss += agent_receiver.tasks[task]["loss_value"].item()
 
         self.writer.add_scalar(f'{receiver_id}_reset/Loss sp',
-                               mean_train_loss, epoch)
+                               mean_train_loss/n_batch, epoch)
 
         # Mean val loss
         mean_val_loss = 0.
