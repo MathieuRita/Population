@@ -173,7 +173,7 @@ def build_receiver(receiver_params,game_params):
 
     # Message processor
     if receiver_type == "recurrent":
-        message_encoder = RecurrentProcessorLayerNorm(receiver_cell=receiver_cell,
+        message_encoder = RecurrentProcessor(receiver_cell=receiver_cell,
                                                        receiver_embed_dim=receiver_embed_dim,
                                                        receiver_num_layers=receiver_num_layers,
                                                        receiver_hidden_size=receiver_hidden_size,
