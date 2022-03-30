@@ -560,7 +560,7 @@ class Evaluator:
                     iter: int) -> None:
 
         # Reward decomposition
-        if self.metrics_to_measure["reward_decomposition"]:
+        if self.metrics_to_measure["reward_decomposition"]<self.n_epochs:
             id_sender = 0
             self.writer.add_scalar(f'{id_sender}/Reward information',
                                    self.stored_metrics["reward_information"][-1], iter)
@@ -570,14 +570,14 @@ class Evaluator:
                                    self.stored_metrics["reward"][-1], iter)
 
         # Language similarity
-        if self.metrics_to_measure["language_similarity"]:
+        if self.metrics_to_measure["language_similarity"]<self.n_epochs:
             similarity_matrix = self.stored_metrics["language_similarity"][-1]
             unique_sim = [similarity_matrix[i, j] for i in range(len(similarity_matrix) - 1) \
                           for j in range(i + 1, len(similarity_matrix))]
             self.writer.add_scalar(f'average_similarity', np.mean(unique_sim), iter)
 
         # Similarity to init language
-        if self.metrics_to_measure["similarity_to_init_languages"]:
+        if self.metrics_to_measure["similarity_to_init_languages"]<self.n_epochs:
             similarity_to_init_languages = self.stored_metrics["similarity_to_init_languages"][-1]
             for i, agent_id in enumerate(self.population.sender_names):
                 for j, agent_id_init in enumerate(self.population.sender_names):
@@ -586,7 +586,7 @@ class Evaluator:
                                            iter)
 
         # Divergence to untrained speakers
-        if self.metrics_to_measure["divergence_to_untrained_speakers"]:
+        if self.metrics_to_measure["divergence_to_untrained_speakers"]<self.n_epochs:
             divergence_matrix = self.stored_metrics["divergence_to_untrained_speakers"][-1]
             for i, agent_id in enumerate(self.population.sender_names):
                 for j, agent_id_untrained in enumerate(self.population.untrained_sender_names):
@@ -598,7 +598,7 @@ class Evaluator:
                                            divergence_matrix[i, j],
                                            iter)
 
-        if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
+        if self.metrics_to_measure["accuracy_with_untrained_speakers"]<self.n_epochs:
             accuracy_matrix = self.stored_metrics["accuracy_with_untrained_speakers"][-1]
             for i, receiver_id in enumerate(self.population.receiver_names):
                 for j, untrained_sender_id in enumerate(self.population.untrained_sender_names):
@@ -606,7 +606,7 @@ class Evaluator:
                                            accuracy_matrix[i, j],
                                            iter)
 
-        if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
+        if self.metrics_to_measure["accuracy_with_untrained_listeners"]<self.n_epochs:
             accuracy_matrix = self.stored_metrics["accuracy_with_untrained_listeners"][-1]
             for i, sender_id in enumerate(self.population.sender_names):
                 for j, untrained_receiver_id in enumerate(self.population.untrained_receiver_names):
@@ -614,14 +614,14 @@ class Evaluator:
                                            accuracy_matrix[i, j],
                                            iter)
 
-        if self.metrics_to_measure["topographic_similarity"]:
+        if self.metrics_to_measure["topographic_similarity"]<self.n_epochs:
             topographic_similarity = self.stored_metrics["topographic_similarity"][-1]
             for i, sender_id in enumerate(self.population.sender_names):
                 self.writer.add_scalar(f'{sender_id}/Topographic similarity',
                                        topographic_similarity[i],
                                        iter)
 
-        if self.metrics_to_measure["external_receiver_evaluation"]:
+        if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
             train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
             top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
             etl = self.stored_metrics["etl"][-1]
@@ -638,32 +638,32 @@ class Evaluator:
 
     def save_metrics(self, save_dir):
 
-        if self.metrics_to_measure["reward_decomposition"]:
+        if self.metrics_to_measure["reward_decomposition"]<self.n_epochs:
             np.save(f"{save_dir}/reward_total.npy",
                     self.stored_metrics["reward"])
             np.save(f"{save_dir}/reward_information.npy",
                     self.stored_metrics["reward_information"])
             np.save(f"{save_dir}/reward_coordination.npy",
                     self.stored_metrics["reward_coordination"])
-        if self.metrics_to_measure["language_similarity"]:
+        if self.metrics_to_measure["language_similarity"]<self.n_epochs:
             np.save(f"{save_dir}/language_similarity.npy",
                     np.stack(self.stored_metrics["language_similarity"]))
-        if self.metrics_to_measure["similarity_to_init_languages"]:
+        if self.metrics_to_measure["similarity_to_init_languages"]<self.n_epochs:
             np.save(f"{save_dir}/language_similarity_to_init.npy",
                     np.stack(self.stored_metrics["similarity_to_init_languages"]))
-        if self.metrics_to_measure["divergence_to_untrained_speakers"]:
+        if self.metrics_to_measure["divergence_to_untrained_speakers"]<self.n_epochs:
             np.save(f"{save_dir}/divergence_to_untrained_speakers.npy",
                     np.stack(self.stored_metrics["divergence_to_untrained_speakers"]))
-        if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
+        if self.metrics_to_measure["accuracy_with_untrained_listeners"]<self.n_epochs:
             np.save(f"{save_dir}/accuracy_with_untrained_listeners.npy",
                     np.stack(self.stored_metrics["accuracy_with_untrained_listeners"]))
-        if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
+        if self.metrics_to_measure["accuracy_with_untrained_speakers"]<self.n_epochs:
             np.save(f"{save_dir}/accuracy_with_untrained_speakers.npy",
                     np.stack(self.stored_metrics["accuracy_with_untrained_speakers"]))
-        if self.metrics_to_measure["topographic_similarity"]:
+        if self.metrics_to_measure["topographic_similarity"]<self.n_epochs:
             np.save(f"{save_dir}/topographic_similarity.npy",
                     np.stack(self.stored_metrics["topographic_similarity"]))
-        if self.metrics_to_measure["external_receiver_evaluation"]:
+        if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
             np.save(f"{save_dir}/external_receiver_train_acc.npy",
                     np.stack(self.stored_metrics["external_receiver_train_acc"]))
             np.save(f"{save_dir}/external_receiver_val_acc.npy",
