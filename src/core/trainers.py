@@ -1063,7 +1063,7 @@ class TrainerCustom(TrainerPopulation):
                                                "sender_log_prob": 0.,
                                                "message_length": 0.}
                 if receiver_id not in mean_metrics:
-                    mean_metrics[receiver_id] = {"accuracy": 0.}
+                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot" : 0.}
 
                 mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
                 mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
