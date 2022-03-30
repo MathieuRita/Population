@@ -542,15 +542,15 @@ class TrainerCustom(TrainerPopulation):
                                                 custom_steps=custom_steps,
                                                 early_stopping=custom_early_stopping)
 
-                self.save_error(epoch=epoch, save=False)
+                #self.save_error(epoch=epoch, save=False)
 
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication_and_mutual_information()
 
-                if epoch % 100 == 0:
-                    self.save_error(epoch=epoch, save=True)
-                else:
-                    self.save_error(epoch=epoch, save=False)
+                #if epoch % 100 == 0:
+                #    self.save_error(epoch=epoch, save=True)
+                #else:
+                #    self.save_error(epoch=epoch, save=False)
 
 
             else:
