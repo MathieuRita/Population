@@ -115,7 +115,7 @@ class Evaluator:
             self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
             self.stored_metrics["etl"].append(etl)
 
-        if self.writer is not None:
+        if epoch % self.metrics_to_measure["writing"] == 0 and self.writer is not None:
             self.log_metrics(iter=epoch)
 
     def evaluate_mi_with_optimal_listener(self) -> defaultdict():
