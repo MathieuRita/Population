@@ -162,7 +162,7 @@ class Evaluator:
                         optimal_listener.tasks[task]["optimizer"].step()
 
                         mean_loss_value += optimal_listener.tasks[task]["loss_value"].item()
-                        batch += 1
+                        n_batch += 1
 
                     mean_loss_value /= n_batch
                     step += 1
