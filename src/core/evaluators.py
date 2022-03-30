@@ -637,8 +637,8 @@ class Evaluator:
                                        iter)
 
         if self.metrics_to_measure["MI"]<self.n_epochs:
-            for sender in self.metrics_to_measure["MI"]:
-                mi_value = self.metrics_to_measure["MI"][sender][-1]
+            for sender in self.stored_metrics["MI"]:
+                mi_value = self.stored_metrics["MI"][sender][-1]
                 self.writer.add_scalar(f'{sender_id}/MI',
                                        mi_value,
                                        iter)
