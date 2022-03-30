@@ -879,7 +879,7 @@ class TrainerCustom(TrainerPopulation):
         self.writer.add_scalar(f'{optimal_listener_id}/Loss val sp',
                                mean_train_loss / 5, epoch)
 
-    def pretrain_language_model(self, epoch: int, threshold=1e-2):
+    def pretrain_language_model(self, threshold=1e-2):
 
         self.game.train()
 
@@ -906,6 +906,8 @@ class TrainerCustom(TrainerPopulation):
         mean_metrics = {}
 
         self.game.train()
+
+        self.pretrain_language_model()
 
         for batch in self.train_loader:
 
