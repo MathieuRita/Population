@@ -35,13 +35,13 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
         self.broadcasting = broadcasting
         self.mode = mode
         self.seed = seed
-
-    def __iter__(self):
-
-        if self.seed is None:
+        if seed is None:
             seed = np.random.randint(0, 2 ** 32)
         else:
-            seed = self.seed
+            self.seed = seed
+        self.random_state = np.random.RandomState(self.seed)
+
+    def __iter__(self):
 
         return _ReconstructionIterator(data=self.data,
                                        agent_names=self.agent_names,
@@ -53,7 +53,7 @@ class ReconstructionDataLoader(th.utils.data.DataLoader):
                                        task=self.task,
                                        broadcasting=self.broadcasting,
                                        mode=self.mode,
-                                       seed=seed)
+                                       random_state=self.random_state)
 
 
 class _ReconstructionIterator():
@@ -69,7 +69,7 @@ class _ReconstructionIterator():
                  task: str = "communication",
                  broadcasting: bool = False,
                  mode: str = "train",
-                 seed: int = 10):
+                 random_state = None):
 
         self.data = data
         self.agent_names = agent_names
@@ -84,7 +84,7 @@ class _ReconstructionIterator():
         self.batches_generated = 0
         self.mode = mode
         self.task = task
-        self.random_state = np.random.RandomState(seed)
+        self.random_state = random_state
 
     def __iter__(self):
         return self
@@ -106,7 +106,7 @@ class _ReconstructionIterator():
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]
         batch_ids = self.random_state.choice(len(split_ids),
                                              size=self.batch_size,
-                                             replace=True)
+                                             replace=False)
 
         batch_data = self.data[split_ids[batch_ids]]
 
@@ -359,7 +359,7 @@ def split_data_into_population(dataset_size: int,
             data_split[agent_name] = {}
             data_split[agent_name]["train_split"] = train_split
             data_split[agent_name]["val_split"] = val_split
-            data_split[agent_name]["MI_split"] = train_split
+            data_split[agent_name]["MI_split"] = random_permut
 
     else:
         raise "Specify a known population dataset type"

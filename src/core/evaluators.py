@@ -5,6 +5,7 @@ from .utils import move_to, find_lengths
 import torch.nn.functional as F
 from .language_metrics import compute_language_similarity
 from .agents import get_agent
+from collections import defaultdict
 
 
 class Evaluator:
@@ -15,6 +16,7 @@ class Evaluator:
                  dump_batch,
                  train_loader,
                  val_loader,
+                 mi_loader,
                  agent_repertory,
                  game_params,
                  eval_receiver_id,
@@ -26,6 +28,7 @@ class Evaluator:
         self.dump_batch = dump_batch
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.mi_loader = mi_loader
         self.agent_repertory = agent_repertory
         self.game_params = game_params
         self.eval_receiver_id = eval_receiver_id
@@ -57,41 +60,54 @@ class Evaluator:
             self.stored_metrics["external_receiver_train_acc"] = list()
             self.stored_metrics["external_receiver_val_acc"] = list()
             self.stored_metrics["etl"] = list()
+        if self.metrics_to_measure["MI"]:
+            self.stored_metrics["MI"] = defaultdict(list)
 
     def step(self,
              epoch: int) -> None:
 
-        if self.metrics_to_measure["reward_decomposition"]:
+        if self.metrics_to_measure["reward_decomposition"] % epoch == 0:
             reward_total, reward_information, reward_coordination = self.reward_decomposition()
             self.stored_metrics["reward"].append(reward_total)
             self.stored_metrics["reward_coordination"].append(reward_coordination)
             self.stored_metrics["reward_information"].append(reward_information)
 
-        if self.metrics_to_measure["language_similarity"]:
+        if self.metrics_to_measure["language_similarity"] % epoch == 0:
             similarity_matrix = self.evaluate_language_similarity(n_samples=10)
             self.stored_metrics["language_similarity"].append(similarity_matrix)
 
-        if self.metrics_to_measure["similarity_to_init_languages"]:
+        if self.metrics_to_measure["similarity_to_init_languages"] % epoch == 0:
             similarity_to_init_languages = self.evaluate_distance_from_init_language(n_samples=10)
             self.stored_metrics["similarity_to_init_languages"].append(similarity_to_init_languages)
 
-        if self.metrics_to_measure["divergence_to_untrained_speakers"]:
+        if self.metrics_to_measure["divergence_to_untrained_speakers"] % epoch == 0:
             divergence_matrix = self.divergence_to_untrained_speakers(n_samples=50)
             self.stored_metrics["divergence_to_untrained_speakers"].append(divergence_matrix)
 
-        if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
+        if self.metrics_to_measure["accuracy_with_untrained_speakers"] % epoch == 0:
             accuracy_with_untrained_speakers = self.accuracy_with_untrained_speakers()
             self.stored_metrics["accuracy_with_untrained_speakers"].append(accuracy_with_untrained_speakers)
 
-        if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
+        if self.metrics_to_measure["accuracy_with_untrained_listeners"] % epoch == 0:
             accuracy_with_untrained_listeners = self.accuracy_with_untrained_listeners()
             self.stored_metrics["accuracy_with_untrained_listeners"].append(accuracy_with_untrained_listeners)
 
-        if self.metrics_to_measure["topographic_similarity"]:
+        if self.metrics_to_measure["topographic_similarity"] % epoch == 0:
             top_sim = self.evaluate_topographic_similarity()
             self.stored_metrics["topographic_similarity"].append(top_sim)
 
-        if self.metrics_to_measure["external_receiver_evaluation"]:
+        if self.metrics_to_measure["external_receiver_evaluation"] % epoch == 0:
+            train_acc, top_val_acc, etl = self.evaluate_external_receiver()
+            self.stored_metrics["external_receiver_train_acc"].append(train_acc)
+            self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
+            self.stored_metrics["etl"].append(etl)
+
+        if self.metrics_to_measure["MI"] % epoch == 0:
+            mi_values = self.evaluate_mi_with_optimal_listener()
+            for sender in mi_values:
+                self.stored_metrics["MI"][sender].append(mi_values[sender])
+
+        if self.metrics_to_measure["external_receiver_evaluation"] % epoch == 0:
             train_acc, top_val_acc, etl = self.evaluate_external_receiver()
             self.stored_metrics["external_receiver_train_acc"].append(train_acc)
             self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
@@ -100,7 +116,70 @@ class Evaluator:
         if self.writer is not None:
             self.log_metrics(iter=epoch)
 
-    def evaluate_external_receiver(self,n_step_train:int=200,early_stopping:bool=True):
+    def evaluate_mi_with_optimal_listener(self) -> defaultdict():
+
+        mi_values = defaultdict()
+
+        for sender_id in self.population.sender_names:
+
+            # MI train
+            if self.population.agents[sender_id].optimal_listener is not None:
+                # TRAIN TIL CONVERGENCE
+
+                agent_sender = self.population.agents[sender_id]
+                optimal_listener_id = agent_sender.optimal_listener
+                optimal_listener = self.population.agents[optimal_listener_id]
+
+                model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                   list(optimal_listener.object_decoder.parameters())
+                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                                     lr=0.0005)
+
+                prev_loss_value = [0.]
+                step = 0
+                task = "communication"
+
+                continue_optimal_listener_training = True
+
+                while continue_optimal_listener_training:
+
+                    self.game.train()
+
+                    mean_loss_value = 0.
+                    n_batch = 0
+
+                    for batch in self.mi_loader:
+                        inputs, sender_id = batch.data, batch.sender_id
+                        inputs = inputs[th.randperm(inputs.size()[0])]
+                        batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+                        _ = self.game(batch)
+
+                        optimal_listener.tasks[task]["optimizer"].zero_grad()
+                        optimal_listener.tasks[task]["loss_value"].backward()
+                        optimal_listener.tasks[task]["optimizer"].step()
+
+                        mean_loss_value += optimal_listener.tasks[task]["loss_value"].item()
+                        batch += 1
+
+                    mean_loss_value /= n_batch
+                    step += 1
+
+                    if (len(prev_loss_value) > 9 and abs(mean_loss_value - np.mean(prev_loss_value)) < 10e-3) or \
+                            step > 50:
+                        continue_optimal_listener_training = False
+                        prev_loss_value.append(mean_loss_value)
+                        prev_loss_value.pop(0)
+                    else:
+                        prev_loss_value.append(mean_loss_value)
+                        if len(prev_loss_value) > 10:
+                            prev_loss_value.pop(0)
+
+                mi_values[sender_id] = prev_loss_value[-1]
+
+        return mi_values
+
+    def evaluate_external_receiver(self, n_step_train: int = 200, early_stopping: bool = True):
 
         train_accs = np.zeros(len(self.population.sender_names))
         top_val_accs = np.zeros(len(self.population.sender_names))
@@ -126,8 +205,8 @@ class Evaluator:
 
                 self.game.train()
 
-                mean_train_acc=0.
-                n_batch=0
+                mean_train_acc = 0.
+                n_batch = 0
 
                 # for batch in self.train_loader:
                 for _ in range(1):
@@ -137,7 +216,7 @@ class Evaluator:
 
                     task = "communication"
 
-                    batch = move_to((batch.data,sender_id,self.eval_receiver_id), self.device)
+                    batch = move_to((batch.data, sender_id, self.eval_receiver_id), self.device)
                     metrics = self.game(batch, compute_metrics=True)
 
                     eval_receiver.tasks[task]["optimizer"].zero_grad()
@@ -145,9 +224,9 @@ class Evaluator:
                     eval_receiver.tasks[task]["optimizer"].step()
 
                     mean_train_acc += metrics["accuracy"].detach().item()
-                    n_batch+=1
+                    n_batch += 1
 
-                train_accuracies.append(mean_train_acc/n_batch)
+                train_accuracies.append(mean_train_acc / n_batch)
 
                 self.game.eval()
 
@@ -166,30 +245,30 @@ class Evaluator:
                         mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
                         n_batch += 1
 
-                val_accuracies.append(mean_val_acc/n_batch)
-                val_losses.append(mean_val_loss/n_batch)
+                val_accuracies.append(mean_val_acc / n_batch)
+                val_losses.append(mean_val_loss / n_batch)
 
-                step+=1
+                step += 1
 
                 if early_stopping:
-                    continue_training = not (len(val_losses)>20 and (val_losses[-1]>np.mean(val_losses[-20:])-0.0001) \
-                                        or step==1000)
+                    continue_training = not (
+                            len(val_losses) > 20 and (val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) \
+                            or step == 1000)
                 else:
-                    continue_training = (step>n_step_train)
+                    continue_training = (step > n_step_train)
 
             train_acc = np.min(train_accuracies[-5:])
             top_val_acc = np.max(val_accuracies[-5:])
-            if len(np.where(np.array(train_accuracies)>0.98)[0]):
-                etl = np.min(np.where(np.array(train_accuracies)>0.98)[0])
+            if len(np.where(np.array(train_accuracies) > 0.98)[0]):
+                etl = np.min(np.where(np.array(train_accuracies) > 0.98)[0])
             else:
-                etl=-1
+                etl = -1
 
             train_accs[i] = train_acc
             top_val_accs[i] = top_val_acc
             etls[i] = etl
 
         return train_accs, top_val_accs, etls
-
 
     def save_messages(self, save_dir):
 
@@ -296,9 +375,9 @@ class Evaluator:
 
                 # Sample pairs of messages ; inputs
                 idx = np.random.randint(0, inputs_np.shape[0], n_pairs * 2)
-                inputs_pairs = inputs_np[idx].reshape((n_pairs,2,-1))
-                messages_pairs = messages.cpu().numpy()[idx].reshape((n_pairs,2,-1))
-                messages_len_pairs = messages_len.cpu().numpy()[idx].reshape((n_pairs,2))
+                inputs_pairs = inputs_np[idx].reshape((n_pairs, 2, -1))
+                messages_pairs = messages.cpu().numpy()[idx].reshape((n_pairs, 2, -1))
+                messages_len_pairs = messages_len.cpu().numpy()[idx].reshape((n_pairs, 2))
 
                 if dist_input == "common_attributes":
                     distances_inputs = np.mean(1 - 1 * ((inputs_pairs[:, 0, :] - inputs_pairs[:, 1, :]) == 0), axis=1)
@@ -554,7 +633,6 @@ class Evaluator:
                 self.writer.add_scalar(f'{sender_id}/ETL',
                                        etl[i],
                                        iter)
-
 
     def save_metrics(self, save_dir):
 
