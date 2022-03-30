@@ -70,12 +70,12 @@ def accuracy(inputs,
             receiver_output = receiver_output.argmax(dim=2)
 
         # Accuracy
-        acc = 1 * (inputs == receiver_output)  # [batch_size,n_attributes]
+        acc = (inputs == receiver_output)  # [batch_size,n_attributes]
 
         if all_attributes_equal:
             acc = 1 * th.all(acc, dim=1)  # [batch_size]
         else:
-            acc = acc.float().mean(dim=1)  # [batch_size]
+            acc = (1 * acc).float().mean(dim=1)  # [batch_size]
 
     elif game_mode == "referential":
         acc = 1 * (receiver_output.argmax(dim=1) == idx_correct_object).float()
