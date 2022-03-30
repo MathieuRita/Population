@@ -66,48 +66,48 @@ class Evaluator:
     def step(self,
              epoch: int) -> None:
 
-        if self.metrics_to_measure["reward_decomposition"] % epoch == 0:
+        if epoch % self.metrics_to_measure["reward_decomposition"]:
             reward_total, reward_information, reward_coordination = self.reward_decomposition()
             self.stored_metrics["reward"].append(reward_total)
             self.stored_metrics["reward_coordination"].append(reward_coordination)
             self.stored_metrics["reward_information"].append(reward_information)
 
-        if self.metrics_to_measure["language_similarity"] % epoch == 0:
+        if epoch % self.metrics_to_measure["language_similarity"]:
             similarity_matrix = self.evaluate_language_similarity(n_samples=10)
             self.stored_metrics["language_similarity"].append(similarity_matrix)
 
-        if self.metrics_to_measure["similarity_to_init_languages"] % epoch == 0:
+        if epoch % self.metrics_to_measure["similarity_to_init_languages"] == 0:
             similarity_to_init_languages = self.evaluate_distance_from_init_language(n_samples=10)
             self.stored_metrics["similarity_to_init_languages"].append(similarity_to_init_languages)
 
-        if self.metrics_to_measure["divergence_to_untrained_speakers"] % epoch == 0:
+        if epoch % self.metrics_to_measure["divergence_to_untrained_speakers"] == 0:
             divergence_matrix = self.divergence_to_untrained_speakers(n_samples=50)
             self.stored_metrics["divergence_to_untrained_speakers"].append(divergence_matrix)
 
-        if self.metrics_to_measure["accuracy_with_untrained_speakers"] % epoch == 0:
+        if epoch % self.metrics_to_measure["accuracy_with_untrained_speakers"] == 0:
             accuracy_with_untrained_speakers = self.accuracy_with_untrained_speakers()
             self.stored_metrics["accuracy_with_untrained_speakers"].append(accuracy_with_untrained_speakers)
 
-        if self.metrics_to_measure["accuracy_with_untrained_listeners"] % epoch == 0:
+        if epoch % self.metrics_to_measure["accuracy_with_untrained_listeners"] == 0:
             accuracy_with_untrained_listeners = self.accuracy_with_untrained_listeners()
             self.stored_metrics["accuracy_with_untrained_listeners"].append(accuracy_with_untrained_listeners)
 
-        if self.metrics_to_measure["topographic_similarity"] % epoch == 0:
+        if epoch % self.metrics_to_measure["topographic_similarity"] == 0:
             top_sim = self.evaluate_topographic_similarity()
             self.stored_metrics["topographic_similarity"].append(top_sim)
 
-        if self.metrics_to_measure["external_receiver_evaluation"] % epoch == 0:
+        if epoch % self.metrics_to_measure["external_receiver_evaluation"] == 0:
             train_acc, top_val_acc, etl = self.evaluate_external_receiver()
             self.stored_metrics["external_receiver_train_acc"].append(train_acc)
             self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
             self.stored_metrics["etl"].append(etl)
 
-        if self.metrics_to_measure["MI"] % epoch == 0:
+        if epoch % self.metrics_to_measure["MI"] == 0:
             mi_values = self.evaluate_mi_with_optimal_listener()
             for sender in mi_values:
                 self.stored_metrics["MI"][sender].append(mi_values[sender])
 
-        if self.metrics_to_measure["external_receiver_evaluation"] % epoch == 0:
+        if epoch % self.metrics_to_measure["external_receiver_evaluation"] == 0:
             train_acc, top_val_acc, etl = self.evaluate_external_receiver()
             self.stored_metrics["external_receiver_train_acc"].append(train_acc)
             self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
