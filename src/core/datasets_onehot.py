@@ -105,7 +105,7 @@ class _ReconstructionIterator():
         # Sample batch from sender_id's split
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]
         batch_ids = self.random_state.choice(len(split_ids),
-                                             size=self.batch_size,
+                                             size=min(self.batch_size,len(split_ids)),
                                              replace=False)
 
         batch_data = self.data[split_ids[batch_ids]]
