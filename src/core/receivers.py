@@ -178,7 +178,7 @@ def build_receiver(receiver_params, game_params):
                                              receiver_hidden_size=receiver_hidden_size,
                                              voc_size=voc_size,
                                              max_len=max_len)
-    if receiver_type == "recurrent_layernorm":
+    elif receiver_type == "recurrent_layernorm":
         message_encoder = RecurrentProcessorLayerNorm(receiver_cell=receiver_cell,
                                                       receiver_embed_dim=receiver_embed_dim,
                                                       receiver_num_layers=receiver_num_layers,
