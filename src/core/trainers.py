@@ -752,6 +752,7 @@ class TrainerCustom(TrainerPopulation):
                 _ = self.game(batch)
 
                 mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
+                n_batch+=1
 
         self.writer.add_scalar(f'{receiver_id}_reset/Loss val sp',mean_val_loss/n_batch, epoch)
 
