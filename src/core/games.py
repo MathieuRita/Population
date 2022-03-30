@@ -79,6 +79,9 @@ class ReconstructionGame(nn.Module):
         if compute_metrics:
             # accuracy
             metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            # accuracy tot
+            metrics["accuracy_tot"] = accuracy(inputs, output_receiver, game_mode="reconstruction",
+                                               all_attributes_equal=True).mean()
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Sender log prob
@@ -116,7 +119,7 @@ class ReconstructionGame(nn.Module):
         """
 
         agent_sender = self.population.agents[sender_id]
-        accuracies = {}
+        accuracies, accuracies_tot = {}, {}
 
         # Agent Sender sends message based on input
         inputs_embedding = agent_sender.encode_object(inputs)
@@ -132,6 +135,8 @@ class ReconstructionGame(nn.Module):
             message_embedding = agent_receiver.receive(messages)
             output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
             accuracies[receiver_id] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            accuracies_tot[receiver_id] = accuracy(inputs, output_receiver, game_mode="reconstruction",
+                                                    all_attributes_equal=True).mean()
 
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver).detach()
@@ -163,6 +168,8 @@ class ReconstructionGame(nn.Module):
         if compute_metrics:
             # accuracy
             metrics["accuracy"] = accuracies
+            # accuracy
+            metrics["accuracy_tot"] = accuracies_tot
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Sender log prob
@@ -284,6 +291,9 @@ class ReconstructionGame(nn.Module):
         if compute_metrics:
             # accuracy
             metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            # accuracy tot
+            metrics["accuracy_tot"] = accuracy(inputs, output_receiver, game_mode="reconstruction",
+                                               all_attributes_equal=True).mean()
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Sender log prob

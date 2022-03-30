@@ -147,17 +147,20 @@ class TrainerPopulation(object):
                 # Store metrics
                 if sender_id not in mean_metrics:
                     mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "accuracy_tot": 0.,
                                                "sender_entropy": 0.,
                                                "sender_log_prob": 0.,
                                                "message_length": 0.}
                 if receiver_id not in mean_metrics:
-                    mean_metrics[receiver_id] = {"accuracy": 0.}
+                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.}
 
                 mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
+                mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"]
                 mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                 mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                 mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
+                mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
@@ -213,6 +216,7 @@ class TrainerPopulation(object):
                 # Store metrics
                 if sender_id not in mean_metrics:
                     mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "accuracy_tot":0.,
                                                "sender_entropy": 0.,
                                                "sender_log_prob": 0.,
                                                "message_length": 0.}
@@ -235,13 +239,15 @@ class TrainerPopulation(object):
                 if compute_metrics:
 
                     if receiver_id not in mean_metrics:
-                        mean_metrics[receiver_id] = {"accuracy": 0.}
+                        mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.}
 
                     mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                    mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
                     mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                     mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
                     mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                     mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                    mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
@@ -289,13 +295,18 @@ class TrainerPopulation(object):
                 if compute_metrics:
                     # Store metrics
                     if sender_id not in mean_metrics:
-                        mean_metrics[sender_id] = {"accuracy": 0., "sender_entropy": 0., "message_length": 0.}
+                        mean_metrics[sender_id] = {"accuracy": 0.,
+                                                   "accuracy_tot" : 0.,
+                                                   "sender_entropy": 0.,
+                                                   "message_length": 0.}
                     if receiver_id not in mean_metrics:
-                        mean_metrics[receiver_id] = {"accuracy": 0.}
+                        mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.}
                     mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
+                    mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"]
                     mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                     mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                     mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
+                    mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
 
             mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                                  for sender_id in mean_loss_senders}
@@ -329,6 +340,8 @@ class TrainerPopulation(object):
                     if task == "communication":
                         self.writer.add_scalar(f'{sender}/accuracy (train)',
                                                train_metrics[sender]['accuracy'], epoch)
+                        self.writer.add_scalar(f'{sender}/accuracy tot (train)',
+                                               train_metrics[sender]['accuracy_tot'], epoch)
                         self.writer.add_scalar(f'{sender}/Language entropy (train)',
                                                train_metrics[sender]['sender_entropy'], epoch)
                         self.writer.add_scalar(f'{sender}/Sender log prob',
@@ -345,6 +358,8 @@ class TrainerPopulation(object):
                     if task == "communication":
                         self.writer.add_scalar(f'{receiver}/accuracy (train)',
                                                train_metrics[receiver]['accuracy'], epoch)
+                        self.writer.add_scalar(f'{receiver}/accuracy tot (train)',
+                                               train_metrics[receiver]['accuracy_tot'], epoch)
 
         # Imitation
         if train_imitation_loss_senders is not None:
@@ -366,6 +381,8 @@ class TrainerPopulation(object):
                     if task == "communication":
                         self.writer.add_scalar(f'{sender}/accuracy (train)',
                                                train_metrics[sender]['accuracy'], epoch)
+                        self.writer.add_scalar(f'{sender}/accuracy tot (train)',
+                                               train_metrics[sender]['accuracy_tot'], epoch)
                         self.writer.add_scalar(f'{sender}/Language entropy (train)',
                                                train_metrics[sender]['sender_entropy'], epoch)
                         self.writer.add_scalar(f'{sender}/Sender log prob',
@@ -381,6 +398,8 @@ class TrainerPopulation(object):
 
                 self.writer.add_scalar(f'{sender}/accuracy (val)',
                                        val_metrics[sender]['accuracy'], epoch)
+                self.writer.add_scalar(f'{sender}/accuracy tot (val)',
+                                       val_metrics[sender]['accuracy_tot'], epoch)
                 self.writer.add_scalar(f'{sender}/Language entropy (val)',
                                        val_metrics[sender]['sender_entropy'], epoch)
                 self.writer.add_scalar(f'{sender}/Messages length (val)',
@@ -392,6 +411,8 @@ class TrainerPopulation(object):
 
                 self.writer.add_scalar(f'{receiver}/accuracy (val)',
                                        val_metrics[receiver]['accuracy'], epoch)
+                self.writer.add_scalar(f'{receiver}/accuracy tot (val)',
+                                       val_metrics[receiver]['accuracy_tot'], epoch)
 
 
 class PretrainingTrainer:
@@ -1037,6 +1058,7 @@ class TrainerCustom(TrainerPopulation):
                 # Store metrics
                 if sender_id not in mean_metrics:
                     mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "accuracy_tot" : 0.,
                                                "sender_entropy": 0.,
                                                "sender_log_prob": 0.,
                                                "message_length": 0.}
@@ -1044,10 +1066,12 @@ class TrainerCustom(TrainerPopulation):
                     mean_metrics[receiver_id] = {"accuracy": 0.}
 
                 mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
                 mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                 mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                 mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
