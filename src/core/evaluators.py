@@ -20,11 +20,13 @@ class Evaluator:
                  agent_repertory,
                  game_params,
                  eval_receiver_id,
+                 n_epochs,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  device: str = "cpu") -> None:
 
         self.game = game
         self.population = game.population
+        self.n_epochs = n_epochs
         self.dump_batch = dump_batch
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -40,27 +42,27 @@ class Evaluator:
         self.metrics_to_measure = metrics_to_measure
         self.stored_metrics = {}
 
-        if self.metrics_to_measure["reward_decomposition"]:
+        if self.metrics_to_measure["reward_decomposition"]<self.n_epochs:
             self.stored_metrics["reward"] = list()
             self.stored_metrics["reward_coordination"] = list()
             self.stored_metrics["reward_information"] = list()
-        if self.metrics_to_measure["language_similarity"]:
+        if self.metrics_to_measure["language_similarity"]<self.n_epochs:
             self.stored_metrics["language_similarity"] = list()
-        if self.metrics_to_measure["similarity_to_init_languages"]:
+        if self.metrics_to_measure["similarity_to_init_languages"]<self.n_epochs:
             self.stored_metrics["similarity_to_init_languages"] = list()
-        if self.metrics_to_measure["divergence_to_untrained_speakers"]:
+        if self.metrics_to_measure["divergence_to_untrained_speakers"]<self.n_epochs:
             self.stored_metrics["divergence_to_untrained_speakers"] = list()
-        if self.metrics_to_measure["accuracy_with_untrained_speakers"]:
+        if self.metrics_to_measure["accuracy_with_untrained_speakers"]<self.n_epochs:
             self.stored_metrics["accuracy_with_untrained_speakers"] = list()
-        if self.metrics_to_measure["accuracy_with_untrained_listeners"]:
+        if self.metrics_to_measure["accuracy_with_untrained_listeners"]<self.n_epochs:
             self.stored_metrics["accuracy_with_untrained_listeners"] = list()
-        if self.metrics_to_measure["topographic_similarity"]:
+        if self.metrics_to_measure["topographic_similarity"]<self.n_epochs:
             self.stored_metrics["topographic_similarity"] = list()
-        if self.metrics_to_measure["external_receiver_evaluation"]:
+        if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
             self.stored_metrics["external_receiver_train_acc"] = list()
             self.stored_metrics["external_receiver_val_acc"] = list()
             self.stored_metrics["etl"] = list()
-        if self.metrics_to_measure["MI"]:
+        if self.metrics_to_measure["MI"]<self.n_epochs:
             self.stored_metrics["MI"] = defaultdict(list)
 
     def step(self,
@@ -679,9 +681,11 @@ def build_evaluator(metrics_to_measure,
                     agent_repertory,
                     game_params,
                     eval_receiver_id,
+                    n_epochs,
                     logger: th.utils.tensorboard.SummaryWriter = None,
                     device: str = "cpu"):
     evaluator = Evaluator(metrics_to_measure=metrics_to_measure,
+                          n_epochs=n_epochs,
                           game=game,
                           logger=logger,
                           dump_batch=dump_batch,

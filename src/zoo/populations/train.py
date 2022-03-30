@@ -147,6 +147,7 @@ def main(params):
                                 agent_repertory=agent_repertory,
                                 game_params=game_params,
                                 eval_receiver_id=training_params["eval_receiver_id"],
+                                n_epochs=training_params["n_epochs"],
                                 dump_batch=(full_dataset,
                                             population.agent_names[0],
                                             population.agent_names[1]))
