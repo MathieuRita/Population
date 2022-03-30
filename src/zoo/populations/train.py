@@ -143,6 +143,7 @@ def main(params):
                                 logger=logger,
                                 train_loader=train_loader,
                                 val_loader=val_loader,
+                                mi_loader = mi_loader,
                                 agent_repertory=agent_repertory,
                                 game_params=game_params,
                                 eval_receiver_id=training_params["eval_receiver_id"],

@@ -4,24 +4,23 @@ from .utils import find_lengths
 
 cell_types = {'rnn': nn.RNN, 'gru': nn.GRU, 'LSTM': nn.LSTM}
 
+
 class Receiver(nn.Module):
 
     def __init__(self,
-                 message_encoder : nn.Module):
-
+                 message_encoder: nn.Module):
         super(Receiver, self).__init__()
 
         self.message_encoder = message_encoder
 
-    def forward(self,message,context=None):
-
+    def forward(self, message, context=None):
         embedding = self.message_encoder(message)
 
         return embedding
 
     def reset_parameters(self):
-
         self.message_encoder.reset_parameters()
+
 
 # MessageProcessor classes
 
@@ -86,6 +85,7 @@ class RecurrentProcessor(nn.Module):
 
         return encoded
 
+
 class RecurrentProcessorLayerNorm(nn.Module):
 
     def __init__(self,
@@ -134,22 +134,22 @@ class RecurrentProcessorLayerNorm(nn.Module):
 
         embedding = self.receiver_embedding(message)
 
-        prev_hidden = [th.zeros((embedding.size(0),self.receiver_hidden_size),device=embedding.device)
-                            for _ in range(self.receiver_num_layers)]
-        prev_c = [th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers)]   # only used for LSTM
+        prev_hidden = [th.zeros((embedding.size(0), self.receiver_hidden_size), device=embedding.device)
+                       for _ in range(self.receiver_num_layers)]
+        prev_c = [th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers)]  # only used for LSTM
 
-        #if message_lengths is None:
+        # if message_lengths is None:
         #    message_lengths = find_lengths(message)
 
         for step in range(self.max_len):
             for i, layer in enumerate(self.receiver_cells):
                 if isinstance(layer, nn.LSTMCell):
-                    h_t, c_t = layer(embedding[:,step], (prev_hidden[i], prev_c[i]))
+                    h_t, c_t = layer(embedding[:, step], (prev_hidden[i], prev_c[i]))
                     h_t = self.receiver_norm_h(h_t)
                     c_t = self.receiver_norm_c(c_t)
                     prev_c[i] = c_t
                 else:
-                    h_t = layer(embedding[:,step], prev_hidden[i])
+                    h_t = layer(embedding[:, step], prev_hidden[i])
                     h_t = self.receiver_norm_h(h_t)
                 prev_hidden[i] = h_t
 
@@ -158,8 +158,7 @@ class RecurrentProcessorLayerNorm(nn.Module):
         return encoded
 
 
-def build_receiver(receiver_params,game_params):
-
+def build_receiver(receiver_params, game_params):
     # Network params
     receiver_type = receiver_params["receiver_type"]
     receiver_cell = receiver_params["receiver_cell"]
@@ -174,14 +173,21 @@ def build_receiver(receiver_params,game_params):
     # Message processor
     if receiver_type == "recurrent":
         message_encoder = RecurrentProcessor(receiver_cell=receiver_cell,
-                                                       receiver_embed_dim=receiver_embed_dim,
-                                                       receiver_num_layers=receiver_num_layers,
-                                                       receiver_hidden_size=receiver_hidden_size,
-                                                       voc_size=voc_size,
-                                                       max_len=max_len)
+                                             receiver_embed_dim=receiver_embed_dim,
+                                             receiver_num_layers=receiver_num_layers,
+                                             receiver_hidden_size=receiver_hidden_size,
+                                             voc_size=voc_size,
+                                             max_len=max_len)
+    if receiver_type == "recurrent_layernorm":
+        message_encoder = RecurrentProcessorLayerNorm(receiver_cell=receiver_cell,
+                                                      receiver_embed_dim=receiver_embed_dim,
+                                                      receiver_num_layers=receiver_num_layers,
+                                                      receiver_hidden_size=receiver_hidden_size,
+                                                      voc_size=voc_size,
+                                                      max_len=max_len)
     else:
         raise "Specify a known receiver type"
 
-    receiver = Receiver(message_encoder = message_encoder)
+    receiver = Receiver(message_encoder=message_encoder)
 
     return receiver
