@@ -263,7 +263,7 @@ class ReconstructionGame(nn.Module):
         reward_communication = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                           receiver_output=output_receiver).detach()
 
-        p_x = th.Tensor([1 / (6**6)]).to("cuda")
+        p_x = th.Tensor([4000]).to("cuda")
 
         reward_kl = th.log(prob_lm).detach() + reward_communication \
                     - th.log(p_x) - (log_prob_sender.detach() * mask_eos.detach()).sum(dim=1)
