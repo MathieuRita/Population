@@ -636,6 +636,13 @@ class Evaluator:
                                        etl[i],
                                        iter)
 
+        if self.metrics_to_measure["MI"]<self.n_epochs:
+            for sender in self.metrics_to_measure["MI"]:
+                mi_value = self.metrics_to_measure["MI"][sender][-1]
+                self.writer.add_scalar(f'{sender_id}/MI',
+                                       mi_value,
+                                       iter)
+
     def save_metrics(self, save_dir):
 
         if self.metrics_to_measure["reward_decomposition"]<self.n_epochs:

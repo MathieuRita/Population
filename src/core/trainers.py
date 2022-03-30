@@ -536,7 +536,7 @@ class TrainerCustom(TrainerPopulation):
 
                 self.reset_agents()
 
-                self.pretrain_optimal_listener(epoch=epoch)
+                #self.pretrain_optimal_listener(epoch=epoch)
 
                 self.custom_train_communication(epoch=epoch,
                                                 custom_steps=custom_steps,
@@ -609,7 +609,6 @@ class TrainerCustom(TrainerPopulation):
 
                 for batch in self.train_loader:
 
-                #batch = next(iter(self.train_loader))
                     inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
                     inputs = inputs[th.randperm(inputs.size()[0])]
                     agent_receiver = self.population.agents[receiver_id]
@@ -745,8 +744,7 @@ class TrainerCustom(TrainerPopulation):
         self.game.eval()
         with th.no_grad():
             n_batch = 0
-            for batch in self.train_loader:
-                batch = next(iter(self.val_loader))
+            for batch in self.val_loader:
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
                 agent_receiver = self.population.agents[receiver_id]
                 batch = move_to((inputs, sender_id, receiver_id), self.device)
@@ -984,11 +982,7 @@ class TrainerCustom(TrainerPopulation):
 
         self.game.train()
 
-        # for batch in self.train_loader:
-
-        for _ in range(1):
-
-            batch = next(iter(self.train_loader))
+        for batch in self.train_loader:
 
             inputs = batch.data
             inputs = inputs[th.randperm(inputs.size()[0])]
