@@ -66,13 +66,13 @@ class Evaluator:
     def step(self,
              epoch: int) -> None:
 
-        if epoch % self.metrics_to_measure["reward_decomposition"]:
+        if epoch % self.metrics_to_measure["reward_decomposition"] == 0:
             reward_total, reward_information, reward_coordination = self.reward_decomposition()
             self.stored_metrics["reward"].append(reward_total)
             self.stored_metrics["reward_coordination"].append(reward_coordination)
             self.stored_metrics["reward_information"].append(reward_information)
 
-        if epoch % self.metrics_to_measure["language_similarity"]:
+        if epoch % self.metrics_to_measure["language_similarity"] == 0:
             similarity_matrix = self.evaluate_language_similarity(n_samples=10)
             self.stored_metrics["language_similarity"].append(similarity_matrix)
 
