@@ -165,7 +165,7 @@ def main(params):
                             logger=logger)
 
     # Train
-    evaluator.step(0)
+    #evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
                   train_communication_freq=training_params["train_communication_freq"],
