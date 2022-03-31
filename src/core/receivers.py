@@ -158,18 +158,13 @@ class RecurrentProcessorLayerNorm(nn.Module):
         #encoded = prev_hidden[-1]
         hidden_all_positions = th.stack(hidden_all_positions).permute(1,0,2)
         encoded = hidden_all_positions.gather(dim=1,
-                                              index=message_lengths.view(-1,
-                                                                         1,
-                                                                         1).repeat(1,
-                                                                                   1,
-                                                                                   hidden_all_positions.size(-1)))
+                                              index=(message_lengths-1).view(-1,
+                                                                             1,
+                                                                             1).repeat(1,
+                                                                                       1,
+                                                                                       hidden_all_positions.size(-1)))
 
         encoded=encoded.squeeze(1)
-
-        print("hidden_all_positions")
-        print(hidden_all_positions.size())
-        print("encoded")
-        print(encoded.size())
 
         return encoded
 
