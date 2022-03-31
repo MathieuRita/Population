@@ -147,7 +147,7 @@ class Agent(object):
             for el in self.receiver.state_dict():
 
                 if len(self.receiver.state_dict()[el].size())>1:
-                    w = th.empty(self.sender.state_dict()[el].size(),device=self.device)
+                    w = th.empty(self.receiver.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.receiver.state_dict()[el] + \
                                         nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
