@@ -166,6 +166,11 @@ class RecurrentProcessorLayerNorm(nn.Module):
 
         encoded=encoded.squeeze(1)
 
+        print("hidden_all_positions")
+        print(hidden_all_positions.size())
+        print("encoded")
+        print(encoded.size())
+
         return encoded
 
 
