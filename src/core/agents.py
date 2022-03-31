@@ -100,6 +100,56 @@ class Agent(object):
         if self.receiver is not None: self.receiver.reset_parameters()
         if self.object_decoder is not None: self.object_decoder.reset_parameters()
 
+    def weight_noise(self):
+
+        if self.object_decoder is not None:
+            reset_weights = self.object_decoder.state_dict().copy()
+
+            for el in self.object_decoder.state_dict():
+                w = torch.empty(self.object_decoder.state_dict()[el].size())
+
+                reset_weights[el] = self.object_decoder.state_dict()[el] + \
+                                    nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+
+            self.object_decoder.load_state_dict(reset_weights)
+
+        if self.object_encoder is not None:
+            reset_weights = self.object_encoder.state_dict().copy()
+
+            for el in self.object_encoder.state_dict():
+                w = torch.empty(self.object_encoder.state_dict()[el].size())
+
+                reset_weights[el] = self.object_encoder.state_dict()[el] + \
+                                    nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+
+            self.object_encoder.load_state_dict(reset_weights)
+
+        if self.sender is not None:
+            reset_weights = self.sender.state_dict().copy()
+
+            for el in self.sender.state_dict():
+
+                w = torch.empty(self.sender.state_dict()[el].size())
+
+                reset_weights[el] = self.sender.state_dict()[el] + \
+                                    nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+
+            self.sender.load_state_dict(reset_weights)
+
+        if self.receiver is not None:
+
+            reset_weights = self.receiver.state_dict().copy()
+
+            for el in self.receiver.state_dict():
+
+                w = torch.empty(self.sender.state_dict()[el].size())
+
+                reset_weights[el] = self.receiver.state_dict()[el] + \
+                                    nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+
+            self.receiver.load_state_dict(reset_weights)
+
+
     def random_reset(self,reset_level: float = 0.5):
 
         if self.object_encoder is not None:

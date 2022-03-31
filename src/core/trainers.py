@@ -556,14 +556,15 @@ class TrainerCustom(TrainerPopulation):
             # Train Mutual information
             if epoch % train_custom_freq == 0:
 
-                self.reset_agents()
+                #self.reset_agents()
+                self.weigth_noise_listener()
 
                 #self.pretrain_optimal_listener(epoch=epoch)
 
-                self.custom_train_communication(epoch=epoch,
-                                                custom_steps=custom_steps,
-                                                max_steps=max_steps,
-                                                early_stopping=custom_early_stopping)
+                #self.custom_train_communication(epoch=epoch,
+                #                                custom_steps=custom_steps,
+                #                                max_steps=max_steps,
+                #                                early_stopping=custom_early_stopping)
 
                 #self.save_error(epoch=epoch, save=False)
 
@@ -1086,6 +1087,11 @@ class TrainerCustom(TrainerPopulation):
                 mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt][task])
 
         return mean_loss_senders, mean_loss_receivers, mean_metrics
+
+    def weigth_noise_listener(self):
+
+        for receiver_id in self.population.receiver_names:
+            self.population.agents[receiver_id].weight_noise()
 
 
 def build_trainer(game,
