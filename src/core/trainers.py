@@ -562,7 +562,7 @@ class TrainerCustom(TrainerPopulation):
 
                 self.custom_train_communication(epoch=epoch,
                                                 custom_steps=custom_steps,
-                                                max_steps=max_step,
+                                                max_steps=max_steps,
                                                 early_stopping=custom_early_stopping)
 
                 #self.save_error(epoch=epoch, save=False)
