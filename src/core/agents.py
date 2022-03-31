@@ -102,6 +102,8 @@ class Agent(object):
 
     def weight_noise(self):
 
+        alpha=0.01
+
         if self.object_decoder is not None:
             reset_weights = self.object_decoder.state_dict().copy()
 
@@ -110,7 +112,7 @@ class Agent(object):
                     w = th.empty(self.object_decoder.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.object_decoder.state_dict()[el] + \
-                                        nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+                                        alpha*nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
 
             self.object_decoder.load_state_dict(reset_weights)
 
@@ -123,7 +125,7 @@ class Agent(object):
                     w = th.empty(self.object_encoder.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.object_encoder.state_dict()[el] + \
-                                        nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+                                        alpha*nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
 
             self.object_encoder.load_state_dict(reset_weights)
 
@@ -136,7 +138,7 @@ class Agent(object):
                     w = th.empty(self.sender.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.sender.state_dict()[el] + \
-                                        nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+                                        alpha*nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
 
             self.sender.load_state_dict(reset_weights)
 
@@ -150,7 +152,7 @@ class Agent(object):
                     w = th.empty(self.receiver.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.receiver.state_dict()[el] + \
-                                        nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
+                                        alpha*nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
 
             self.receiver.load_state_dict(reset_weights)
 
