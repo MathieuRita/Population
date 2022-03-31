@@ -532,6 +532,7 @@ class TrainerCustom(TrainerPopulation):
               evaluator_freq: int = 1000000,
               print_evolution: bool = True,
               custom_steps: int = 0,
+              max_steps: int = 1000000,
               custom_early_stopping: bool = False):
 
         for epoch in range(self.start_epoch, n_epochs):
@@ -561,6 +562,7 @@ class TrainerCustom(TrainerPopulation):
 
                 self.custom_train_communication(epoch=epoch,
                                                 custom_steps=custom_steps,
+                                                max_steps=max_step,
                                                 early_stopping=custom_early_stopping)
 
                 #self.save_error(epoch=epoch, save=False)
@@ -614,7 +616,8 @@ class TrainerCustom(TrainerPopulation):
                                    compute_metrics: bool = False,
                                    early_stopping: bool = False,
                                    epoch: int = 0,
-                                   custom_steps: int = 0):
+                                   custom_steps: int = 0,
+                                   max_steps : int = 1000000):
         task = "communication"
 
         if early_stopping:
@@ -677,7 +680,7 @@ class TrainerCustom(TrainerPopulation):
                 cond = (len(val_losses) > 20 and (
                             val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) or early_stop_step == 1000)
 
-                if cond:
+                if cond or early_stop_step>max_steps:
                     continue_training = False
 
             self.writer.add_scalar(f'{receiver_id}_reset/early_stop_steps',

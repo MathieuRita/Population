@@ -177,6 +177,7 @@ def main(params):
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],
                   custom_steps=training_params["custom_steps"],
+                  max_steps=training_params["max_steps"],
                   custom_early_stopping=training_params["custom_early_stopping"])
 
     if opts.model_save_dir:
