@@ -295,8 +295,14 @@ def get_agent(agent_name: str,
     for task, task_infos in agent_params["tasks"].items():
         loss = get_loss(loss_infos=task_infos["loss"])
 
+        if "weight_decay" in task_infos:
+            weight_decay = task_infos["weight_decay"]
+        else:
+            weight_decay=0.
+
         optimizer = get_optimizer(model_parameters=model_parameters,
                                   optimizer_name=task_infos["optimizer"],
+                                  weight_decay=weight_decay,
                                   lr=task_infos["lr"])
 
         p_step = task_infos["p_step"]
@@ -344,12 +350,13 @@ def get_agent(agent_name: str,
 
 def get_optimizer(model_parameters: list,
                   optimizer_name: str,
-                  lr: float):
+                  lr: float,
+                  weight_decay : float = 0.):
     optimizers = {'adam': th.optim.Adam,
                   'sgd': th.optim.SGD,
                   'adagrad': th.optim.Adagrad}
 
-    optimizer = optimizers[optimizer_name](model_parameters, lr=lr)
+    optimizer = optimizers[optimizer_name](model_parameters, lr=lr, weight_decay=weight_decay)
 
     return optimizer
 
