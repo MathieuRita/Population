@@ -106,7 +106,7 @@ class Agent(object):
             reset_weights = self.object_decoder.state_dict().copy()
 
             for el in self.object_decoder.state_dict():
-                w = torch.empty(self.object_decoder.state_dict()[el].size())
+                w = th.empty(self.object_decoder.state_dict()[el].size())
 
                 reset_weights[el] = self.object_decoder.state_dict()[el] + \
                                     nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -117,7 +117,7 @@ class Agent(object):
             reset_weights = self.object_encoder.state_dict().copy()
 
             for el in self.object_encoder.state_dict():
-                w = torch.empty(self.object_encoder.state_dict()[el].size())
+                w = th.empty(self.object_encoder.state_dict()[el].size())
 
                 reset_weights[el] = self.object_encoder.state_dict()[el] + \
                                     nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -129,7 +129,7 @@ class Agent(object):
 
             for el in self.sender.state_dict():
 
-                w = torch.empty(self.sender.state_dict()[el].size())
+                w = th.empty(self.sender.state_dict()[el].size())
 
                 reset_weights[el] = self.sender.state_dict()[el] + \
                                     nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -142,7 +142,7 @@ class Agent(object):
 
             for el in self.receiver.state_dict():
 
-                w = torch.empty(self.sender.state_dict()[el].size())
+                w = th.empty(self.sender.state_dict()[el].size())
 
                 reset_weights[el] = self.receiver.state_dict()[el] + \
                                     nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
