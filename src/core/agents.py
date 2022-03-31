@@ -107,7 +107,7 @@ class Agent(object):
 
             for el in self.object_decoder.state_dict():
                 if len(self.object_decoder.state_dict()[el].size()) > 1:
-                    w = th.empty(self.object_decoder.state_dict()[el].size())
+                    w = th.empty(self.object_decoder.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.object_decoder.state_dict()[el] + \
                                         nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -120,7 +120,7 @@ class Agent(object):
             for el in self.object_encoder.state_dict():
 
                 if len(self.object_encoder.state_dict()[el].size()) > 1:
-                    w = th.empty(self.object_encoder.state_dict()[el].size())
+                    w = th.empty(self.object_encoder.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.object_encoder.state_dict()[el] + \
                                         nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -133,7 +133,7 @@ class Agent(object):
             for el in self.sender.state_dict():
 
                 if len(self.sender.state_dict()[el].size()) > 1:
-                    w = th.empty(self.sender.state_dict()[el].size())
+                    w = th.empty(self.sender.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.sender.state_dict()[el] + \
                                         nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
@@ -147,7 +147,7 @@ class Agent(object):
             for el in self.receiver.state_dict():
 
                 if len(self.sender.state_dict()[el].size())>1:
-                    w = th.empty(self.sender.state_dict()[el].size())
+                    w = th.empty(self.sender.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.receiver.state_dict()[el] + \
                                         nn.init.kaiming_uniform_(w, mode='fan_in', nonlinearity='relu')
