@@ -556,22 +556,22 @@ class TrainerCustom(TrainerPopulation):
             # Train Mutual information
             if epoch % train_custom_freq == 0:
 
-                #self.reset_agents()
-                self.weigth_noise_listener()
+                self.reset_agents()
+                #self.weigth_noise_listener()
 
                 #self.pretrain_optimal_listener(epoch=epoch)
 
-                #self.custom_train_communication(epoch=epoch,
-                #                                custom_steps=custom_steps,
-                #                                max_steps=max_steps,
-                #                                early_stopping=custom_early_stopping)
+                self.custom_train_communication(epoch=epoch,
+                                                custom_steps=custom_steps,
+                                                max_steps=max_steps,
+                                                early_stopping=custom_early_stopping)
 
                 #self.save_error(epoch=epoch, save=False)
 
-                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
-                    self.train_communication_and_mutual_information()
                 #train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
-                #    self.train_communication_and_kl()
+                #    self.train_communication_and_mutual_information()
+                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
+                    self.train_communication_and_kl()
 
                 #if epoch % 100 == 0:
                 #    self.save_error(epoch=epoch, save=True)
