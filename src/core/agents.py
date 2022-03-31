@@ -106,7 +106,7 @@ class Agent(object):
             reset_weights = self.object_decoder.state_dict().copy()
 
             for el in self.object_decoder.state_dict():
-                if len(self.sender.state_dict()[el].size()) > 1:
+                if len(self.object_decoder.state_dict()[el].size()) > 1:
                     w = th.empty(self.object_decoder.state_dict()[el].size())
 
                     reset_weights[el] = self.object_decoder.state_dict()[el] + \
@@ -119,7 +119,7 @@ class Agent(object):
 
             for el in self.object_encoder.state_dict():
 
-                if len(self.sender.state_dict()[el].size()) > 1:
+                if len(self.object_encoder.state_dict()[el].size()) > 1:
                     w = th.empty(self.object_encoder.state_dict()[el].size())
 
                     reset_weights[el] = self.object_encoder.state_dict()[el] + \
