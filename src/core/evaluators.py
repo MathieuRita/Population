@@ -61,6 +61,8 @@ class Evaluator:
         if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
             self.stored_metrics["external_receiver_train_acc"] = list()
             self.stored_metrics["external_receiver_val_acc"] = list()
+            self.stored_metrics["external_receiver_train_loss"] = list()
+            self.stored_metrics["external_receiver_val_loss"] = list()
             self.stored_metrics["etl"] = list()
         if self.metrics_to_measure["MI"]<self.n_epochs:
             self.stored_metrics["MI"] = defaultdict(list)
@@ -99,9 +101,11 @@ class Evaluator:
             self.stored_metrics["topographic_similarity"].append(top_sim)
 
         if epoch % self.metrics_to_measure["external_receiver_evaluation"] == 0:
-            train_acc, top_val_acc, etl = self.evaluate_external_receiver()
+            train_acc, top_val_acc, etl, train_loss, val_loss = self.evaluate_external_receiver()
             self.stored_metrics["external_receiver_train_acc"].append(train_acc)
             self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
+            self.stored_metrics["external_receiver_train_loss"].append(train_loss)
+            self.stored_metrics["external_receiver_val_loss"].append(val_loss)
             self.stored_metrics["etl"].append(etl)
 
         if epoch % self.metrics_to_measure["MI"] == 0:
@@ -109,11 +113,6 @@ class Evaluator:
             for sender in mi_values:
                 self.stored_metrics["MI"][sender].append(mi_values[sender])
 
-        if epoch % self.metrics_to_measure["external_receiver_evaluation"] == 0:
-            train_acc, top_val_acc, etl = self.evaluate_external_receiver()
-            self.stored_metrics["external_receiver_train_acc"].append(train_acc)
-            self.stored_metrics["external_receiver_val_acc"].append(top_val_acc)
-            self.stored_metrics["etl"].append(etl)
 
         if epoch % self.metrics_to_measure["writing"] == 0 and self.writer is not None:
             self.log_metrics(iter=epoch)
@@ -185,6 +184,8 @@ class Evaluator:
 
         train_accs = np.zeros(len(self.population.sender_names))
         top_val_accs = np.zeros(len(self.population.sender_names))
+        train_loss_all_senders = np.zeros(len(self.population.sender_names))
+        val_loss_all_senders = np.zeros(len(self.population.sender_names))
         etls = np.zeros(len(self.population.sender_names))
 
         for i, sender_id in enumerate(self.population.sender_names):
@@ -196,6 +197,7 @@ class Evaluator:
                                                                       device=self.device)
 
             train_accuracies = []
+            train_losses = []
             val_accuracies = []
             val_losses = []
             step = 0
@@ -208,11 +210,11 @@ class Evaluator:
                 self.game.train()
 
                 mean_train_acc = 0.
+                mean_train_loss = 0.
                 n_batch = 0
 
                 # for batch in self.train_loader:
-                for _ in range(1):
-                    batch = next(iter(self.train_loader))
+                for batch in self.train_loader:
 
                     eval_receiver = self.population.agents[self.eval_receiver_id]
 
@@ -226,9 +228,11 @@ class Evaluator:
                     eval_receiver.tasks[task]["optimizer"].step()
 
                     mean_train_acc += metrics["accuracy"].detach().item()
+                    mean_train_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
                     n_batch += 1
 
                 train_accuracies.append(mean_train_acc / n_batch)
+                train_losses.append(mean_train_loss / n_batch)
 
                 self.game.eval()
 
@@ -254,13 +258,15 @@ class Evaluator:
 
                 if early_stopping:
                     continue_training = not (
-                            len(val_losses) > 20 and (val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) \
+                            len(val_losses) > 200 and (val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) \
                             or step == 1000)
                 else:
                     continue_training = (step > n_step_train)
 
-            train_acc = np.min(train_accuracies[-5:])
-            top_val_acc = np.max(val_accuracies[-5:])
+            train_acc = np.max(train_accuracies[-5:])
+            top_val_acc = np.max(val_accuracies)
+            train_loss = train_losses[-1]
+            top_val_loss = np.min(val_losses)
             if len(np.where(np.array(train_accuracies) > 0.98)[0]):
                 etl = np.min(np.where(np.array(train_accuracies) > 0.98)[0])
             else:
@@ -268,9 +274,11 @@ class Evaluator:
 
             train_accs[i] = train_acc
             top_val_accs[i] = top_val_acc
+            train_loss_all_senders[i] = train_loss
+            val_loss_all_senders[i] = top_val_loss
             etls[i] = etl
 
-        return train_accs, top_val_accs, etls
+        return train_accs, top_val_accs, etls, train_loss_all_senders, val_loss_all_senders
 
     def save_messages(self, save_dir):
 
@@ -624,13 +632,21 @@ class Evaluator:
         if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
             train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
             top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
+            train_loss =  self.stored_metrics["external_receiver_train_loss"][-1]
+            top_val_loss = self.stored_metrics["external_receiver_val_loss"][-1]
             etl = self.stored_metrics["etl"][-1]
             for i, sender_id in enumerate(self.population.sender_names):
                 self.writer.add_scalar(f'{sender_id}/Train acc external receiver',
                                        train_acc[i],
                                        iter)
-                self.writer.add_scalar(f'{sender_id}/Top val external receiver',
+                self.writer.add_scalar(f'{sender_id}/Top val acc external receiver',
                                        top_val_acc[i],
+                                       iter)
+                self.writer.add_scalar(f'{sender_id}/Train loss external receiver',
+                                       train_loss[i],
+                                       iter)
+                self.writer.add_scalar(f'{sender_id}/Top val loss external receiver',
+                                       top_val_loss[i],
                                        iter)
                 self.writer.add_scalar(f'{sender_id}/ETL',
                                        etl[i],

@@ -134,12 +134,13 @@ class RecurrentProcessorLayerNorm(nn.Module):
 
         embedding = self.receiver_embedding(message)
 
+        hidden_all_positions=[]
         prev_hidden = [th.zeros((embedding.size(0), self.receiver_hidden_size), device=embedding.device)
                        for _ in range(self.receiver_num_layers)]
         prev_c = [th.zeros_like(prev_hidden[0]) for _ in range(self.receiver_num_layers)]  # only used for LSTM
 
-        # if message_lengths is None:
-        #    message_lengths = find_lengths(message)
+        if message_lengths is None:
+            message_lengths = find_lengths(message)
 
         for step in range(self.max_len):
             for i, layer in enumerate(self.receiver_cells):
@@ -152,8 +153,18 @@ class RecurrentProcessorLayerNorm(nn.Module):
                     h_t = layer(embedding[:, step], prev_hidden[i])
                     h_t = self.receiver_norm_h(h_t)
                 prev_hidden[i] = h_t
+            hidden_all_positions.append(h_t)
 
-        encoded = prev_hidden[-1]
+        #encoded = prev_hidden[-1]
+        hidden_all_positions = th.stack(hidden_all_positions).permute(1,0,2)
+        encoded = hidden_all_positions.gather(dim=1,
+                                              index=message_lengths.view(-1,
+                                                                         1,
+                                                                         1).repeat(1,
+                                                                                   1,
+                                                                                   hidden_all_positions.size(-1)))
+
+        encoded=encoded.squeeze(1)
 
         return encoded
 
