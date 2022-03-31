@@ -258,7 +258,7 @@ class Evaluator:
 
                 if early_stopping:
                     continue_training = not (
-                            len(val_losses) > 200 and (val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) \
+                            len(val_losses) > 200 and (train_losses[-1] > np.mean(train_losses[-20:]) - 0.0001) \
                             or step == 1000)
                 else:
                     continue_training = (step > n_step_train)
