@@ -146,7 +146,7 @@ class Agent(object):
 
             for el in self.receiver.state_dict():
 
-                if len(self.sender.state_dict()[el].size())>1:
+                if len(self.receiver.state_dict()[el].size())>1:
                     w = th.empty(self.sender.state_dict()[el].size(),device=self.device)
 
                     reset_weights[el] = self.receiver.state_dict()[el] + \
