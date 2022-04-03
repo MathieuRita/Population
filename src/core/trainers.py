@@ -20,6 +20,7 @@ class TrainerPopulation(object):
                  imitation_loader: th.utils.data.DataLoader = None,
                  mi_loader: th.utils.data.DataLoader = None,
                  val_loader: th.utils.data.DataLoader = None,
+                 test_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  metrics_save_dir: str = "",
                  device: str = "cpu") -> None:
@@ -28,6 +29,7 @@ class TrainerPopulation(object):
         self.population = game.population
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.test_loader = test_loader
         self.imitation_loader = imitation_loader
         self.game_params = game_params
         self.agent_repertory = agent_repertory
@@ -152,7 +154,7 @@ class TrainerPopulation(object):
                                                "sender_log_prob": 0.,
                                                "message_length": 0.}
                 if receiver_id not in mean_metrics:
-                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.}
+                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.,"entropy":0.}
 
                 mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
                 mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"]
@@ -161,6 +163,7 @@ class TrainerPopulation(object):
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                 mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
                 mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
+                mean_metrics[receiver_id]["entropy"] += metrics["entropy"]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
@@ -271,7 +274,7 @@ class TrainerPopulation(object):
 
         with th.no_grad():
 
-            for batch in self.val_loader:
+            for batch in self.test_loader:
 
                 sender_id, receiver_id = batch.sender_id, batch.receiver_id
                 agent_sender, agent_receiver = self.population.agents[sender_id], self.population.agents[receiver_id]
@@ -300,13 +303,14 @@ class TrainerPopulation(object):
                                                    "sender_entropy": 0.,
                                                    "message_length": 0.}
                     if receiver_id not in mean_metrics:
-                        mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.}
+                        mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.,"entropy":0.}
                     mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
                     mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"]
                     mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
                     mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                     mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
                     mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
+                    mean_metrics[receiver_id]["entropy"] += metrics["entropy"]
 
             mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                                  for sender_id in mean_loss_senders}
@@ -360,6 +364,9 @@ class TrainerPopulation(object):
                                                train_metrics[receiver]['accuracy'], epoch)
                         self.writer.add_scalar(f'{receiver}/accuracy tot (train)',
                                                train_metrics[receiver]['accuracy_tot'], epoch)
+                        if "entropy" in train_metrics[receiver]:
+                            self.writer.add_scalar(f'{receiver}/entropy (train)',
+                                                train_metrics[receiver]['entropy'], epoch)
 
         # Imitation
         if train_imitation_loss_senders is not None:
@@ -413,6 +420,9 @@ class TrainerPopulation(object):
                                        val_metrics[receiver]['accuracy'], epoch)
                 self.writer.add_scalar(f'{receiver}/accuracy tot (val)',
                                        val_metrics[receiver]['accuracy_tot'], epoch)
+                if "entropy" in val_metrics[receiver]:
+                    self.writer.add_scalar(f'{receiver}/entropy (val)',
+                                           val_metrics[receiver]['entropy'], epoch)
 
 
 class PretrainingTrainer:
@@ -497,6 +507,7 @@ class TrainerCustom(TrainerPopulation):
                  imitation_loader: th.utils.data.DataLoader = None,
                  mi_loader: th.utils.data.DataLoader = None,
                  val_loader: th.utils.data.DataLoader = None,
+                 test_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  metrics_save_dir: str = "",
                  device: str = "cpu") -> None:
@@ -517,6 +528,7 @@ class TrainerCustom(TrainerPopulation):
                          imitation_loader=imitation_loader,
                          mi_loader=mi_loader,
                          val_loader=val_loader,
+                         test_loader=test_loader,
                          logger=logger,
                          metrics_save_dir=metrics_save_dir,
                          device=device)
@@ -744,8 +756,6 @@ class TrainerCustom(TrainerPopulation):
 
         # Mean loss
         mean_train_loss = 0.
-        n_batch = 5
-        #for _ in range(n_batch):
         self.game.train()
 
         with th.no_grad():
@@ -1104,6 +1114,7 @@ def build_trainer(game,
                   agent_repertory: dict,
                   mi_loader: th.utils.data.DataLoader = None,
                   val_loader: th.utils.data.DataLoader = None,
+                  test_loader: th.utils.data.DataLoader = None,
                   imitation_loader: th.utils.data.DataLoader = None,
                   logger: th.utils.tensorboard.SummaryWriter = None,
                   compute_metrics: bool = False,
@@ -1117,6 +1128,7 @@ def build_trainer(game,
                                 mi_loader=mi_loader,
                                 imitation_loader=imitation_loader,
                                 val_loader=val_loader,
+                                test_loader=test_loader,
                                 game_params=game_params,
                                 agent_repertory=agent_repertory,
                                 logger=logger,

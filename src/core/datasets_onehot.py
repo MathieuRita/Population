@@ -352,13 +352,17 @@ def split_data_into_population(dataset_size: int,
 
     if population_dataset_type == "unique":
         random_permut = np.random.RandomState(seed).choice(dataset_size, size=n_elements, replace=False)
-        train_split, val_split = random_permut[:int(split_proportion * n_elements)], \
-                                 random_permut[int(split_proportion * n_elements):]
+        N_element_train = int(split_proportion * n_elements)
+        N_element_test = N_element_val = int(split_proportion + 0.5*(1-split_proportion) * n_elements)
+        train_split, val_split, test_split = random_permut[:N_element_train], \
+                                             random_permut[N_element_train:N_element_train+N_element_val], \
+                                             random_permut[N_element_train+N_element_val:]
 
         for agent_name in agent_names:
             data_split[agent_name] = {}
             data_split[agent_name]["train_split"] = train_split
             data_split[agent_name]["val_split"] = val_split
+            data_split[agent_name]["test_split"] = test_split
             data_split[agent_name]["MI_split"] = random_permut
 
     else:

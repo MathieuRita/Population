@@ -223,61 +223,18 @@ class Agent(object):
 
             self.receiver.load_state_dict(reset_weights)
 
-    def compute_mutual_information(self,inputs):
-
-        raise NotImplementedError
-
-    #def compute_mutual_information(self, inputs):
-    #    inputs_embeddings = self.encode_object(inputs)
-    #    messages, log_prob_sender, entropy_sender = self.send(inputs_embeddings)
-    #    batch_size = messages.size(0)
-
-    #    id_sampled_messages = np.arange(batch_size)
-    #    sampled_messages = messages[id_sampled_messages]
-    #    sampled_messages = sampled_messages.unsqueeze(0)
-    #    sampled_messages = sampled_messages.repeat(batch_size, 1, 1)
-    #    sampled_messages = sampled_messages.permute(1, 0, 2)
-    #    sampled_messages = sampled_messages.reshape([batch_size * batch_size, sampled_messages.size(-1)])
-    #    sampled_x = inputs.repeat(batch_size, 1, 1, 1)
-    #    sampled_x = sampled_x.reshape([batch_size * batch_size, *inputs.size()[1:]])
-
-    #    sampled_x = move_to(sampled_x, self.device)
-    #    sampled_messages = move_to(sampled_messages, self.device)
-    #    log_probs = self.get_log_prob_m_given_x(sampled_x, sampled_messages)
-
-        # log_probs -> pm1_x1,...,pm1_xn ; pm2_x1,...,pm2_xn,.....
-    #    message_lengths = find_lengths(sampled_messages)
-    #    max_len = sampled_messages.size(1)
-    #    mask_eos = 1 - th.cumsum(F.one_hot(message_lengths.to(th.int64),
-    #                                       num_classes=max_len + 1), dim=1)[:, :-1]
-    #    log_probs = (log_probs * mask_eos).sum(dim=1)
-
-    #    log_pi_m_x = log_probs.reshape([batch_size, batch_size])
-    #    pi_m_x = th.exp(log_pi_m_x)
-    #    p_x = th.ones(batch_size) / batch_size  # Here we set p(x)=1/batch_size
-    #    p_x = p_x.to(pi_m_x.device)  # Fix device issue
-
-    #    log_p_x = th.log(p_x)
-    #    log_pi_m = th.log((pi_m_x * p_x).sum(1))
-    #    log_pi_m_x = th.log(pi_m_x.diagonal(0))
-
-    #    mutual_information = log_pi_m_x + log_p_x - log_pi_m
-
-    #    reward = mutual_information.detach()
-    #    reward = (reward - reward.mean()) / reward.std()
-
-    #    loss_mi = - log_pi_m_x * reward
-
-    #    return loss_mi.mean()
 
 
 def get_agent(agent_name: str,
               agent_repertory: dict,
               game_params: dict,
-              device: str = "cpu") -> object:
+              pretrained_modules : dict = dict(),
+              device: str = "cpu") -> Agent:
 
     agent_params = agent_repertory[agent_name]
-    pretrained_modules = agent_params["pretrained_modules"] if "pretrained_modules" in agent_params else {}
+
+    if not len(pretrained_modules) and "pretrained_modules" in agent_params:
+        pretrained_modules = {k : th.load(path) for k,path in agent_params["pretrained_modules"].items()}
 
     if agent_params["sender"] and agent_params["receiver"]:
 
@@ -305,9 +262,9 @@ def get_agent(agent_name: str,
         if "object_encoder" in pretrained_modules:
             object_encoder.load_state_dict(th.load(pretrained_modules["object_encoder"]))
         if "sender" in pretrained_modules:
-            sender.load_state_dict(th.load(pretrained_modules["sender"]))
+            sender.load_state_dict(pretrained_modules["sender"])
         if "language_model" in pretrained_modules:
-            language_model.load_state_dict(th.load(pretrained_modules["language_model"]))
+            language_model.load_state_dict(pretrained_modules["language_model"])
 
         # Send models to device
         sender.to(device)
@@ -329,11 +286,11 @@ def get_agent(agent_name: str,
 
         # Pretrained modules
         if "object_encoder" in pretrained_modules:
-            object_encoder.load_state_dict(th.load(pretrained_modules["object_encoder"]))
+            object_encoder.load_state_dict(pretrained_modules["object_encoder"])
         if "object_decoder" in pretrained_modules:
-            object_decoder.load_state_dict(th.load(pretrained_modules["object_decoder"]))
+            object_decoder.load_state_dict(pretrained_modules["object_decoder"])
         if "receiver" in pretrained_modules:
-            receiver.load_state_dict(th.load(pretrained_modules["receiver"]))
+            receiver.load_state_dict(pretrained_modules["receiver"])
 
         # Send models to device
         receiver.to(device)
@@ -435,3 +392,29 @@ def get_loss(loss_infos: dict):
         raise Exception("Specify a known loss")
 
     return agent_loss_fn
+
+def copy_agent(agent : Agent,
+               agent_repertory: dict,
+               game_params: dict,
+               device: str = "cpu") -> Agent:
+
+    pretrained_modules = dict()
+
+    if agent.object_encoder is not None:
+        pretrained_modules["object_encoder"] = agent.object_encoder
+    if agent.sender is not None:
+        pretrained_modules["sender"] = agent.sender
+    if agent.receiver is not None:
+        pretrained_modules["receiver"] = agent.receiver
+    if agent.language_model is not None:
+        pretrained_modules["language_model"] = agent.language_model
+    if agent.object_decoder is not None:
+        pretrained_modules["object_decoder"] = agent.object_decoder
+
+    agent_copy = get_agent(agent_name=agent.agent_name,
+                          agent_repertory=agent_repertory,
+                          game_params=game_params,
+                          pretrained_modules=pretrained_modules,
+                          device=device)
+
+    raise agent_copy

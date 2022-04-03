@@ -4,7 +4,7 @@ from scipy.stats import spearmanr
 from .utils import move_to, find_lengths
 import torch.nn.functional as F
 from .language_metrics import compute_language_similarity
-from .agents import get_agent
+from .agents import get_agent, copy_agent
 from collections import defaultdict
 
 
@@ -16,6 +16,7 @@ class Evaluator:
                  dump_batch,
                  train_loader,
                  val_loader,
+                 test_loader,
                  mi_loader,
                  agent_repertory,
                  game_params,
@@ -30,6 +31,7 @@ class Evaluator:
         self.dump_batch = dump_batch
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.test_loader = test_loader
         self.mi_loader = mi_loader
         self.agent_repertory = agent_repertory
         self.game_params = game_params
@@ -113,6 +115,9 @@ class Evaluator:
             for sender in mi_values:
                 self.stored_metrics["MI"][sender].append(mi_values[sender])
 
+        if epoch % self.metrics_to_measure["overfitting"]==0:
+            self.evaluate_overfitting(iter=epoch)
+
 
         if epoch % self.metrics_to_measure["writing"] == 0 and self.writer is not None:
             self.log_metrics(iter=epoch)
@@ -180,6 +185,75 @@ class Evaluator:
 
         return mi_values
 
+    def evaluate_overfitting(self,
+                             n_step_train : int = 200,
+                             iter : int = 200):
+
+        for i,sender_id in enumerate(self.population.sender_names):
+            for j,receiver_id in enumerate(self.population.receiver_names):
+
+                # Copy agents
+                self.population.agents[sender_id+"_copy"] = copy_agent(self.population.agents[sender_id])
+                self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id])
+
+                for i in range(n_step_train):
+
+                    self.game.train()
+
+                    mean_train_acc = 0.
+                    mean_train_loss = 0.
+                    n_batch = 0
+
+                    # for batch in self.train_loader:
+                    for batch in self.train_loader:
+
+                        task = "communication"
+
+                        receiver_copy = self.population.agents[receiver_id + "_copy"]
+
+                        batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
+                        metrics = self.game(batch, compute_metrics=True)
+
+                        receiver_copy.tasks[task]["optimizer"].zero_grad()
+                        receiver_copy.tasks[task]["loss_value"].backward()
+                        receiver_copy.tasks[task]["optimizer"].step()
+
+                        mean_train_acc += metrics["accuracy"].detach().item()
+                        mean_train_loss += receiver_copy.tasks[task]["loss_value"].detach().item()
+                        n_batch += 1
+
+
+                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/train accuracy',
+                                           mean_train_acc / n_batch,
+                                           i)
+                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/train loss',
+                                           mean_train_loss / n_batch,
+                                           i)
+
+                    self.game.eval()
+
+                    mean_val_acc = 0.
+                    mean_val_loss = 0.
+                    n_batch = 0
+
+                    # Eval
+                    with th.no_grad():
+                        for batch in self.val_loader:
+                            batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
+                            receiver_copy = self.population.agents[receiver_id + "_copy"]
+                            metrics = self.game(batch, compute_metrics=True)
+
+                            mean_val_acc += metrics["accuracy"].detach().item()
+                            mean_val_loss += receiver_copy.tasks[task]["loss_value"].item()
+                            n_batch += 1
+
+                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val accuracy',
+                                           mean_val_acc / n_batch,
+                                           i)
+                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val loss',
+                                           mean_val_loss / n_batch,
+                                           i)
+
     def evaluate_external_receiver(self, n_step_train: int = 200, early_stopping: bool = True):
 
         train_accs = np.zeros(len(self.population.sender_names))
@@ -242,7 +316,7 @@ class Evaluator:
 
                 # Eval
                 with th.no_grad():
-                    for batch in self.val_loader:
+                    for batch in self.test_loader:
                         batch = move_to((batch.data, sender_id, self.eval_receiver_id), self.device)
                         agent_receiver = self.population.agents[self.eval_receiver_id]
                         metrics = self.game(batch, compute_metrics=True)
@@ -258,7 +332,7 @@ class Evaluator:
 
                 if early_stopping:
                     continue_training = not (
-                            len(val_losses) > 200 and (train_losses[-1] > np.mean(train_losses[-20:]) - 0.0001) \
+                            len(train_losses) > 200 and (train_losses[-1] > np.mean(train_losses[-20:]) - 0.0001) \
                             or step == 1000)
                 else:
                     continue_training = (step > n_step_train)
@@ -700,6 +774,7 @@ def build_evaluator(metrics_to_measure,
                     dump_batch,
                     train_loader,
                     val_loader,
+                    test_loader,
                     mi_loader,
                     agent_repertory,
                     game_params,
@@ -714,6 +789,7 @@ def build_evaluator(metrics_to_measure,
                           dump_batch=dump_batch,
                           train_loader=train_loader,
                           val_loader=val_loader,
+                          test_loader=test_loader,
                           mi_loader=mi_loader,
                           agent_repertory=agent_repertory,
                           game_params=game_params,

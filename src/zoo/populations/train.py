@@ -102,6 +102,15 @@ def main(params):
                                           training_params=training_params,
                                           mode="val")
 
+    test_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                          dataset=full_dataset,
+                                          agent_names=population.agent_names,
+                                          population_split=population_split,
+                                          population_probs=population.pairs_prob,
+                                          imitation_probs=population.imitation_probs,
+                                          training_params=training_params,
+                                          mode="test")
+
     # Mutual information task
     mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
                                          dataset=full_dataset,
@@ -143,6 +152,7 @@ def main(params):
                                 logger=logger,
                                 train_loader=train_loader,
                                 val_loader=val_loader,
+                                test_loader=test_loader,
                                 mi_loader = mi_loader,
                                 agent_repertory=agent_repertory,
                                 game_params=game_params,
@@ -157,6 +167,7 @@ def main(params):
                             train_loader=train_loader,
                             mi_loader=mi_loader,
                             val_loader=val_loader,
+                            test_loader=test_loader,
                             imitation_loader=imitation_loader,
                             agent_repertory=agent_repertory,
                             game_params=game_params,
