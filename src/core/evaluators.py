@@ -193,8 +193,14 @@ class Evaluator:
             for j,receiver_id in enumerate(self.population.receiver_names):
 
                 # Copy agents
-                self.population.agents[sender_id+"_copy"] = copy_agent(self.population.agents[sender_id])
-                self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id])
+                self.population.agents[sender_id+"_copy"] = copy_agent(self.population.agents[sender_id],
+                                                                       agent_repertory=self.agent_repertory,
+                                                                       game_params=self.game_params,
+                                                                       device=self.device)
+                self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id],
+                                                                           agent_repertory=self.agent_repertory,
+                                                                           game_params=self.game_params,
+                                                                           device=self.device)
 
                 for i in range(n_step_train):
 
