@@ -116,7 +116,7 @@ class Evaluator:
                 self.stored_metrics["MI"][sender].append(mi_values[sender])
 
         if epoch % self.metrics_to_measure["overfitting"] == 0:
-            self.evaluate_overfitting(iter=epoch)
+            self.evaluate_overfitting(iter=epoch,eval_sender=True,eval_receiver=True)
 
 
         if epoch % self.metrics_to_measure["writing"] == 0 and self.writer is not None:
@@ -187,78 +187,154 @@ class Evaluator:
 
     def evaluate_overfitting(self,
                              n_step_train : int = 200,
-                             iter : int = 200):
+                             iter : int = 200,
+                             eval_sender : bool = False,
+                             eval_receiver : bool = False):
 
-        for i,sender_id in enumerate(self.population.sender_names):
-            for j,receiver_id in enumerate(self.population.receiver_names):
+        if eval_receiver:
+            for i,sender_id in enumerate(self.population.sender_names):
+                for j,receiver_id in enumerate(self.population.receiver_names):
 
-                # Copy agents
-                self.population.agents[sender_id+"_copy"] = copy_agent(self.population.agents[sender_id],
-                                                                       agent_repertory=self.agent_repertory,
-                                                                       game_params=self.game_params,
-                                                                       device=self.device)
-                self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id],
+                    # Copy agents
+                    self.population.agents[sender_id+"_copy"] = copy_agent(self.population.agents[sender_id],
                                                                            agent_repertory=self.agent_repertory,
                                                                            game_params=self.game_params,
                                                                            device=self.device)
+                    self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id],
+                                                                               agent_repertory=self.agent_repertory,
+                                                                               game_params=self.game_params,
+                                                                               device=self.device)
 
-                for i in range(n_step_train):
+                    for i in range(n_step_train):
 
-                    self.game.train()
+                        self.game.train()
 
-                    mean_train_acc = 0.
-                    mean_train_loss = 0.
-                    n_batch = 0
+                        mean_train_acc = 0.
+                        mean_train_loss = 0.
+                        n_batch = 0
 
-                    # for batch in self.train_loader:
-                    for batch in self.train_loader:
+                        # for batch in self.train_loader:
+                        for batch in self.train_loader:
 
-                        task = "communication"
+                            task = "communication"
 
-                        receiver_copy = self.population.agents[receiver_id + "_copy"]
-
-                        batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
-                        metrics = self.game(batch, compute_metrics=True)
-
-                        receiver_copy.tasks[task]["optimizer"].zero_grad()
-                        receiver_copy.tasks[task]["loss_value"].backward()
-                        receiver_copy.tasks[task]["optimizer"].step()
-
-                        mean_train_acc += metrics["accuracy"].detach().item()
-                        mean_train_loss += receiver_copy.tasks[task]["loss_value"].detach().item()
-                        n_batch += 1
-
-
-                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/train accuracy',
-                                           mean_train_acc / n_batch,
-                                           i)
-                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/train loss',
-                                           mean_train_loss / n_batch,
-                                           i)
-
-                    self.game.eval()
-
-                    mean_val_acc = 0.
-                    mean_val_loss = 0.
-                    n_batch = 0
-
-                    # Eval
-                    with th.no_grad():
-                        for batch in self.val_loader:
-                            batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
                             receiver_copy = self.population.agents[receiver_id + "_copy"]
+
+                            batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
                             metrics = self.game(batch, compute_metrics=True)
 
-                            mean_val_acc += metrics["accuracy"].detach().item()
-                            mean_val_loss += receiver_copy.tasks[task]["loss_value"].item()
+                            receiver_copy.tasks[task]["optimizer"].zero_grad()
+                            receiver_copy.tasks[task]["loss_value"].backward()
+                            receiver_copy.tasks[task]["optimizer"].step()
+
+                            mean_train_acc += metrics["accuracy"].detach().item()
+                            mean_train_loss += receiver_copy.tasks[task]["loss_value"].detach().item()
                             n_batch += 1
 
-                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val accuracy',
-                                           mean_val_acc / n_batch,
-                                           i)
-                    self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val loss',
-                                           mean_val_loss / n_batch,
-                                           i)
+
+                        self.writer.add_scalar(f'{receiver_id}_copy_{iter}/train accuracy',
+                                               mean_train_acc / n_batch,
+                                               i)
+                        self.writer.add_scalar(f'{receiver_id}_copy_{iter}/train loss',
+                                               mean_train_loss / n_batch,
+                                               i)
+
+                        self.game.eval()
+
+                        mean_val_acc = 0.
+                        mean_val_loss = 0.
+                        n_batch = 0
+
+                        # Eval
+                        with th.no_grad():
+                            for batch in self.val_loader:
+                                batch = move_to((batch.data, sender_id+"_copy", receiver_id + "_copy"), self.device)
+                                receiver_copy = self.population.agents[receiver_id + "_copy"]
+                                metrics = self.game(batch, compute_metrics=True)
+
+                                mean_val_acc += metrics["accuracy"].detach().item()
+                                mean_val_loss += receiver_copy.tasks[task]["loss_value"].item()
+                                n_batch += 1
+
+                        self.writer.add_scalar(f'{receiver_id}_copy_{iter}/Val accuracy',
+                                               mean_val_acc / n_batch,
+                                               i)
+                        self.writer.add_scalar(f'{receiver_id}_copy_{iter}/Val loss',
+                                               mean_val_loss / n_batch,
+                                               i)
+
+        if eval_sender:
+
+            for i, sender_id in enumerate(self.population.sender_names):
+                for j, receiver_id in enumerate(self.population.receiver_names):
+
+                    # Copy agents
+                    self.population.agents[sender_id + "_copy"] = copy_agent(self.population.agents[sender_id],
+                                                                             agent_repertory=self.agent_repertory,
+                                                                             game_params=self.game_params,
+                                                                             device=self.device)
+                    self.population.agents[receiver_id + "_copy"] = copy_agent(self.population.agents[receiver_id],
+                                                                               agent_repertory=self.agent_repertory,
+                                                                               game_params=self.game_params,
+                                                                               device=self.device)
+
+                    for i in range(n_step_train):
+
+                        self.game.train()
+
+                        mean_train_acc = 0.
+                        mean_train_loss = 0.
+                        n_batch = 0
+
+                        # for batch in self.train_loader:
+                        for batch in self.train_loader:
+                            task = "communication"
+
+                            receiver_copy = self.population.agents[receiver_id + "_copy"]
+                            sender_copy = self.population.agents[sender_id + "_copy"]
+
+                            batch = move_to((batch.data, sender_id + "_copy", receiver_id + "_copy"), self.device)
+                            metrics = self.game(batch, compute_metrics=True)
+
+                            sender_copy.tasks[task]["optimizer"].zero_grad()
+                            sender_copy.tasks[task]["loss_value"].backward()
+                            sender_copy.tasks[task]["optimizer"].step()
+
+                            mean_train_acc += metrics["accuracy"].detach().item()
+                            mean_train_loss += receiver_copy.tasks[task]["loss_value"].detach().item()
+                            n_batch += 1
+
+                        self.writer.add_scalar(f'{sender_id}_copy_{iter}/train accuracy',
+                                               mean_train_acc / n_batch,
+                                               i)
+                        self.writer.add_scalar(f'{sender_id}_copy_{iter}/train loss',
+                                               mean_train_loss / n_batch,
+                                               i)
+
+                        self.game.eval()
+
+                        mean_val_acc = 0.
+                        mean_val_loss = 0.
+                        n_batch = 0
+
+                        # Eval
+                        with th.no_grad():
+                            for batch in self.val_loader:
+                                batch = move_to((batch.data, sender_id + "_copy", receiver_id + "_copy"), self.device)
+                                receiver_copy = self.population.agents[receiver_id + "_copy"]
+                                sender_copy = self.population.agents[sender_id + "_copy"]
+                                metrics = self.game(batch, compute_metrics=True)
+
+                                mean_val_acc += metrics["accuracy"].detach().item()
+                                mean_val_loss += receiver_copy.tasks[task]["loss_value"].item()
+                                n_batch += 1
+
+                        self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val accuracy',
+                                               mean_val_acc / n_batch,
+                                               i)
+                        self.writer.add_scalar(f'{sender_id}_copy_{iter}/Val loss',
+                                               mean_val_loss / n_batch,
+                                               i)
 
     def evaluate_external_receiver(self, n_step_train: int = 200, early_stopping: bool = True):
 
