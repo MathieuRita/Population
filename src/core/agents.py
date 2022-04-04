@@ -233,16 +233,14 @@ def get_agent(agent_name: str,
               device: str = "cpu") -> Agent:
 
     agent_params = agent_repertory[agent_name]
-    
-    print(pretrained_modules)
 
     if not len(pretrained_modules) and "pretrained_modules" in agent_params:
-        print("true")
         pretrained_modules = {k : th.load(path) for k,path in agent_params["pretrained_modules"].items()}
         load_state_dict_cond=True
-    else:
-        print("false")
+    elif len(pretrained_modules):
         load_state_dict_cond=False
+    else:
+        load_state_dict_cond=True
 
     if agent_params["sender"] and agent_params["receiver"]:
 
