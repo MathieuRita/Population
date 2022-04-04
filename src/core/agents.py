@@ -401,15 +401,15 @@ def copy_agent(agent : Agent,
     pretrained_modules = dict()
 
     if agent.object_encoder is not None:
-        pretrained_modules["object_encoder"] = agent.object_encoder
+        pretrained_modules["object_encoder"] = agent.object_encoder.copy()
     if agent.sender is not None:
-        pretrained_modules["sender"] = agent.sender
+        pretrained_modules["sender"] = agent.sender.copy()
     if agent.receiver is not None:
-        pretrained_modules["receiver"] = agent.receiver
+        pretrained_modules["receiver"] = agent.receiver.copy()
     if agent.language_model is not None:
-        pretrained_modules["language_model"] = agent.language_model
+        pretrained_modules["language_model"] = agent.language_model.copy()
     if agent.object_decoder is not None:
-        pretrained_modules["object_decoder"] = agent.object_decoder
+        pretrained_modules["object_decoder"] = agent.object_decoder.copy()
 
     agent_copy = get_agent(agent_name=agent.agent_name,
                           agent_repertory=agent_repertory,
