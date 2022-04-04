@@ -436,4 +436,4 @@ def copy_agent(agent : Agent,
                           pretrained_modules=pretrained_modules,
                           device=device)
 
-    raise agent_copy
+    return agent_copy
