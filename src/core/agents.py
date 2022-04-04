@@ -2,6 +2,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CosineSimilarity
+import copy
 import numpy as np
 
 from .utils import find_lengths, move_to
@@ -401,15 +402,15 @@ def copy_agent(agent : Agent,
     pretrained_modules = dict()
 
     if agent.object_encoder is not None:
-        pretrained_modules["object_encoder"] = agent.object_encoder.copy()
+        pretrained_modules["object_encoder"] = copy.deepcopy(agent.object_encoder)
     if agent.sender is not None:
-        pretrained_modules["sender"] = agent.sender.copy()
+        pretrained_modules["sender"] = copy.deepcopy(agent.sender)
     if agent.receiver is not None:
-        pretrained_modules["receiver"] = agent.receiver.copy()
+        pretrained_modules["receiver"] = copy.deepcopy(agent.receiver)
     if agent.language_model is not None:
-        pretrained_modules["language_model"] = agent.language_model.copy()
+        pretrained_modules["language_model"] = copy.deepcopy(agent.language_model)
     if agent.object_decoder is not None:
-        pretrained_modules["object_decoder"] = agent.object_decoder.copy()
+        pretrained_modules["object_decoder"] = copy.deepcopy(agent.object_decoder)
 
     agent_copy = get_agent(agent_name=agent.agent_name,
                           agent_repertory=agent_repertory,
