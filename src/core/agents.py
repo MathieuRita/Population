@@ -267,15 +267,15 @@ def get_agent(agent_name: str,
         # Pretrained modules
         if "object_encoder" in pretrained_modules and load_state_dict_cond:
             object_encoder.load_state_dict(pretrained_modules["object_encoder"])
-        else:
+        elif "object_encoder" in pretrained_modules and not load_state_dict_cond:
             object_encoder = pretrained_modules["object_encoder"]
         if "sender" in pretrained_modules and load_state_dict_cond:
             sender.load_state_dict(pretrained_modules["sender"])
-        else:
+        elif "sender" in pretrained_modules and not load_state_dict_cond:
             sender = pretrained_modules["sender"]
         if "language_model" in pretrained_modules and load_state_dict_cond:
             language_model.load_state_dict(pretrained_modules["language_model"])
-        else:
+        elif "language_model" in pretrained_modules and not load_state_dict_cond:
             language_model = pretrained_modules["language_model"]
 
 
@@ -300,15 +300,15 @@ def get_agent(agent_name: str,
         # Pretrained modules
         if "object_encoder" in pretrained_modules and load_state_dict_cond:
             object_encoder.load_state_dict(pretrained_modules["object_encoder"])
-        else:
+        elif "object_encoder" in pretrained_modules and not load_state_dict_cond:
             object_encoder = pretrained_modules["object_encoder"]
         if "object_decoder" in pretrained_modules and load_state_dict_cond:
             object_decoder.load_state_dict(pretrained_modules["object_decoder"])
-        else:
+        elif "object_decoder" in pretrained_modules and not load_state_dict_cond:
             object_decoder = pretrained_modules["object_decoder"]
         if "receiver" in pretrained_modules and load_state_dict_cond:
             receiver.load_state_dict(pretrained_modules["receiver"])
-        else:
+        elif "receiver" in pretrained_modules and not load_state_dict_cond:
             receiver = pretrained_modules["receiver"]
 
         # Send models to device
