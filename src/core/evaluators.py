@@ -115,7 +115,7 @@ class Evaluator:
             for sender in mi_values:
                 self.stored_metrics["MI"][sender].append(mi_values[sender])
 
-        if epoch % self.metrics_to_measure["overfitting"]==0:
+        if epoch % self.metrics_to_measure["overfitting"] == 0:
             self.evaluate_overfitting(iter=epoch)
 
 

@@ -163,7 +163,7 @@ class TrainerPopulation(object):
                 mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                 mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
                 mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
-                mean_metrics[receiver_id]["entropy"] += metrics["entropy"]
+                mean_metrics[receiver_id]["entropy"] += metrics["entropy_receiver"]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
@@ -310,7 +310,7 @@ class TrainerPopulation(object):
                     mean_metrics[sender_id]["message_length"] += metrics["message_length"]
                     mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
                     mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
-                    mean_metrics[receiver_id]["entropy"] += metrics["entropy"]
+                    mean_metrics[receiver_id]["entropy"] += metrics["entropy_receiver"]
 
             mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                                  for sender_id in mean_loss_senders}
