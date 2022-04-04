@@ -236,6 +236,9 @@ def get_agent(agent_name: str,
 
     if not len(pretrained_modules) and "pretrained_modules" in agent_params:
         pretrained_modules = {k : th.load(path) for k,path in agent_params["pretrained_modules"].items()}
+        load_state_dict_cond=True
+    else:
+        load_state_dict_cond=False
 
     if agent_params["sender"] and agent_params["receiver"]:
 
@@ -260,12 +263,19 @@ def get_agent(agent_name: str,
         receiver = None
 
         # Pretrained modules
-        if "object_encoder" in pretrained_modules:
+        if "object_encoder" in pretrained_modules and load_state_dict_cond:
             object_encoder.load_state_dict(pretrained_modules["object_encoder"])
-        if "sender" in pretrained_modules:
+        else:
+            object_encoder = pretrained_modules["object_encoder"]
+        if "sender" in pretrained_modules and load_state_dict_cond:
             sender.load_state_dict(pretrained_modules["sender"])
-        if "language_model" in pretrained_modules:
+        else:
+            sender = pretrained_modules["sender"]
+        if "language_model" in pretrained_modules and load_state_dict_cond:
             language_model.load_state_dict(pretrained_modules["language_model"])
+        else:
+            language_model = pretrained_modules["language_model"]
+
 
         # Send models to device
         sender.to(device)
@@ -286,12 +296,18 @@ def get_agent(agent_name: str,
         receiver = build_receiver(receiver_params=agent_params["receiver_params"], game_params=game_params)
 
         # Pretrained modules
-        if "object_encoder" in pretrained_modules:
+        if "object_encoder" in pretrained_modules and load_state_dict_cond:
             object_encoder.load_state_dict(pretrained_modules["object_encoder"])
-        if "object_decoder" in pretrained_modules:
+        else:
+            object_encoder = pretrained_modules["object_encoder"]
+        if "object_decoder" in pretrained_modules and load_state_dict_cond:
             object_decoder.load_state_dict(pretrained_modules["object_decoder"])
-        if "receiver" in pretrained_modules:
+        else:
+            object_decoder = pretrained_modules["object_decoder"]
+        if "receiver" in pretrained_modules and load_state_dict_cond:
             receiver.load_state_dict(pretrained_modules["receiver"])
+        else:
+            receiver = pretrained_modules["receiver"]
 
         # Send models to device
         receiver.to(device)
