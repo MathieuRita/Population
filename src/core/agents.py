@@ -238,8 +238,8 @@ def get_agent(agent_name: str,
 
     if agent_params["sender"] and agent_params["receiver"]:
 
-        assert agent_params["receiver_params"]["receiver_embed_dim"] == agent_params["sender_params"][
-            "sender_embed_dim"]
+        assert agent_params["receiver_params"]["receiver_embed_dim"] \
+               == agent_params["sender_params"]["sender_embed_dim"]
 
         raise NotImplementedError  # Should take into account lots of agents modellings
 
@@ -260,7 +260,7 @@ def get_agent(agent_name: str,
 
         # Pretrained modules
         if "object_encoder" in pretrained_modules:
-            object_encoder.load_state_dict(th.load(pretrained_modules["object_encoder"]))
+            object_encoder.load_state_dict(pretrained_modules["object_encoder"])
         if "sender" in pretrained_modules:
             sender.load_state_dict(pretrained_modules["sender"])
         if "language_model" in pretrained_modules:
