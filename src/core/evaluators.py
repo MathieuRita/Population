@@ -186,7 +186,7 @@ class Evaluator:
         return mi_values
 
     def evaluate_overfitting(self,
-                             n_step_train : int = 200,
+                             n_step_train : int = 400,
                              iter : int = 200,
                              eval_sender : bool = False,
                              eval_receiver : bool = False):
