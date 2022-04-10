@@ -174,6 +174,7 @@ def main(params):
                             device=training_params["device"],
                             compute_metrics=True,
                             metrics_save_dir=opts.metrics_save_dir,
+                            models_save_dir=opts.models_save_dir,
                             logger=logger)
 
     # Train

@@ -23,6 +23,7 @@ class TrainerPopulation(object):
                  test_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  metrics_save_dir: str = "",
+                 models_save_dir : str = "",
                  device: str = "cpu") -> None:
 
         self.game = game
@@ -39,17 +40,16 @@ class TrainerPopulation(object):
         self.device = th.device(device)
         self.writer = logger
         self.metrics_save_dir = metrics_save_dir
+        self.models_save_dir = models_save_dir
 
     def train(self,
               n_epochs,
               train_communication_freq: int = 1000000,
               validation_freq: int = 1,
               train_imitation_freq: int = 100000,
-              train_broadcasting_freq: int = 1000000,
               evaluator_freq: int = 1000000,
-              print_evolution: bool = True,
-              custom_steps: int = 0,
-              custom_early_stopping: bool = False):
+              save_models_freq : int = 100000,
+              print_evolution: bool = True):
 
         for epoch in range(self.start_epoch, n_epochs):
 
@@ -85,6 +85,9 @@ class TrainerPopulation(object):
                                  val_loss_senders=val_loss_senders,
                                  val_loss_receivers=val_loss_receivers,
                                  val_metrics=val_metrics)
+
+            if len(self.models_save_dir) and epoch % save_models_freq == 0:
+                self.save_models(epoch=epoch)
 
             if self.evaluator is not None and epoch % evaluator_freq == 0:
                 self.evaluator.step(epoch=epoch)
@@ -424,6 +427,10 @@ class TrainerPopulation(object):
                     self.writer.add_scalar(f'{receiver}/entropy (val)',
                                            val_metrics[receiver]['entropy'], epoch)
 
+    def save_models(self,epoch):
+        self.population.save_models(save_dir=self.models_save_dir,
+                                    add_info=str(epoch))
+
 
 class PretrainingTrainer:
 
@@ -510,6 +517,7 @@ class TrainerCustom(TrainerPopulation):
                  test_loader: th.utils.data.DataLoader = None,
                  logger: th.utils.tensorboard.SummaryWriter = None,
                  metrics_save_dir: str = "",
+                 models_save_dir : str = "",
                  device: str = "cpu") -> None:
 
         self.mi_step = 0
@@ -531,6 +539,7 @@ class TrainerCustom(TrainerPopulation):
                          test_loader=test_loader,
                          logger=logger,
                          metrics_save_dir=metrics_save_dir,
+                         models_save_dir=models_save_dir,
                          device=device)
 
     def train(self,
@@ -621,6 +630,9 @@ class TrainerCustom(TrainerPopulation):
                                  val_loss_senders=val_loss_senders,
                                  val_loss_receivers=val_loss_receivers,
                                  val_metrics=val_metrics)
+
+            if len(self.models_save_dir) and epoch % self.save_models_freq == 0:
+                self.save_models(epoch=epoch)
 
             if self.evaluator is not None and epoch % evaluator_freq == 0:
                 self.evaluator.step(epoch=epoch)

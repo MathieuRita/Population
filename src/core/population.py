@@ -54,13 +54,13 @@ class Population(object):
         for agent_name in self.agents:
             agent = self.agents[agent_name]
             if agent.sender is not None:
-                th.save(agent.sender.state_dict(), f"{save_dir}/{agent_name}_sender{add_info}.pt")
+                th.save(agent.sender.state_dict(), f"{save_dir}/{agent_name}_sender_{add_info}.pt")
             if agent.object_encoder is not None:
-                th.save(agent.object_encoder.state_dict(), f"{save_dir}/{agent_name}_object_encoder{add_info}.pt")
+                th.save(agent.object_encoder.state_dict(), f"{save_dir}/{agent_name}_object_encoder_{add_info}.pt")
             if agent.receiver is not None:
-                th.save(agent.receiver.state_dict(), f"{save_dir}/{agent_name}_receiver{add_info}.pt")
+                th.save(agent.receiver.state_dict(), f"{save_dir}/{agent_name}_receiver_{add_info}.pt")
             if agent.object_decoder is not None:
-                th.save(agent.object_decoder.state_dict(), f"{save_dir}/{agent_name}_object_decoder{add_info}.pt")
+                th.save(agent.object_decoder.state_dict(), f"{save_dir}/{agent_name}_object_decoder_{add_info}.pt")
 
 class FullyConnectedPopulation(Population):
 
