@@ -589,8 +589,10 @@ class TrainerCustom(TrainerPopulation):
 
                 #self.save_error(epoch=epoch, save=False)
 
-                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
-                    self.train_communication_and_mutual_information()
+                #train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
+                #    self.train_communication_and_mutual_information()
+                train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
+                    self.train_communication(compute_metrics=True)
                 #train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                 #    self.train_communication_and_kl()
 
