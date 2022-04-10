@@ -188,6 +188,8 @@ def main(params):
                   train_kl_freq=training_params["train_kl_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],
+                  evaluator_freq=training_params["evaluator_freq"],
+                  save_models_freq=training_params["save_models_freq"],
                   custom_steps=training_params["custom_steps"],
                   max_steps=training_params["max_steps"],
                   custom_early_stopping=training_params["custom_early_stopping"])

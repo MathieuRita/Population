@@ -551,6 +551,7 @@ class TrainerCustom(TrainerPopulation):
               train_broadcasting_freq: int = 1000000,
               train_kl_freq : int = 10000000,
               evaluator_freq: int = 1000000,
+              save_models_freq : int = 10000000,
               print_evolution: bool = True,
               custom_steps: int = 0,
               max_steps: int = 1000000,
@@ -633,7 +634,7 @@ class TrainerCustom(TrainerPopulation):
                                  val_loss_receivers=val_loss_receivers,
                                  val_metrics=val_metrics)
 
-            if len(self.models_save_dir) and epoch % self.save_models_freq == 0:
+            if len(self.models_save_dir) and epoch % save_models_freq == 0:
                 self.save_models(epoch=epoch)
 
             if self.evaluator is not None and epoch % evaluator_freq == 0:
@@ -1134,6 +1135,7 @@ def build_trainer(game,
                   compute_metrics: bool = False,
                   pretraining: bool = False,
                   metrics_save_dir: str = "",
+                  models_save_dir : str = "",
                   device: str = "cpu"):
     if not pretraining:
         trainer = TrainerCustom(game=game,
@@ -1147,6 +1149,7 @@ def build_trainer(game,
                                 agent_repertory=agent_repertory,
                                 logger=logger,
                                 metrics_save_dir=metrics_save_dir,
+                                models_save_dir=models_save_dir,
                                 device=device)
     else:
         trainer = PretrainingTrainer(game=game,
