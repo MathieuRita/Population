@@ -94,7 +94,7 @@ class TrainerPopulation(object):
 
     def reset_agents(self):
 
-        for agent_id in self.population.agents:
+        for agent_id in self.population.sender_names+self.population.receiver_names:
             agent = self.population.agents[agent_id]
             if th.rand(1)[0] < agent.prob_reset:
                 self.population.agents[agent_id] = get_agent(agent_name=agent_id,

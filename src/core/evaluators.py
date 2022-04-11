@@ -187,7 +187,7 @@ class Evaluator:
 
     def evaluate_overfitting(self,
                              n_step_train : int = 400,
-                             iter : int = 200,
+                             iter: int = 200,
                              eval_sender : bool = False,
                              eval_receiver : bool = False):
 
