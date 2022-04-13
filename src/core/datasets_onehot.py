@@ -373,15 +373,15 @@ def split_data_into_population(dataset_size: int,
 
 def save_dataset(dataset_save_dir: str,
                  full_dataset: th.Tensor,
-                 split_population: dict) -> None:
+                 population_split: dict) -> None:
 
     th.save(full_dataset, f"{dataset_save_dir}/full_dataset.pt")
 
-    for agent_name in split_population:
-        th.save(split_population[agent_name]["train_split"], f"{dataset_save_dir}/{agent_name}_train_split.pt")
-        th.save(split_population[agent_name]["val_split"], f"{dataset_save_dir}/{agent_name}_val_split.pt")
-        th.save(split_population[agent_name]["test_split"], f"{dataset_save_dir}/{agent_name}_test_split.pt")
-        th.save(split_population[agent_name]["MI_split"], f"{dataset_save_dir}/{agent_name}_MI_split.pt")
+    for agent_name in population_split:
+        th.save(population_split[agent_name]["train_split"], f"{dataset_save_dir}/{agent_name}_train_split.pt")
+        th.save(population_split[agent_name]["val_split"], f"{dataset_save_dir}/{agent_name}_val_split.pt")
+        th.save(population_split[agent_name]["test_split"], f"{dataset_save_dir}/{agent_name}_test_split.pt")
+        th.save(population_split[agent_name]["MI_split"], f"{dataset_save_dir}/{agent_name}_MI_split.pt")
 
 
 def build_one_hot_dataloader(game_type: str,
