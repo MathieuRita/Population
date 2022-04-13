@@ -154,7 +154,7 @@ class Evaluator:
                     mean_loss_value = 0.
                     n_batch = 0
 
-                    for batch in self.mi_loader:
+                    for batch in self.train_loader:
                         inputs, sender_id = batch.data, batch.sender_id
                         inputs = inputs[th.randperm(inputs.size()[0])]
                         batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
