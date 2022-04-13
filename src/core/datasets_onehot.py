@@ -69,7 +69,7 @@ class _ReconstructionIterator():
                  task: str = "communication",
                  broadcasting: bool = False,
                  mode: str = "train",
-                 random_state = None):
+                 random_state=None):
 
         self.data = data
         self.agent_names = agent_names
@@ -105,7 +105,7 @@ class _ReconstructionIterator():
         # Sample batch from sender_id's split
         split_ids = self.population_split[sender_id]["{}_split".format(self.mode)]
         batch_ids = self.random_state.choice(len(split_ids),
-                                             size=min(self.batch_size,len(split_ids)),
+                                             size=min(self.batch_size, len(split_ids)),
                                              replace=False)
 
         batch_data = self.data[split_ids[batch_ids]]
@@ -353,10 +353,10 @@ def split_data_into_population(dataset_size: int,
     if population_dataset_type == "unique":
         random_permut = np.random.RandomState(seed).choice(dataset_size, size=n_elements, replace=False)
         N_element_train = int(split_proportion * n_elements)
-        N_element_test = N_element_val = int(split_proportion + 0.5*(1-split_proportion) * n_elements)
+        N_element_test = N_element_val = int(split_proportion + 0.5 * (1 - split_proportion) * n_elements)
         train_split, val_split, test_split = random_permut[:N_element_train], \
-                                             random_permut[N_element_train:N_element_train+N_element_val], \
-                                             random_permut[N_element_train+N_element_val:]
+                                             random_permut[N_element_train:N_element_train + N_element_val], \
+                                             random_permut[N_element_train + N_element_val:]
 
         for agent_name in agent_names:
             data_split[agent_name] = {}
@@ -369,6 +369,19 @@ def split_data_into_population(dataset_size: int,
         raise "Specify a known population dataset type"
 
     return data_split
+
+
+def save_dataset(dataset_save_dir: str,
+                 full_dataset: th.Tensor,
+                 split_population: dict) -> None:
+
+    th.save(full_dataset, f"{dataset_save_dir}/full_dataset.pt")
+
+    for agent_name in split_population:
+        th.save(split_population[agent_name]["train_split"], f"{dataset_save_dir}/{agent_name}_train_split.pt")
+        th.save(split_population[agent_name]["val_split"], f"{dataset_save_dir}/{agent_name}_val_split.pt")
+        th.save(split_population[agent_name]["test_split"], f"{dataset_save_dir}/{agent_name}_test_split.pt")
+        th.save(split_population[agent_name]["MI_split"], f"{dataset_save_dir}/{agent_name}_MI_split.pt")
 
 
 def build_one_hot_dataloader(game_type: str,
@@ -384,7 +397,7 @@ def build_one_hot_dataloader(game_type: str,
                              ) -> th.utils.data.DataLoader:
     if game_type == "reconstruction":
 
-        if "broadcasting" in training_params and mode!="val":
+        if "broadcasting" in training_params and mode != "val":
             broadcasting = training_params["broadcasting"]
         else:
             broadcasting = False
@@ -399,7 +412,8 @@ def build_one_hot_dataloader(game_type: str,
                                                   population_split=population_split,
                                                   population_probs=population_probs,
                                                   batch_size=training_params["batch_size"],
-                                                  batches_per_epoch=training_params["{}_batches_per_epoch".format(mode)],
+                                                  batches_per_epoch=training_params[
+                                                      "{}_batches_per_epoch".format(mode)],
                                                   task=task,
                                                   mode=mode,
                                                   broadcasting=broadcasting,

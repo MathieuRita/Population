@@ -9,7 +9,6 @@ from src.core.trainers import build_trainer
 from src.core.population import build_population
 from src.core.evaluators import build_evaluator
 from src.core.datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
-from src.core.datasets_onehot import save_dataset
 from .utils import parse_json
 
 
@@ -35,7 +34,6 @@ def get_params(params):
     # Save Directory
     parser.add_argument('--model_save_dir', type=str, default="", help="Directory to save models")
     parser.add_argument('--metrics_save_dir', type=str, default="", help="Directory to save metrics")
-    parser.add_argument('--dataset_save_dir', type=str, default="", help="Directory to save dataset")
 
     args = parser.parse_args(params)
 
@@ -82,12 +80,6 @@ def main(params):
                                                   agent_names=population.agent_names,
                                                   population_dataset_type=population_params['dataset_type'],
                                                   seed=training_params["seed"])
-
-    if opts.dataset_save_dir:
-        save_dataset(dataset_save_dir=opts.dataset_save_dir,
-                     full_dataset=full_dataset,
-                     population_split=population_split)
-
 
     # Communication task
 
