@@ -8,7 +8,7 @@ import numpy as np
 from .utils import find_lengths, move_to
 from .senders import build_sender
 from .receivers import build_receiver
-from .object_encoders import build_encoder, build_decoder
+from .object_encoders import build_encoder, build_decoder, build_object_projector
 from .losses import ReinforceLoss, CrossEntropyLoss, ReferentialLoss, SpeakerImitation
 from .language_model import get_language_model
 
@@ -21,6 +21,7 @@ class Agent(object):
                  receiver: nn.Module,
                  object_encoder: nn.Module,
                  object_decoder: nn.Module,
+                 object_projector : nn.Module,
                  language_model,
                  tasks:dict,
                  weights:dict,
@@ -34,6 +35,7 @@ class Agent(object):
         self.receiver = receiver
         self.language_model = language_model
         self.object_decoder = object_decoder
+        self.object_projector = object_projector
         self.optimal_listener = optimal_listener
         self.optimal_lm = optimal_lm
         self.tasks = tasks
@@ -63,23 +65,41 @@ class Agent(object):
     def reconstruct_from_message_embedding(self, embedding):
         return self.object_decoder(embedding)
 
-    def predict_referential_candidate(self,
-                                      message_embedding: th.Tensor,
-                                      inputs_embedding: th.Tensor,
-                                      distractors_embedding: th.Tensor):
+    def project_object(self,object):
+        return self.object_projector(object)
+
+    def compute_referential_scores(self,
+                                  message_projection: th.Tensor,
+                                  object_projection: th.Tensor,
+                                  n_distractors : int):
+
         # Expand dims across distractors axis
-        inputs_embedding = inputs_embedding.reshape((inputs_embedding.size(0), 1, inputs_embedding.size(1)))
-        message_embedding = message_embedding.reshape((message_embedding.size(0), 1, message_embedding.size(1)))
 
-        embeddings = th.concat((inputs_embedding,
-                                distractors_embedding), dim=1)
+        cos = CosineSimilarity(dim=1)
 
-        cos = CosineSimilarity(dim=2)
-        message_object_scalar_product = cos(message_embedding, embeddings)
+        # Target
+        target_cosine = cos(message_projection, object_projection)
 
-        output = F.log_softmax(message_object_scalar_product, dim=1)
+        batch_size = message_projection.size(0)
 
-        return output
+        # Distractors
+        distractor_ids = th.stack([(i + 1 + th.multinomial(th.ones(batch_size-1),
+                                                           n_distractors,
+                                                           replacement=False))%batch_size
+                                   for i in range(batch_size)]) # sample n_distractors != target
+
+        distractors_projection = object_projection[distractor_ids]
+        message_projection_repeated = message_projection.repeat((n_distractors, 1))
+        distractors_cosine = cos(message_projection_repeated,
+                                 distractors_projection).reshape((batch_size, n_distractors))
+
+        target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
+
+        probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[0]
+        loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[0]
+        accuracy = 1. * (target_and_distractors_cosine.argmax(1) == 0)
+
+        return probs, loss, accuracy
 
     def compute_task_losses(self, inputs, sender_log_prob, sender_entropy, messages, receiver_output,
                             neg_log_imit=None):
@@ -100,6 +120,7 @@ class Agent(object):
         if self.sender is not None: self.sender.reset_parameters()
         if self.receiver is not None: self.receiver.reset_parameters()
         if self.object_decoder is not None: self.object_decoder.reset_parameters()
+        if self.object_projector is not None: self.object_projector.reset_parameters()
 
     def weight_noise(self):
 
@@ -293,6 +314,12 @@ def get_agent(agent_name: str,
                                        embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
         object_decoder = build_decoder(object_params=game_params["objects"],
                                        embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
+        if game_params["game_type"]=="referential":
+            object_projector = build_object_projector(object_params=game_params["objects"],
+                                                      projection_size=agent_params["receiver_params"]["projection_dim"])
+        else:
+            object_projector = None
+
         sender = None
         language_model = None
         receiver = build_receiver(receiver_params=agent_params["receiver_params"], game_params=game_params)
@@ -310,14 +337,24 @@ def get_agent(agent_name: str,
             receiver.load_state_dict(pretrained_modules["receiver"])
         elif "receiver" in pretrained_modules and not load_state_dict_cond:
             receiver = pretrained_modules["receiver"]
+        if "object_projector" in pretrained_modules and load_state_dict_cond:
+            object_projector.load_state_dict(pretrained_modules["object_projector"])
+        elif "object_projector" in pretrained_modules and not load_state_dict_cond:
+            object_projector = pretrained_modules["object_projector"]
 
         # Send models to device
         receiver.to(device)
         object_encoder.to(device)
         object_decoder.to(device)
+        if object_projector is not None:
+            object_projector.to(device)
 
         # Model parameters
-        model_parameters = list(receiver.parameters()) + list(object_decoder.parameters())
+        if object_projector is not None:
+            model_parameters = list(receiver.parameters()) + list(object_decoder.parameters()) + \
+                               list(object_projector.parameters())
+        else:
+            model_parameters = list(receiver.parameters()) + list(object_decoder.parameters())
 
     else:
         raise 'Agent should be at least a Sender or a Receiver'
@@ -368,6 +405,7 @@ def get_agent(agent_name: str,
     agent = Agent(agent_name=agent_name,
                   object_encoder=object_encoder,
                   object_decoder=object_decoder,
+                  object_projector = object_projector,
                   sender=sender,
                   receiver=receiver,
                   language_model = language_model,

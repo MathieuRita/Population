@@ -8,13 +8,13 @@ class ReconstructionGame(nn.Module):
 
     def __init__(self,
                  population: object,
-                 voc_size : int,
-                 max_len : int,
-                 noise_level : float = 0.):
+                 voc_size: int,
+                 max_len: int,
+                 noise_level: float = 0.):
 
         super(ReconstructionGame, self).__init__()
         self.population = population
-        self.voc_size=voc_size
+        self.voc_size = voc_size
         self.max_len = max_len
         self.noise_level = noise_level
 
@@ -23,7 +23,7 @@ class ReconstructionGame(nn.Module):
                                sender_id: th.Tensor,
                                receiver_id: th.Tensor,
                                compute_metrics: bool = False,
-                               reduce : bool = True):
+                               reduce: bool = True):
 
         """
         :param noise_threshold: 0 -> no noise
@@ -43,10 +43,10 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Noise in communication channel
-        #random_messages = th.randint(low=1, high=self.voc_size, size=messages.size(),device=messages.device)
-        #probs = th.rand(messages.size(), device=messages.device)
-        #mask = 1 * (probs < self.noise_level)
-        #messages = (1 - mask) * messages + mask * random_messages
+        # random_messages = th.randint(low=1, high=self.voc_size, size=messages.size(),device=messages.device)
+        # probs = th.rand(messages.size(), device=messages.device)
+        # mask = 1 * (probs < self.noise_level)
+        # messages = (1 - mask) * messages + mask * random_messages
 
         # Agent receiver encodes message and predict the reconstructed object
         message_embedding = agent_receiver.receive(messages)
@@ -62,7 +62,7 @@ class ReconstructionGame(nn.Module):
                                                         message=messages
                                                         )
 
-        if reduce: loss=loss.mean()
+        if reduce: loss = loss.mean()
 
         agent_sender.tasks[task]["loss_value"] = loss
 
@@ -92,14 +92,14 @@ class ReconstructionGame(nn.Module):
             metrics["message_length"] = find_lengths(messages).float().mean().item()
             # Receiver entropy
             log_prob_receiver = output_receiver.detach().sum(1)
-            entropy_receiver = (log_prob_receiver*th.exp(log_prob_receiver)).sum(1)
+            entropy_receiver = (log_prob_receiver * th.exp(log_prob_receiver)).sum(1)
             metrics["entropy_receiver"] = entropy_receiver.mean()
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False, reduce : bool = True):
+    def forward(self, batch, compute_metrics: bool = False, reduce: bool = True):
 
-        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, reduce = reduce)
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, reduce=reduce)
 
         return metrics
 
@@ -108,7 +108,7 @@ class ReconstructionGame(nn.Module):
                                               sender_id: th.Tensor,
                                               receiver_ids: list,
                                               weight_receivers: dict,
-                                              reward_noise : bool = False,
+                                              reward_noise: bool = False,
                                               compute_metrics: bool = False):
 
         """
@@ -138,7 +138,7 @@ class ReconstructionGame(nn.Module):
             output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
             accuracies[receiver_id] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
             accuracies_tot[receiver_id] = accuracy(inputs, output_receiver, game_mode="reconstruction",
-                                                    all_attributes_equal=True).mean()
+                                                   all_attributes_equal=True).mean()
 
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver).detach()
@@ -152,9 +152,9 @@ class ReconstructionGame(nn.Module):
 
         average_reward /= sum([v for _, v in weight_receivers.items()])
 
-        #if reward_noise:
+        # if reward_noise:
         #    average_reward-=2+2*th.normal(th.zeros(average_reward.size(0))).to(average_reward.device)
-            #average_reward=average_reward - 1.
+        # average_reward=average_reward - 1.
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=average_reward,
                                                                sender_log_prob=log_prob_sender,
@@ -277,7 +277,7 @@ class ReconstructionGame(nn.Module):
         reward_kl = th.log(prob_lm).detach() + reward_communication \
                     - th.log(p_x) - (log_prob_sender.detach() * mask_eos.detach()).sum(dim=1)
 
-        reward = weights["communication"]*reward_communication + weights["KL"]*reward_kl
+        reward = weights["communication"] * reward_communication + weights["KL"] * reward_kl
         reward /= sum([v for _, v in weights.items()])
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
@@ -403,16 +403,18 @@ class ReconstructionGame(nn.Module):
 class ReferentialGame(nn.Module):
 
     def __init__(self,
-                 population: object):
+                 population: object,
+                 n_distractors: int):
         super(ReferentialGame, self).__init__()
         self.population = population
+        self.n_distractors = n_distractors
 
     def game_instance(self,
                       inputs: th.Tensor,
-                      distractors: th.Tensor,
                       sender_id: th.Tensor,
                       receiver_id: th.Tensor,
-                      compute_metrics: bool = False):
+                      compute_metrics: bool = False,
+                      reduce: bool = True):
         """
         :param x: tuple (sender_id,receiver_id,batch)
         :return: (loss_sender,loss_receiver) [batch_size,batch_size]
@@ -421,10 +423,6 @@ class ReferentialGame(nn.Module):
         agent_sender = self.population.agents[sender_id]
         agent_receiver = self.population.agents[receiver_id]
 
-        # Dimensions
-        batch_size, n_distractors, dim_obj_1, dim_obj_2 = distractors.size(0), distractors.size(1), \
-                                                          distractors.size(2), distractors.size(3)
-
         # Agent sender sends message based on object
         inputs_encoded = agent_sender.encode_object(inputs)
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_encoded)
@@ -432,31 +430,38 @@ class ReferentialGame(nn.Module):
         # Agent receiver encodes messages and distractors and predicts input objects
         message_embedding = agent_receiver.receive(messages)
 
-        distractors = distractors.reshape((batch_size * n_distractors, dim_obj_1, dim_obj_2))
-        distractors_embedding = agent_receiver.encode_object(distractors)
-        distractors_embedding = distractors_embedding.reshape(
-            (batch_size, n_distractors, distractors_embedding.size(-1)))
-        inputs_embedding = agent_receiver.encode_object(inputs)
-        output_receiver = agent_receiver.predict_referential_candidate(message_embedding=message_embedding,
-                                                                       inputs_embedding=inputs_embedding,
-                                                                       distractors_embedding=distractors_embedding)
-        # [batch_size,1+n_distractors]
+        message_projection = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+        object_projection = agent_receiver.project_object(inputs)
 
-        loss_sender = agent_sender.compute_sender_loss(inputs=inputs,
-                                                       sender_log_prob=log_prob_sender,
-                                                       sender_entropy=entropy_sender,
-                                                       messages=messages,
-                                                       receiver_output=output_receiver)  # [batch_size]
+        probs_receiver, loss_receiver, accuracy = \
+            agent_receiver.compute_referential_scores(message_projection=message_projection,
+                                                      object_projection=object_projection,
+                                                      n_distractors=self.n_distractors)
 
-        loss_receiver = agent_receiver.compute_receiver_loss(inputs=inputs,
-                                                             output_receiver=output_receiver)  # [batch_size]
+        task = "communication"
+
+        reward = - loss_receiver
+
+        loss_sender = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                               sender_log_prob=log_prob_sender,
+                                                               sender_entropy=entropy_sender,
+                                                               message=messages
+                                                               )
+
+        if reduce: loss_sender = loss_sender.mean()
+
+        agent_sender.tasks[task]["loss_value"] = loss_sender
+
+        if reduce: loss_receiver = loss_receiver.mean()
+
+        agent_receiver.tasks[task]["loss_value"] = loss_receiver
 
         # Compute additional metrics
         metrics = {}
 
         if compute_metrics:
             # accuracy
-            metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="referential").mean()
+            metrics["accuracy"] = accuracy.mean()
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Raw messages
@@ -579,7 +584,8 @@ class PretrainingGame(nn.Module):
         inputs_encoded = self.agent.encode_object(inputs)
         messages, _, log_prob_sender, entropy_sender = self.agent.send(inputs_encoded, return_whole_log_probs=True)
 
-        loss_sender = cross_entropy_imitation(sender_log_prob=log_prob_sender,target_messages=target_messages)  # [batch_size]
+        loss_sender = cross_entropy_imitation(sender_log_prob=log_prob_sender,
+                                              target_messages=target_messages)  # [batch_size]
 
         # Compute additional metrics
         metrics = {}
@@ -608,7 +614,7 @@ def build_game(game_params: dict,
         if "noise_level" in game_params["channel"]:
             noise_level = game_params["channel"]["noise_level"]
         else:
-            noise_level=0.
+            noise_level = 0.
         game = ReconstructionGame(population=population,
                                   voc_size=game_params["channel"]["voc_size"],
                                   max_len=game_params["channel"]["max_len"],
@@ -618,7 +624,9 @@ def build_game(game_params: dict,
         game = ReconstructionImitationGame(population=population)
     elif game_params["game_type"] == "referential":
         assert population is not None, "Specify a population to play the game"
-        game = ReferentialGame(population=population)
+        assert game_params["n_distractors"] is not None, "Specify a number of distractors to play the game"
+        game = ReferentialGame(population=population,
+                               n_distractors=game_params["n_distractors"])
     elif game_params["game_type"] == "speaker_pretraining":
         assert agent is not None, "Specify a Speaker agent to be pretrained"
         game = PretrainingGame(agent=agent)
