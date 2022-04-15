@@ -27,22 +27,22 @@ class StaticEvaluator:
              print_results: bool = False,
              save_results: bool = False) -> None:
 
-        if self.metrics_to_measure["topographic_similarity"]:
+        if "topographic_similarity" in self.metrics_to_measure:
             topographic_similarity = self.estimate_topographic_similarity()
         else:
             topographic_similarity = None
 
-        if self.metrics_to_measure["MI"]:
+        if "MI" in self.metrics_to_measure:
             raise NotImplementedError
         else:
             mutual_information = None
 
-        if self.metrics_to_measure["success"]:
+        if "success" in self.metrics_to_measure:
             raise NotImplementedError
         else:
             success = None
 
-        if self.metrics_to_measure["max_generalization"]:
+        if "max_generalization" in self.metrics_to_measure:
             raise NotImplementedError
         else:
             max_generalization = None
@@ -50,6 +50,12 @@ class StaticEvaluator:
         if save_results:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
+                              mutual_information = mutual_information,
+                              success = success,
+                              max_generalization = max_generalization)
+
+        if print_results:
+            self.print_results(topographic_similarity=topographic_similarity,
                               mutual_information = mutual_information,
                               success = success,
                               max_generalization = max_generalization)
