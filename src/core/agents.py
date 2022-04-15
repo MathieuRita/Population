@@ -282,7 +282,9 @@ def get_agent(agent_name: str,
                                                 device=device)
         else:
             language_model = None
+
         object_decoder = None
+        object_projector = None
         receiver = None
 
         # Pretrained modules
@@ -314,6 +316,7 @@ def get_agent(agent_name: str,
                                        embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
         object_decoder = build_decoder(object_params=game_params["objects"],
                                        embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
+
         if game_params["game_type"]=="referential":
             object_projector = build_object_projector(object_params=game_params["objects"],
                                                       projection_size=agent_params["receiver_params"]["projection_dim"])
