@@ -94,10 +94,10 @@ class StaticEvaluator:
                         # Train
                         for _ in range(N_sampling):
                             num_inputs = min(batch_size, dataset.size(0))
-                            inputs_1 = dataset[torch.multinomial(torch.ones(dataset.size(0)),
+                            inputs_1 = dataset[th.multinomial(th.ones(dataset.size(0)),
                                                                  num_inputs,
                                                                  replacement=False)].to(self.device)
-                            inputs_2 = dataset[torch.multinomial(torch.ones(dataset.size(0)),
+                            inputs_2 = dataset[th.multinomial(th.ones(dataset.size(0)),
                                                                  num_inputs,
                                                                  replacement=False)].to(self.device)
 
