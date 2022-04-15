@@ -76,7 +76,7 @@ class StaticEvaluator:
         with th.no_grad():
 
             for agent_name in self.agents_to_evaluate:
-                agent = self.population[agent_name]
+                agent = self.population.agents[agent_name]
                 if agent.sender is not None:
                     topographic_similarity_results[agent_name] = defaultdict(list)
                     train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
