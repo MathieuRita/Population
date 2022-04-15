@@ -59,7 +59,9 @@ def main(params):
                                            population=population,
                                            agents_to_evaluate = eval_params["agents_to_evaluate"],
                                            metrics_to_measure = eval_params["metrics_to_evaluate"],
-                                           save_dir = opts.save_dir)
+                                           dataset_dir=opts.dataset_dir,
+                                           save_dir = opts.save_dir,
+                                           device = eval_params["device"])
 
     static_evaluator.step(print_results = True, save_results = True)
 
