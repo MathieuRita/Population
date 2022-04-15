@@ -14,6 +14,7 @@ class StaticEvaluator:
                  metrics_to_measure,
                  agents_to_evaluate,
                  dataset_dir,
+                 save_dir,
                  device: str = "cpu") -> None:
 
         self.game = game
@@ -22,6 +23,7 @@ class StaticEvaluator:
         self.agents_to_evaluate = agents_to_evaluate
         self.metrics_to_measure = metrics_to_measure
         self.dataset_dir = dataset_dir
+        self.save_dir = save_dir
 
     def step(self,
              print_results: bool = False,
@@ -50,15 +52,15 @@ class StaticEvaluator:
         if save_results:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
-                              mutual_information = mutual_information,
-                              success = success,
-                              max_generalization = max_generalization)
+                              mutual_information=mutual_information,
+                              success=success,
+                              max_generalization=max_generalization)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
-                              mutual_information = mutual_information,
-                              success = success,
-                              max_generalization = max_generalization)
+                               mutual_information=mutual_information,
+                               success=success,
+                               max_generalization=max_generalization)
 
     def estimate_topographic_similarity(self,
                                         distance_input: str = "common_attributes",
@@ -66,7 +68,7 @@ class StaticEvaluator:
                                         N_sampling: int = 100,
                                         batch_size: int = 1000) -> dict:
 
-        topographic_similarity_results = defaultdict(defaultdict(list))
+        topographic_similarity_results = dict()
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         self.game.train()
@@ -76,6 +78,7 @@ class StaticEvaluator:
             for agent_name in self.agents_to_evaluate:
                 agent = self.population[agent_name]
                 if agent.sender is not None:
+                    topographic_similarity_results[agent_name] = defaultdict(list)
                     train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
                     val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
                     test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
@@ -138,9 +141,9 @@ class StaticEvaluator:
     def save_results(self,
                      save_dir: str,
                      topographic_similarity: dict = None,
-                     mutual_information : dict = None,
-                     success : dict = None,
-                     max_generalization : dict = None) -> None:
+                     mutual_information: dict = None,
+                     success: dict = None,
+                     max_generalization: dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -158,10 +161,10 @@ class StaticEvaluator:
             raise NotImplementedError
 
     def print_results(self,
-                      topographic_similarity : dict = None,
-                      mutual_information : dict = None,
-                      success : dict = None,
-                      max_generalization : dict = None):
+                      topographic_similarity: dict = None,
+                      mutual_information: dict = None,
+                      success: dict = None,
+                      max_generalization: dict = None):
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -182,20 +185,19 @@ class StaticEvaluator:
             raise NotImplementedError
 
 
-
-
-
 def get_static_evaluator(game,
                          population,
                          metrics_to_measure,
                          agents_to_evaluate,
                          dataset_dir,
+                         save_dir,
                          device: str = "cpu"):
     evaluator = StaticEvaluator(game=game,
                                 population=population,
                                 metrics_to_measure=metrics_to_measure,
                                 agents_to_evaluate=agents_to_evaluate,
                                 dataset_dir=dataset_dir,
+                                save_dir=save_dir,
                                 device=device)
 
     return evaluator

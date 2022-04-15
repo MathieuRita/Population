@@ -27,6 +27,9 @@ def get_params(params):
     # Dataset dir
     parser.add_argument('--dataset_dir', type=str, help="Path to dataset dir")
 
+    # Dataset dir
+    parser.add_argument('--save_dir', type=str, help="Path to dataset dir")
+
     args = parser.parse_args(params)
 
     return args
@@ -56,7 +59,7 @@ def main(params):
                                            population=population,
                                            agents_to_evaluate = eval_params["agents_to_evaluate"],
                                            metrics_to_measure = eval_params["metrics_to_evaluate"],
-                                           dataset_dir = opts.dataset_dir)
+                                           save_dir = opts.save_dir)
 
     static_evaluator.step(print_results = True, save_results = True)
 
