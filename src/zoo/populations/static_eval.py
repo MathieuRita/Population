@@ -44,7 +44,7 @@ def main(params):
     population = build_population(population_params=population_params,
                                   agent_repertory=agent_repertory,
                                   game_params=game_params,
-                                  device=)#training_params["device"])
+                                  device=eval_params["device"])
 
     # Build Game
     game = build_game(game_params=game_params,

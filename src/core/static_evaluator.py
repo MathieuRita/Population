@@ -87,10 +87,10 @@ class StaticEvaluator:
                             num_inputs = min(batch_size, dataset.size(0))
                             inputs_1 = dataset[torch.multinomial(torch.ones(dataset.size(0)),
                                                                  num_inputs,
-                                                                 replacement=False)]
+                                                                 replacement=False)].to(self.device)
                             inputs_2 = dataset[torch.multinomial(torch.ones(dataset.size(0)),
                                                                  num_inputs,
-                                                                 replacement=False)]
+                                                                 replacement=False)].to(self.device)
 
                             inputs_embedding_1 = agent.encode_object(inputs_1)
                             messages_1, _, _ = agent.send(inputs_embedding_1)
