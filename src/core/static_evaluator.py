@@ -112,9 +112,8 @@ class StaticEvaluator:
                             messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
 
                             if distance_input == "common_attributes":
-                                print(inputs_1.argmax(2),inputs_2.argmax(2))
-                                print(1 * ((inputs_1.argmax(2) - inputs_2.argmax(2)) == 0))
-                                distances_inputs = np.mean(1 - 1 * ((inputs_1.argmax(2) - inputs_2.argmax(2)) == 0),
+                                equal_att=1 - 1 *((inputs_1.argmax(2) - inputs_2.argmax(2)) == 0).cpu().numpy()
+                                distances_inputs = np.mean(equal_att,
                                                            axis=1)
                             else:
                                 raise NotImplementedError
