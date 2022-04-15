@@ -151,7 +151,7 @@ class StaticEvaluator:
         if topographic_similarity is not None:
             for agent_name in topographic_similarity:
                 for dataset_type in topographic_similarity[agent_name]:
-                    th.save(f"{save_dir}/topsim_{agent_name}_{dataset_type}.pt",
+                    np.save(f"{save_dir}/topsim_{agent_name}_{dataset_type}.npy",
                             topographic_similarity[agent_name][dataset_type])
 
         if mutual_information is not None:
