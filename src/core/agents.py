@@ -79,8 +79,6 @@ class Agent(object):
 
         # Target
         target_cosine = cos(message_projection, object_projection)
-        print("target cosine")
-        print(target_cosine.size())
 
         batch_size = message_projection.size(0)
 
