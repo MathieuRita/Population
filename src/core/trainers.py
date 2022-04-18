@@ -57,7 +57,7 @@ class TrainerPopulation(object):
 
             # Train communication
             if epoch % train_communication_freq == 0:
-                if epoch%200==0:
+                if epoch%100==0:
                     self.reset_optimizer()
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication(compute_metrics=True)  # dict,dict, dict
@@ -100,6 +100,13 @@ class TrainerPopulation(object):
             agent = self.population.agents[agent_id]
             model_parameters = list(agent.receiver.parameters()) + list(agent.object_decoder.parameters()) + \
                                list(agent.object_projector.parameters())
+
+            agent.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                      lr=0.0005)
+            
+        for agent_id in self.population.sender_names:
+            agent = self.population.agents[agent_id]
+            model_parameters = list(agent.sender.parameters()) + list(agent.object_encoder.parameters())
 
             agent.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
                                                                       lr=0.0005)
