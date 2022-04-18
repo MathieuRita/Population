@@ -93,6 +93,9 @@ class Agent(object):
         distractors_projection = object_projection[distractor_ids]
         print("distractors_projection")
         print(distractors_projection.size())
+        print("message projection")
+        print(message_projection.size())
+        message_projection = message_projection.unsqueeze(1)
         message_projection_repeated = message_projection.repeat((n_distractors, 1))
         print("message_projection_repeated")
         print(message_projection_repeated.size())
