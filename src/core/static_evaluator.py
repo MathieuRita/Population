@@ -139,7 +139,8 @@ class StaticEvaluator:
         return topographic_similarity_results
 
     def estimate_h_x_m(self,
-                       batch_size: int = 1024):
+                       batch_size: int = 1024,
+                       n_batch_val : int = 5):
 
         h_x_m_results = defaultdict()
         accuracy_results = defaultdict()
@@ -219,19 +220,27 @@ class StaticEvaluator:
                         losses.append(mean_loss / n_batch)
                         accuracies.append(mean_accuracy / n_batch)
 
-                        step+=1
-
                         if split_type=="train":
                             with th.no_grad():
 
-                                batch_data = full_dataset["val"]
+                                mean_val_loss=0.
+                                mean_val_acc=0.
 
-                                eval_receiver = self.population.agents[self.eval_receiver_id]
-                                batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
-                                metrics = self.game(batch, compute_metrics=True)
+                                for _ in range(n_batch_val):
 
-                                val_losses.append(eval_receiver.tasks[task]["loss_value"].detach().item())
-                                val_accuracies.append(metrics["accuracy"].detach().item())
+                                    batch_data = full_dataset[splits["val"]]
+
+                                    eval_receiver = self.population.agents[self.eval_receiver_id]
+                                    batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
+                                    metrics = self.game(batch, compute_metrics=True)
+
+                                    mean_val_loss+=eval_receiver.tasks[task]["loss_value"].detach().item()
+                                    mean_val_acc+=metrics["accuracy"].detach().item()
+
+                                val_losses.append(mean_val_loss/n_batch_val)
+                                val_accuracies.append(mean_val_acc/n_batch_val)
+
+                        step += 1
 
                         if step == 2500 : continue_training = False
 
