@@ -42,19 +42,14 @@ class StaticEvaluator:
             topographic_similarity = None
 
         if "h_x_m" in self.metrics_to_measure:
-            h_x_m, accuracy_h_x_m = self.estimate_h_x_m()
+            h_x_m, accuracy_h_x_m, val_losses_results, val_accuracies_results = self.estimate_h_x_m()
         else:
-            h_x_m, accuracy_h_x_m = None, None
+            h_x_m, accuracy_h_x_m, val_losses_results, val_accuracies_results = None, None, None, None
 
         if "success" in self.metrics_to_measure:
             raise NotImplementedError
         else:
             success = None
-
-        if "max_generalization" in self.metrics_to_measure:
-            raise NotImplementedError
-        else:
-            max_generalization = None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -62,14 +57,16 @@ class StaticEvaluator:
                               h_x_m=h_x_m,
                               accuracy_h_x_m = accuracy_h_x_m,
                               success=success,
-                              max_generalization=max_generalization)
+                              val_losses_results=val_losses_results,
+                              val_accuracies_results=val_accuracies_results)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
                                h_x_m=h_x_m,
                                accuracy_h_x_m=accuracy_h_x_m,
                                success=success,
-                               max_generalization=max_generalization)
+                               val_losses_results=val_losses_results,
+                               val_accuracies_results=val_accuracies_results)
 
     def estimate_topographic_similarity(self,
                                         distance_input: str = "common_attributes",
@@ -146,6 +143,8 @@ class StaticEvaluator:
 
         h_x_m_results = defaultdict()
         accuracy_results = defaultdict()
+        val_losses_results = defaultdict()
+        val_accuracies_results = defaultdict()
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         for agent_name in self.agents_to_evaluate:
@@ -175,6 +174,8 @@ class StaticEvaluator:
 
                     losses = []
                     accuracies = []
+                    val_losses = []
+                    val_accuracies = []
 
                     step = 0
                     continue_training = True
@@ -220,13 +221,27 @@ class StaticEvaluator:
 
                         step+=1
 
+                        if split_type=="train":
+                            with th.no_grad():
+
+                                batch_data = full_dataset["val"]
+
+                                eval_receiver = self.population.agents[self.eval_receiver_id]
+                                batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
+                                metrics = self.game(batch, compute_metrics=True)
+
+                                val_losses.append(eval_receiver.tasks[task]["loss_value"].detach().item())
+                                val_accuracies.append(metrics["accuracy"].detach().item())
+
                         if step == 2500 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
                     accuracy_results[agent_name][split_type].append(np.mean(accuracies[-5:]))
+                    val_losses_results[agent_name] = val_losses
+                    val_accuracies_results[agent_name] = val_accuracies
                     print(f"Done split {split_type} : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
 
-        return h_x_m_results, accuracy_results
+        return h_x_m_results, accuracy_results, val_losses_results, val_accuracies_results
 
     def compute_success(self):
 
@@ -238,7 +253,8 @@ class StaticEvaluator:
                      h_x_m: dict = None,
                      accuracy_h_x_m: dict = None,
                      success: dict = None,
-                     max_generalization: dict = None) -> None:
+                     val_losses_results: dict = None,
+                     val_accuracies_results: dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -258,11 +274,12 @@ class StaticEvaluator:
                 for dataset_type in accuracy_h_x_m[agent_name]:
                     np.save(f"{save_dir}/accuracy_h_x_m_{agent_name}_{dataset_type}.npy",
                             accuracy_h_x_m[agent_name][dataset_type])
+                np.save(f"{save_dir}/val_loss_{agent_name}.npy",
+                            val_losses_results[agent_name])
+                np.save(f"{save_dir}/val_accuracy_{agent_name}.npy",
+                        val_accuracies_results[agent_name])
 
         if success is not None:
-            raise NotImplementedError
-
-        if max_generalization is not None:
             raise NotImplementedError
 
     def print_results(self,
@@ -270,7 +287,8 @@ class StaticEvaluator:
                       h_x_m: dict = None,
                       accuracy_h_x_m: dict = None,
                       success: dict = None,
-                      max_generalization: dict = None):
+                      val_losses_results: dict = None,
+                      val_accuracies_results: dict = None):
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -289,6 +307,8 @@ class StaticEvaluator:
                     h_value = h_x_m[agent_name][dataset_type]
                     accuracy_h = accuracy_h_x_m[agent_name][dataset_type]
                     print(f"{dataset_type} : {h_value} (accuracy = {accuracy_h})")
+                print(f"Minimal validation loss = {np.min(val_losses_results[agent_name])}")
+                print(f"Maximal validation accuracy = {np.max(val_accuracies_results[agent_name])}")
 
 
         if success is not None:
