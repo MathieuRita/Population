@@ -214,6 +214,8 @@ class StaticEvaluator:
                         losses.append(mean_loss / n_batch)
                         accuracies.append(mean_accuracy / n_batch)
 
+                        print(mean_accuracy / n_batch)
+
                         step+=1
 
                         if step == 2500 : continue_training = False
