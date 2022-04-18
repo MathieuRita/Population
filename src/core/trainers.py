@@ -130,6 +130,8 @@ class TrainerPopulation(object):
 
             metrics = self.game(batch, compute_metrics=compute_metrics)
 
+            print(metrics)
+
             # Sender
             if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
                 agent_sender.tasks[task]["optimizer"].zero_grad()
