@@ -324,9 +324,6 @@ class StaticEvaluator:
         if success is not None:
             raise NotImplementedError
 
-        if max_generalization is not None:
-            raise NotImplementedError
-
 
 def get_static_evaluator(game,
                          population,

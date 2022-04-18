@@ -93,6 +93,7 @@ class ReferentialDataLoader(th.utils.data.DataLoader):
                  batch_size: int,
                  mode: str = "train",
                  seed: int = None):
+
         self.dataset_dir = dataset_dir
         self.agent_names = agent_names
         self.population_probs = population_probs
@@ -133,33 +134,6 @@ def build_image_dataloader(game_type: str,
                                        batches_per_epoch=training_params["batches_per_epoch"],
                                        mode=mode,
                                        seed=training_params["seed"])
-
-        if task == "communication":
-
-            if mode == "val" and training_params["split_train_val"] == 1:
-                loader = None
-            else:
-                loader = ReferentialDataLoader(dataset_dir=dataset_dir,
-                                               agent_names=agent_names,
-                                               population_probs=population_probs,
-                                               batch_size=training_params["batch_size"],
-                                               batches_per_epoch=training_params[
-                                                   "{}_batches_per_epoch".format(mode)],
-                                               mode=mode,
-                                               seed=training_params["seed"])
-
-        elif task == "MI":
-
-            loader = ReferentialDataLoader(dataset_dir=dataset_dir,
-                                           agent_names=agent_names,
-                                           population_probs=population_probs,
-                                           batch_size=training_params["MI_batch_size"],
-                                           batches_per_epoch=training_params["MI_batches_per_epoch"],
-                                           mode=mode,
-                                           seed=training_params["seed"])
-
-        else:
-            raise BaseException("Specify a known task")
 
     else:
         raise BaseException("Specify a game type")
