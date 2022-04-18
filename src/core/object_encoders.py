@@ -84,7 +84,7 @@ def build_encoder(object_params: dict,
                                 embedding_size=embedding_size)
 
     elif object_params["object_type"] == "image_logit":
-        encoder = nn.Identity()
+        encoder = nn.Linear(object_params["n_logit"],embedding_size)
 
     else:
         raise "Specify a known object type"
