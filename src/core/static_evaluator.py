@@ -177,7 +177,7 @@ class StaticEvaluator:
                     while continue_training:
 
                         # Prepare dataset
-                        n_batch = round(splits[split_type] / batch_size)
+                        n_batch = round(len(splits[split_type]) / batch_size)
                         permutation = th.multinomial(torch.ones(len(splits[split_type])),
                                                      len(splits[split_type]),
                                                      replacement=False)
