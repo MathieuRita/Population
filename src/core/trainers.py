@@ -128,9 +128,7 @@ class TrainerPopulation(object):
 
             batch = move_to(batch, self.device)
 
-            metrics = self.game(batch, compute_metrics=compute_metrics)
-
-            print(metrics)
+            _,_, metrics = self.game(batch, compute_metrics=compute_metrics)
 
             # Sender
             if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
