@@ -15,6 +15,8 @@ class StaticEvaluator:
                  metrics_to_measure,
                  agents_to_evaluate,
                  eval_receiver_id,
+                 agent_repertory,
+                 game_params,
                  dataset_dir,
                  save_dir,
                  device: str = "cpu") -> None:
@@ -25,6 +27,8 @@ class StaticEvaluator:
         self.agents_to_evaluate = agents_to_evaluate
         self.metrics_to_measure = metrics_to_measure
         self.eval_receiver_id = eval_receiver_id
+        self.agent_repertory = agent_repertory
+        self.game_params = game_params
         self.dataset_dir = dataset_dir
         self.save_dir = save_dir
 
@@ -272,6 +276,8 @@ def get_static_evaluator(game,
                          metrics_to_measure,
                          agents_to_evaluate,
                          eval_receiver_id,
+                         agent_repertory,
+                         game_params,
                          dataset_dir,
                          save_dir,
                          device: str = "cpu"):
@@ -280,6 +286,8 @@ def get_static_evaluator(game,
                                 metrics_to_measure=metrics_to_measure,
                                 agents_to_evaluate=agents_to_evaluate,
                                 eval_receiver_id=eval_receiver_id,
+                                agent_repertory=agent_repertory,
+                                game_params=game_params,
                                 dataset_dir=dataset_dir,
                                 save_dir=save_dir,
                                 device=device)
