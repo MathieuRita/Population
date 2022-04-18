@@ -78,7 +78,6 @@ def main(params):
                                           dataset_dir=game_params["dataset"]["path"],
                                           agent_names=population.agent_names,
                                           population_probs=population.pairs_prob,
-                                          imitation_probs=population.imitation_probs,
                                           training_params=training_params,
                                           task="communication",
                                           mode="train", )
@@ -87,7 +86,6 @@ def main(params):
                                         dataset_dir=game_params["dataset"]["path"],
                                         agent_names=population.agent_names,
                                         population_probs=population.pairs_prob,
-                                        imitation_probs=population.imitation_probs,
                                         training_params=training_params,
                                         mode="valid")
 
@@ -95,7 +93,6 @@ def main(params):
                                          dataset_dir=game_params["dataset"]["path"],
                                          agent_names=population.agent_names,
                                          population_probs=population.pairs_prob,
-                                         imitation_probs=population.imitation_probs,
                                          training_params=training_params,
                                          mode="test")
 
