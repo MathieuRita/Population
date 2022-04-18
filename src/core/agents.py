@@ -312,15 +312,19 @@ def get_agent(agent_name: str,
     elif not agent_params["sender"] and agent_params["receiver"]:
 
         # Models
-        object_encoder = build_encoder(object_params=game_params["objects"],
-                                       embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
-        object_decoder = build_decoder(object_params=game_params["objects"],
-                                       embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
-
         if game_params["game_type"]=="referential":
+            object_encoder = build_encoder(object_params=game_params["objects"],
+                                           embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
+            object_decoder = build_decoder(object_params=game_params["objects"],
+                                           embedding_size=agent_params["receiver_params"]["receiver_embed_dim"],
+                                           projection_size=agent_params["receiver_params"]["projection_dim"])
             object_projector = build_object_projector(object_params=game_params["objects"],
                                                       projection_size=agent_params["receiver_params"]["projection_dim"])
         else:
+            object_encoder = build_encoder(object_params=game_params["objects"],
+                                           embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
+            object_decoder = build_decoder(object_params=game_params["objects"],
+                                           embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
             object_projector = None
 
         sender = None
