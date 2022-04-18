@@ -93,11 +93,15 @@ def build_encoder(object_params: dict,
 
 
 def build_decoder(object_params: dict,
-                  embedding_size: int):
+                  embedding_size: int,
+                  projection_size : int = 100):
     if object_params["object_type"] == "one_hot":
 
         decoder = OneHotDecoder(object_params=object_params,
                                 embedding_size=embedding_size)
+
+    elif object_params["object_type"] == "image_logit":
+        decoder = nn.Linear(embedding_size, projection_size)
 
     else:
         raise "Specify a known object type"
