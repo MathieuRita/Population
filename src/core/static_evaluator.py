@@ -205,9 +205,11 @@ class StaticEvaluator:
 
                         losses.append(mean_loss / n_batch)
 
-                        if step == 250 : continue_training = False
+                        if step == 100 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
+
+                    print(f"Done : {split_type} split ({np.mean(losses[-5:])})")
 
         return h_x_m_results
 
