@@ -42,9 +42,9 @@ class StaticEvaluator:
             topographic_similarity = None
 
         if "h_x_m" in self.metrics_to_measure:
-            h_x_m = self.estimate_h_x_m()
+            h_x_m, accuracy_h_x_m = self.estimate_h_x_m()
         else:
-            h_x_m = None
+            h_x_m, accuracy_h_x_m = None, None
 
         if "success" in self.metrics_to_measure:
             raise NotImplementedError
@@ -60,12 +60,14 @@ class StaticEvaluator:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
                               h_x_m=h_x_m,
+                              accuracy_h_x_m = accuracy_h_x_m,
                               success=success,
                               max_generalization=max_generalization)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
                                h_x_m=h_x_m,
+                               accuracy_h_x_m=accuracy_h_x_m,
                                success=success,
                                max_generalization=max_generalization)
 
@@ -143,6 +145,7 @@ class StaticEvaluator:
                        batch_size: int = 1024):
 
         h_x_m_results = defaultdict()
+        accuracy_results = defaultdict()
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         for agent_name in self.agents_to_evaluate:
@@ -150,6 +153,7 @@ class StaticEvaluator:
             agent = self.population.agents[agent_name]
             if agent.sender is not None:
                 h_x_m_results[agent_name] = defaultdict(list)
+                accuracy_results[agent_name] = defaultdict(list)
                 train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
                 val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
                 test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
@@ -214,16 +218,15 @@ class StaticEvaluator:
                         losses.append(mean_loss / n_batch)
                         accuracies.append(mean_accuracy / n_batch)
 
-                        print(mean_accuracy / n_batch)
-
                         step+=1
 
                         if step == 2500 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
+                    accuracy_results[agent_name][split_type].append(np.mean(accuracies[-5:]))
                     print(f"Done split {split_type} : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
 
-        return h_x_m_results
+        return h_x_m_results, accuracy_results
 
     def compute_success(self):
 
@@ -233,6 +236,7 @@ class StaticEvaluator:
                      save_dir: str,
                      topographic_similarity: dict = None,
                      h_x_m: dict = None,
+                     accuracy_h_x_m: dict = None,
                      success: dict = None,
                      max_generalization: dict = None) -> None:
 
@@ -249,6 +253,12 @@ class StaticEvaluator:
                     np.save(f"{save_dir}/h_x_m_{agent_name}_{dataset_type}.npy",
                             h_x_m[agent_name][dataset_type])
 
+        if accuracy_h_x_m is not None:
+            for agent_name in accuracy_h_x_m:
+                for dataset_type in accuracy_h_x_m[agent_name]:
+                    np.save(f"{save_dir}/accuracy_h_x_m_{agent_name}_{dataset_type}.npy",
+                            accuracy_h_x_m[agent_name][dataset_type])
+
         if success is not None:
             raise NotImplementedError
 
@@ -258,6 +268,7 @@ class StaticEvaluator:
     def print_results(self,
                       topographic_similarity: dict = None,
                       h_x_m: dict = None,
+                      accuracy_h_x_m: dict = None,
                       success: dict = None,
                       max_generalization: dict = None):
 
@@ -276,7 +287,9 @@ class StaticEvaluator:
                 print(f"Sender : {agent_name}")
                 for dataset_type in h_x_m[agent_name]:
                     h_value = h_x_m[agent_name][dataset_type]
-                    print(f"{dataset_type} : {h_value}")
+                    accuracy_h = accuracy_h_x_m[agent_name][dataset_type]
+                    print(f"{dataset_type} : {h_value} (accuracy = {accuracy_h})")
+
 
         if success is not None:
             raise NotImplementedError
