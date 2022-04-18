@@ -175,8 +175,8 @@ class StaticEvaluator:
 
                     losses = []
                     accuracies = []
-                    val_losses = []
-                    val_accuracies = []
+
+                    if split_type=="train": val_losses,val_accuracies = [], []
 
                     step = 0
                     continue_training = True
@@ -246,8 +246,9 @@ class StaticEvaluator:
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
                     accuracy_results[agent_name][split_type].append(np.mean(accuracies[-5:]))
-                    val_losses_results[agent_name] = val_losses
-                    val_accuracies_results[agent_name] = val_accuracies
+                    if split_type=="train":
+                        val_losses_results[agent_name] = val_losses
+                        val_accuracies_results[agent_name] = val_accuracies
                     print(f"Done split {split_type} : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
 
         return h_x_m_results, accuracy_results, val_losses_results, val_accuracies_results
