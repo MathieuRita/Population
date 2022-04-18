@@ -472,8 +472,8 @@ class ReferentialGame(nn.Module):
             # Average message length
             metrics["message_length"] = find_lengths(messages).float().mean().item()
             # Receiver entropy
-            log_prob_receiver = output_receiver.detach().sum(1)
-            entropy_receiver = (log_prob_receiver * th.exp(log_prob_receiver)).sum(1)
+            probs_receiver = probs_receiver.detach()
+            entropy_receiver = (probs_receiver * th.log(probs_receiver)).sum(1)
             metrics["entropy_receiver"] = entropy_receiver.mean()
 
         return metrics
