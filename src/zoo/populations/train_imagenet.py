@@ -32,9 +32,9 @@ def get_params(params):
     parser.add_argument('--log_dir', type=str, default="", help="Directory to save tensorboard vals")
 
     # Save Directory
+    parser.add_argument('--dataset_image', type=str, default="", help="Directory where data are saved")
     parser.add_argument('--model_save_dir', type=str, default="", help="Directory to save models")
     parser.add_argument('--metrics_save_dir', type=str, default="", help="Directory to save metrics")
-    parser.add_argument('--dataset_save_dir', type=str, default="", help="Directory to save dataset")
 
     args = parser.parse_args(params)
 
@@ -76,6 +76,7 @@ def main(params):
     # Communication task
 
     train_loader = build_image_dataloader(game_type=game_params["game_type"],
+                                          dataset_dir=opts.dataset_image,
                                           agent_names=population.agent_names,
                                           population_probs=population.pairs_prob,
                                           imitation_probs=population.imitation_probs,
@@ -84,6 +85,7 @@ def main(params):
                                           mode="train", )
 
     val_loader = build_image_dataloader(game_type=game_params["game_type"],
+                                        dataset_dir=opts.dataset_image,
                                         agent_names=population.agent_names,
                                         population_probs=population.pairs_prob,
                                         imitation_probs=population.imitation_probs,
@@ -91,6 +93,7 @@ def main(params):
                                         mode="valid")
 
     test_loader = build_image_dataloader(game_type=game_params["game_type"],
+                                         dataset_dir=opts.dataset_image,
                                          agent_names=population.agent_names,
                                          population_probs=population.pairs_prob,
                                          imitation_probs=population.imitation_probs,
@@ -99,6 +102,7 @@ def main(params):
 
     # Mutual information task
     mi_loader = build_image_dataloader(game_type=game_params["game_type"],
+                                       dataset_dir=opts.dataset_image,
                                        agent_names=population.agent_names,
                                        population_probs=population.pairs_prob,
                                        training_params=training_params,
@@ -108,6 +112,7 @@ def main(params):
     # Imitation loaders
     if sum(population_params['is_imitator']) > 0.:
         imitation_loader = build_image_dataloader(game_type=game_params["game_type"],
+                                                  dataset_dir=opts.dataset_image,
                                                   agent_names=population.agent_names,
                                                   population_probs=population.pairs_prob,
                                                   imitation_probs=population.imitation_probs,

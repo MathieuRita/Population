@@ -59,6 +59,7 @@ def main(params):
                                            population=population,
                                            agents_to_evaluate = eval_params["agents_to_evaluate"],
                                            metrics_to_measure = eval_params["metrics_to_evaluate"],
+                                            eval_receiver_id = eval_params["eval_receiver_id"],
                                            dataset_dir=opts.dataset_dir,
                                            save_dir = opts.save_dir,
                                            device = eval_params["device"])
