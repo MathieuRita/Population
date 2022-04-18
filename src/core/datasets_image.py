@@ -131,7 +131,7 @@ def build_image_dataloader(game_type: str,
                                        agent_names=agent_names,
                                        population_probs=population_probs,
                                        batch_size=training_params["batch_size"],
-                                       batches_per_epoch=training_params["batches_per_epoch"],
+                                       batches_per_epoch=training_params[f"{mode}_batches_per_epoch"],
                                        mode=mode,
                                        seed=training_params["seed"])
 
