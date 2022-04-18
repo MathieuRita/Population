@@ -170,6 +170,7 @@ class StaticEvaluator:
                     task = "communication"
 
                     losses = []
+                    accuracies = []
 
                     step = 0
                     continue_training = True
@@ -194,31 +195,31 @@ class StaticEvaluator:
                         permutation = th.cat((permutation,batch_fill),dim=0)
 
                         mean_loss = 0.
+                        mean_accuracy = 0.
 
                         for i in range(n_batch):
                             batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
 
                             eval_receiver = self.population.agents[self.eval_receiver_id]
                             batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
-                            _ = self.game(batch, compute_metrics=True)
+                            metrics = self.game(batch, compute_metrics=True)
 
                             eval_receiver.tasks[task]["optimizer"].zero_grad()
                             eval_receiver.tasks[task]["loss_value"].backward()
                             eval_receiver.tasks[task]["optimizer"].step()
 
                             mean_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
+                            mean_accuracy += metrics["accuracy"].detach().item()
 
                         losses.append(mean_loss / n_batch)
-
-                        print(mean_loss / n_batch)
+                        accuracies.append(mean_accuracy / n_batch)
 
                         step+=1
 
-                        if step == 2000 : continue_training = False
+                        if step == 2500 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
-
-                    print(f"Done : {split_type} split ({np.mean(losses[-5:])})")
+                    print(f"Done split {split_type} : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
 
         return h_x_m_results
 
