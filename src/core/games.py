@@ -471,13 +471,17 @@ class ReferentialGame(nn.Module):
             metrics["messages"] = messages
             # Average message length
             metrics["message_length"] = find_lengths(messages).float().mean().item()
+            # Receiver entropy
+            log_prob_receiver = output_receiver.detach().sum(1)
+            entropy_receiver = (log_prob_receiver * th.exp(log_prob_receiver)).sum(1)
+            metrics["entropy_receiver"] = entropy_receiver.mean()
 
-        return loss_sender, loss_receiver.mean(), metrics
+        return metrics
 
     def forward(self, batch, compute_metrics: bool = False):
-        loss_sender, loss_receiver, metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
+        metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
 
-        return loss_sender, loss_receiver, metrics
+        return metrics
 
 
 class ReconstructionImitationGame(nn.Module):
