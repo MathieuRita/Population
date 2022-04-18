@@ -186,7 +186,7 @@ class StaticEvaluator:
                             replacement=False
                         else:
                             replacement = True
-                            
+
                         batch_fill = th.multinomial(th.ones(len(splits[split_type])),
                                                     n_batch * batch_size - len(splits[split_type]),
                                                     replacement=replacement)
@@ -214,7 +214,7 @@ class StaticEvaluator:
 
                         step+=1
 
-                        if step == 500 : continue_training = False
+                        if step == 1000 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
 
@@ -273,7 +273,7 @@ class StaticEvaluator:
                 print(f"Sender : {agent_name}")
                 for dataset_type in h_x_m[agent_name]:
                     h_value = h_x_m[agent_name][dataset_type]
-                    print(f"{dataset_type} : h_value")
+                    print(f"{dataset_type} : {h_value}")
 
         if success is not None:
             raise NotImplementedError
