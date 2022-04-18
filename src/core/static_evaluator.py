@@ -214,7 +214,7 @@ class StaticEvaluator:
 
                         step+=1
 
-                        if step == 1000 : continue_training = False
+                        if step == 2000 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
 
