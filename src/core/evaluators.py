@@ -786,27 +786,28 @@ class Evaluator:
                                        iter)
 
         if self.metrics_to_measure["external_receiver_evaluation"]<self.n_epochs:
-            train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
-            top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
-            train_loss =  self.stored_metrics["external_receiver_train_loss"][-1]
-            top_val_loss = self.stored_metrics["external_receiver_val_loss"][-1]
-            etl = self.stored_metrics["etl"][-1]
-            for i, sender_id in enumerate(self.population.sender_names):
-                self.writer.add_scalar(f'{sender_id}/Train acc external receiver',
-                                       train_acc[i],
-                                       iter)
-                self.writer.add_scalar(f'{sender_id}/Top val acc external receiver',
-                                       top_val_acc[i],
-                                       iter)
-                self.writer.add_scalar(f'{sender_id}/Train loss external receiver',
-                                       train_loss[i],
-                                       iter)
-                self.writer.add_scalar(f'{sender_id}/Top val loss external receiver',
-                                       top_val_loss[i],
-                                       iter)
-                self.writer.add_scalar(f'{sender_id}/ETL',
-                                       etl[i],
-                                       iter)
+            if len(self.stored_metrics["external_receiver_train_acc"]):
+                train_acc = self.stored_metrics["external_receiver_train_acc"][-1]
+                top_val_acc = self.stored_metrics["external_receiver_val_acc"][-1]
+                train_loss =  self.stored_metrics["external_receiver_train_loss"][-1]
+                top_val_loss = self.stored_metrics["external_receiver_val_loss"][-1]
+                etl = self.stored_metrics["etl"][-1]
+                for i, sender_id in enumerate(self.population.sender_names):
+                    self.writer.add_scalar(f'{sender_id}/Train acc external receiver',
+                                           train_acc[i],
+                                           iter)
+                    self.writer.add_scalar(f'{sender_id}/Top val acc external receiver',
+                                           top_val_acc[i],
+                                           iter)
+                    self.writer.add_scalar(f'{sender_id}/Train loss external receiver',
+                                           train_loss[i],
+                                           iter)
+                    self.writer.add_scalar(f'{sender_id}/Top val loss external receiver',
+                                           top_val_loss[i],
+                                           iter)
+                    self.writer.add_scalar(f'{sender_id}/ETL',
+                                           etl[i],
+                                           iter)
 
         if self.metrics_to_measure["MI"]<self.n_epochs:
             for sender in self.stored_metrics["MI"]:
