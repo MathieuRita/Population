@@ -57,6 +57,8 @@ class TrainerPopulation(object):
 
             # Train communication
             if epoch % train_communication_freq == 0:
+                if epoch%200==0:
+                    self.reset_optimizer()
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication(compute_metrics=True)  # dict,dict, dict
             else:
@@ -91,6 +93,16 @@ class TrainerPopulation(object):
 
             if self.evaluator is not None and epoch % evaluator_freq == 0:
                 self.evaluator.step(epoch=epoch)
+
+    def reset_optimizer(self):
+
+        for agent_id in self.population.receiver_names:
+            agent = self.population.agents[agent_id]
+            model_parameters = list(agent.receiver.parameters()) + list(agent.object_decoder.parameters()) + \
+                               list(agent.object_projector.parameters())
+
+            agent.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                      lr=0.0005)
 
     def reset_agents(self):
 
