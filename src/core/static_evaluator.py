@@ -182,6 +182,9 @@ class StaticEvaluator:
                                                      len(splits[split_type]),
                                                      replacement=False)
 
+                        print(n_batch,batch_size,len(splits[split_type]))
+                        print(n_batch * batch_size - len(splits[split_type]))
+
                         batch_fill = th.multinomial(th.ones(len(splits[split_type])),
                                                     n_batch * batch_size - len(splits[split_type]),
                                                     replacement=False)
@@ -207,7 +210,7 @@ class StaticEvaluator:
 
                         step+=1
 
-                        if step == 250 : continue_training = False
+                        if step == 300 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
 
