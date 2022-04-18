@@ -462,6 +462,7 @@ class ReferentialGame(nn.Module):
         if compute_metrics:
             # accuracy
             metrics["accuracy"] = accuracy.mean()
+            metrics["accuracy_tot"] = accuracy.mean() # No difference here
             # Sender entropy
             metrics["sender_entropy"] = entropy_sender.mean().item()
             # Raw messages
