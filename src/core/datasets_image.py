@@ -56,7 +56,7 @@ class _ReferentialIterator():
 
         # Sample random file
         random_file_id = np.random.choice(self.n_files)
-        random_file = th.load(self.dataset_dir + self.files[random_file_id])
+        random_file = th.load(f"{self.dataset_dir}/{self.files[random_file_id]}")
 
         # Select random split inside the file
         random_samples_ids = np.random.choice(len(random_file), self.batch_size, replace=False)
