@@ -183,7 +183,7 @@ class StaticEvaluator:
                                                      replacement=False)
 
                         batch_fill = th.multinomial(th.ones(len(splits[split_type])),
-                                                    n_batch * batch_size - batch_size,
+                                                    n_batch * batch_size - len(splits[split_type]),
                                                     replacement=False)
 
                         permutation = th.cat((permutation,batch_fill),dim=0)
@@ -207,7 +207,7 @@ class StaticEvaluator:
 
                         step+=1
 
-                        if step == 100 : continue_training = False
+                        if step == 250 : continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
 
