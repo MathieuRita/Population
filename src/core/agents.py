@@ -90,23 +90,19 @@ class Agent(object):
                                                            replacement=False))%batch_size
                                    for i in range(batch_size)]) # sample n_distractors != target
 
-        distractors_projection = object_projection[distractor_ids]
-        print("distractors_projection")
-        print(distractors_projection.size())
-        print("message projection")
-        print(message_projection.size())
-        message_projection = message_projection.unsqueeze(1)
+        distractors_projection = object_projection[distractor_ids].reshape((batch_size*n_distractors,-1))
+        message_projection = message_projection
         message_projection_repeated = message_projection.repeat((n_distractors, 1))
-        print("message_projection_repeated")
-        print(message_projection_repeated.size())
         distractors_cosine = cos(message_projection_repeated,
                                  distractors_projection).reshape((batch_size, n_distractors))
 
         target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
 
-        probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[0]
-        loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[0]
+        probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[:,0]
+        loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[:,0]
         accuracy = 1. * (target_and_distractors_cosine.argmax(1) == 0)
+        
+        print(loss.size())
 
         return probs, loss, accuracy
 
