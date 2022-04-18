@@ -854,7 +854,6 @@ class Evaluator:
 
 def build_evaluator(metrics_to_measure,
                     game,
-                    dump_batch,
                     train_loader,
                     val_loader,
                     test_loader,
@@ -863,6 +862,7 @@ def build_evaluator(metrics_to_measure,
                     game_params,
                     eval_receiver_id,
                     n_epochs,
+                    dump_batch = None,
                     logger: th.utils.tensorboard.SummaryWriter = None,
                     device: str = "cpu"):
     evaluator = Evaluator(metrics_to_measure=metrics_to_measure,
