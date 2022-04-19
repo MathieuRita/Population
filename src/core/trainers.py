@@ -57,8 +57,8 @@ class TrainerPopulation(object):
 
             # Train communication
             if epoch % train_communication_freq == 0:
-                if epoch%100==0:
-                    self.reset_optimizer()
+                #if epoch%100==0:
+                #    self.reset_optimizer()
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication(compute_metrics=True)  # dict,dict, dict
             else:
