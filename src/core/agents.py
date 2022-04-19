@@ -101,8 +101,9 @@ class Agent(object):
         target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
 
         probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[:,0]
-        loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[:,0]
+        #loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[:,0]
         accuracy = 1. * (target_and_distractors_cosine.argmax(1) == 0)
+        loss = - th.log(th.exp(target_cosine)/th.exp(distractors_cosine).sum(1))
 
         return probs, loss, accuracy
 
