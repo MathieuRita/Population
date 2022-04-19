@@ -440,7 +440,8 @@ class ReferentialGame(nn.Module):
 
         task = "communication"
 
-        reward = - loss_receiver.detach()
+        #reward = - loss_receiver.detach()
+        reward = accuracy.detach()
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                                sender_log_prob=log_prob_sender,
