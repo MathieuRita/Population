@@ -89,10 +89,11 @@ class Agent(object):
                                    for i in range(batch_size)]) # sample n_distractors != target
 
         distractors_projection = object_projection[distractor_ids].reshape((batch_size*n_distractors,-1))
-        message_projection = message_projection
         message_projection_repeated = message_projection.repeat((n_distractors, 1))
+        #distractors_cosine = cos(message_projection_repeated,
+                                 #distractors_projection).reshape((batch_size, n_distractors)) # working
         distractors_cosine = cos(message_projection_repeated,
-                                 distractors_projection).reshape((batch_size, n_distractors))
+                                 distractors_projection).reshape((n_distractors,batch_size)).transpose(1,0)
 
         target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
 
