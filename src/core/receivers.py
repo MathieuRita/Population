@@ -190,7 +190,7 @@ def build_receiver(receiver_params, game_params):
     receiver_embed_dim = receiver_params["receiver_embed_dim"]
     receiver_num_layers = receiver_params["receiver_num_layers"]
     receiver_hidden_size = receiver_params["receiver_hidden_size"]
-    dropout_rate = receiver_params["dropout_rate"]
+    dropout_rate = receiver_params["dropout_rate"] if "dropout_rate" in receiver_params else None
 
     # Channel params
     voc_size = game_params["channel"]["voc_size"]
