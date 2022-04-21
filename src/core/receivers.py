@@ -94,7 +94,8 @@ class RecurrentProcessorLayerNorm(nn.Module):
                  receiver_num_layers,
                  receiver_hidden_size,
                  voc_size,
-                 max_len
+                 max_len,
+                 dropout_rate : float = None
                  ):
         super(RecurrentProcessorLayerNorm, self).__init__()
 
@@ -123,6 +124,11 @@ class RecurrentProcessorLayerNorm(nn.Module):
         self.receiver_norm_h = nn.LayerNorm(self.receiver_hidden_size)
         self.receiver_norm_c = nn.LayerNorm(self.receiver_hidden_size)
 
+        if dropout_rate is not None:
+            self.dropout = nn.Dropout(dropout_rate)
+        else:
+            self.dropout = None
+
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -142,10 +148,18 @@ class RecurrentProcessorLayerNorm(nn.Module):
         if message_lengths is None:
             message_lengths = find_lengths(message)
 
+        if self.dropout is not None:
+            mask_dropout = self.dropout(th.ones((embedding.size(0),
+                                                 self.receiver_hidden_size)
+                                                ,device=embedding.device))
+        else:
+            mask_dropout = th.ones((embedding.size(0),self.receiver_hidden_size),device=embedding.device)
+
         for step in range(self.max_len):
             for i, layer in enumerate(self.receiver_cells):
                 if isinstance(layer, nn.LSTMCell):
                     h_t, c_t = layer(embedding[:, step], (prev_hidden[i], prev_c[i]))
+                    h_t = h_t*mask_dropout
                     h_t = self.receiver_norm_h(h_t)
                     c_t = self.receiver_norm_c(c_t)
                     prev_c[i] = c_t
@@ -176,6 +190,7 @@ def build_receiver(receiver_params, game_params):
     receiver_embed_dim = receiver_params["receiver_embed_dim"]
     receiver_num_layers = receiver_params["receiver_num_layers"]
     receiver_hidden_size = receiver_params["receiver_hidden_size"]
+    dropout_rate = receiver_params["dropout_rate"]
 
     # Channel params
     voc_size = game_params["channel"]["voc_size"]
@@ -195,7 +210,8 @@ def build_receiver(receiver_params, game_params):
                                                       receiver_num_layers=receiver_num_layers,
                                                       receiver_hidden_size=receiver_hidden_size,
                                                       voc_size=voc_size,
-                                                      max_len=max_len)
+                                                      max_len=max_len,
+                                                      dropout_rate = dropout_rate)
     else:
         raise "Specify a known receiver type"
 
