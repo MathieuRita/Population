@@ -198,6 +198,7 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
                  population_probs: th.Tensor,
                  batches_per_epoch: int,
                  batch_size: int,
+                 n_files : int = None,
                  mode: str = "train",
                  seed: int = None):
 
@@ -207,8 +208,12 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
         self.batches_per_epoch = batches_per_epoch
         self.batch_size = batch_size
         self.mode = mode
-        self.files = [th.load(f"{dataset_dir}/{f}") for f in os.listdir(dataset_dir) if mode in f]
-        self.n_files = len(self.files)
+        if n_files is not None:
+            self.n_files = n_files
+        else:
+            self.n_files = len([f for f in os.listdir(dataset_dir) if mode in f])
+        self.files = [th.load(f"{dataset_dir}/{f}") for i,f in enumerate(os.listdir(dataset_dir)) \
+                      if mode in f and i<n_files]
         self.seed = seed
         self.random_state = np.random.RandomState(self.seed)
 
@@ -228,7 +233,7 @@ def build_image_dataloader(game_type: str,
                            training_params: dict,
                            agent_names: list = None,
                            population_probs=None,
-                           task: str = "communication",
+                           n_files: int = None,
                            mode: str = "train",
                            ) -> th.utils.data.DataLoader:
     if game_type == "referential":
@@ -238,6 +243,7 @@ def build_image_dataloader(game_type: str,
                                                population_probs=population_probs,
                                                batch_size=training_params["batch_size"],
                                                batches_per_epoch=training_params[f"{mode}_batches_per_epoch"],
+                                               n_files=n_files,
                                                mode=mode,
                                                seed=training_params["seed"])
 

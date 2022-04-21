@@ -407,12 +407,12 @@ class ReferentialGame(nn.Module):
                  n_distractors: int):
         super(ReferentialGame, self).__init__()
         self.population = population
-        self.n_distractors = n_distractors
 
     def game_instance(self,
                       inputs: th.Tensor,
                       sender_id: th.Tensor,
                       receiver_id: th.Tensor,
+                      n_ditractors:int,
                       compute_metrics: bool = False,
                       reduce: bool = True):
         """
@@ -436,7 +436,7 @@ class ReferentialGame(nn.Module):
         probs_receiver, loss_receiver, accuracy = \
             agent_receiver.compute_referential_scores(message_projection=message_projection,
                                                       object_projection=object_projection,
-                                                      n_distractors=self.n_distractors)
+                                                      n_distractors=n_distractors)
 
         task = "communication"
 
@@ -477,8 +477,8 @@ class ReferentialGame(nn.Module):
 
         return metrics
 
-    def forward(self, batch, compute_metrics: bool = False):
-        metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
+    def forward(self, batch, n_ditractors : int = 100, compute_metrics: bool = False):
+        metrics = self.game_instance(*batch,n_ditractors = n_ditractors, compute_metrics=compute_metrics)
 
         return metrics
 
