@@ -210,10 +210,12 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
         self.mode = mode
         if n_files is not None:
             self.n_files = n_files
+            self.files = [th.load(f"{dataset_dir}/{f}") for i, f in enumerate(os.listdir(dataset_dir)) \
+                          if mode in f and i < self.n_files]
         else:
-            self.n_files = len([f for f in os.listdir(dataset_dir) if mode in f])
-        self.files = [th.load(f"{dataset_dir}/{f}") for i,f in enumerate(os.listdir(dataset_dir)) \
-                      if mode in f and i<self.n_files]
+            self.files = [th.load(f"{dataset_dir}/{f}") for f in os.listdir(dataset_dir) if mode in f]
+            self.n_files = len(self.files)
+
         self.seed = seed
         self.random_state = np.random.RandomState(self.seed)
 
