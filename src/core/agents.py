@@ -450,9 +450,6 @@ def get_loss(loss_infos: dict):
     if loss_infos["type"] == "cross_entropy":
         agent_loss_fn = CrossEntropyLoss(multi_attribute=False)
 
-    #elif loss_infos["type"] == "referential_loss":
-    #    agent_loss_fn = ReferentialLoss(id_correct_object=0)
-
     elif loss_infos["type"] == "REINFORCE":
         agent_loss_fn = ReinforceLoss(reward_type=loss_infos["reward"],
                                       baseline_type=loss_infos["baseline"],
