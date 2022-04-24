@@ -101,7 +101,7 @@ class Agent(object):
 
         target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
 
-        temperature = 1.1 # Temperature
+        temperature = 1. # Temperature
         target_and_distractors_cosine /= temperature
 
         probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[:,0]
