@@ -75,8 +75,8 @@ class Agent(object):
 
         # Expand dims across distractors axis
 
-        #cos = CosineSimilarity(dim=1)
-        cos = lambda a,b : (a*b).sum(1)
+        cos = CosineSimilarity(dim=1)
+        #cos = lambda a,b : (a*b).sum(1)
 
         # Target
         target_cosine = cos(message_projection, object_projection)
@@ -100,6 +100,9 @@ class Agent(object):
                                  distractors_projection).reshape((batch_size, n_distractors)) # working
 
         target_and_distractors_cosine = th.cat([target_cosine.unsqueeze(1), distractors_cosine], dim=1)
+
+        temperature = 1.1 # Temperature
+        target_and_distractors_cosine /= temperature
 
         probs = th.nn.functional.softmax(target_and_distractors_cosine, dim=1)[:,0]
         loss = - th.nn.functional.log_softmax(target_and_distractors_cosine, dim=1)[:,0]
