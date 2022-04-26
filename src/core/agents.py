@@ -75,8 +75,8 @@ class Agent(object):
 
         # Expand dims across distractors axis
 
-        cos = CosineSimilarity(dim=1)
-        #cos = lambda a,b : (a*b).sum(1)
+        #cos = CosineSimilarity(dim=1)
+        cos = lambda a,b : (a*b).sum(1)
 
         # Target
         target_cosine = cos(message_projection, object_projection)

@@ -133,55 +133,69 @@ class Evaluator:
                 # TRAIN TIL CONVERGENCE
 
                 agent_sender = self.population.agents[sender_id]
-                optimal_listener_id = agent_sender.optimal_listener
-                optimal_listener = self.population.agents[optimal_listener_id]
 
-                model_parameters = list(optimal_listener.receiver.parameters()) + \
-                                   list(optimal_listener.object_decoder.parameters())
-                optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                                     lr=0.0005)
+                mi_values[sender_id] = defaultdict()
 
-                prev_loss_value = [0.]
-                step = 0
-                task = "communication"
+                for dataset_type in agent_sender.optimal_listener:
 
-                continue_optimal_listener_training = True
-
-                while continue_optimal_listener_training:
-
-                    self.game.train()
-
-                    mean_loss_value = 0.
-                    n_batch = 0
-
-                    for batch in self.train_loader:
-                        inputs, sender_id = batch.data, batch.sender_id
-                        inputs = inputs[th.randperm(inputs.size()[0])]
-                        batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
-
-                        _ = self.game(batch)
-
-                        optimal_listener.tasks[task]["optimizer"].zero_grad()
-                        optimal_listener.tasks[task]["loss_value"].backward()
-                        optimal_listener.tasks[task]["optimizer"].step()
-
-                        mean_loss_value += optimal_listener.tasks[task]["loss_value"].item()
-                        n_batch += 1
-
-                    mean_loss_value /= n_batch
-                    step += 1
-
-                    if (len(prev_loss_value) > 9 and abs(mean_loss_value - np.mean(prev_loss_value)) < 10e-4) or \
-                            step > 200:
-                        continue_optimal_listener_training = False
-                        prev_loss_value.append(mean_loss_value)
-                        prev_loss_value.pop(0)
+                    if dataset_type=="train":
+                        loader = self.train_loader
+                    elif dataset_type=="val":
+                        loader = self.val_loader
+                    elif dataset_type=="test":
+                        loader = self.test_loader
                     else:
-                        prev_loss_value.append(mean_loss_value)
-                        if len(prev_loss_value) > 10:
-                            prev_loss_value.pop(0)
+                        raise Exception("Specify a known dataset type for MI evaluation")
 
-                mi_values[sender_id] = prev_loss_value[-1]
+                    optimal_listener_id = agent_sender.optimal_listener[dataset_type]
+                    optimal_listener = self.population.agents[optimal_listener_id]
+
+                    model_parameters = list(optimal_listener.receiver.parameters()) + \
+                                       list(optimal_listener.object_decoder.parameters())
+                    optimal_listener.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
+                                                                                         lr=0.0005)
+
+                    prev_loss_value = [0.]
+                    step = 0
+                    task = "communication"
+
+                    continue_optimal_listener_training = True
+
+                    while continue_optimal_listener_training:
+
+                        self.game.train()
+
+                        mean_loss_value = 0.
+                        n_batch = 0
+
+                        for batch in loader:
+                            inputs, sender_id = batch.data, batch.sender_id
+                            inputs = inputs[th.randperm(inputs.size()[0])]
+                            batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
+
+                            _ = self.game(batch)
+
+                            optimal_listener.tasks[task]["optimizer"].zero_grad()
+                            optimal_listener.tasks[task]["loss_value"].backward()
+                            optimal_listener.tasks[task]["optimizer"].step()
+
+                            mean_loss_value += optimal_listener.tasks[task]["loss_value"].item()
+                            n_batch += 1
+
+                        mean_loss_value /= n_batch
+                        step += 1
+
+                        if (len(prev_loss_value) > 9 and abs(mean_loss_value - np.mean(prev_loss_value)) < 10e-4) or \
+                                step > 200:
+                            continue_optimal_listener_training = False
+                            prev_loss_value.append(mean_loss_value)
+                            prev_loss_value.pop(0)
+                        else:
+                            prev_loss_value.append(mean_loss_value)
+                            if len(prev_loss_value) > 10:
+                                prev_loss_value.pop(0)
+
+                    mi_values[sender_id][dataset_type] = prev_loss_value[-1]
 
         return mi_values
 
@@ -811,10 +825,12 @@ class Evaluator:
 
         if self.metrics_to_measure["MI"]<self.n_epochs:
             for sender in self.stored_metrics["MI"]:
-                mi_value = self.stored_metrics["MI"][sender][-1]
-                self.writer.add_scalar(f'{sender_id}/MI',
-                                       mi_value,
-                                       iter)
+                mi_values = self.stored_metrics["MI"][sender][-1]
+                for dataset_type in mi_values:
+                    mi_value = mi_values[dataset_type]
+                    self.writer.add_scalar(f'{sender_id}/MI_{dataset_type}',
+                                           mi_value,
+                                           iter)
 
     def save_metrics(self, save_dir):
 
