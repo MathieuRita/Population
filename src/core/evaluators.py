@@ -185,8 +185,9 @@ class Evaluator:
                         mean_loss_value /= n_batch
                         step += 1
 
-                        if (len(prev_loss_value) > 9 and abs(mean_loss_value - np.mean(prev_loss_value)) < 10e-4) or \
-                                step > 200:
+                        #if (len(prev_loss_value) > 9 and abs(mean_loss_value - np.mean(prev_loss_value)) < 10e-4) or \
+                        #        step > 200:
+                        if step == 2500:
                             continue_optimal_listener_training = False
                             prev_loss_value.append(mean_loss_value)
                             prev_loss_value.pop(0)
@@ -195,7 +196,7 @@ class Evaluator:
                             if len(prev_loss_value) > 10:
                                 prev_loss_value.pop(0)
 
-                    mi_values[sender_id][dataset_type] = prev_loss_value[-1]
+                    mi_values[sender_id][dataset_type] = np.mean(prev_loss_value[-5:])
 
         return mi_values
 
