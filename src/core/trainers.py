@@ -1069,7 +1069,7 @@ class TrainerCustom(TrainerPopulation):
             agent_sender = self.population.agents[sender_id]
             agent_receiver = self.population.agents[receiver_id]
 
-            optimal_listener_id = agent_sender.optimal_listener
+            optimal_listener_id = agent_sender.optimal_listener["train"]
 
             weights = {receiver_id: agent_sender.weights["communication"],
                        optimal_listener_id: agent_sender.weights["MI"]}
