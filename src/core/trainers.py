@@ -624,7 +624,7 @@ class TrainerCustom(TrainerPopulation):
                 #    self.save_error(epoch=epoch, save=False)
 
 
-            if epoch % train_communication_and_mi_freq:
+            if epoch % train_communication_and_mi_freq == 0:
                 self.pretrain_optimal_listener(epoch=epoch)
                 train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics = \
                    self.train_communication_and_mutual_information()
