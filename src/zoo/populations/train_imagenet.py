@@ -73,10 +73,14 @@ def main(params):
     # Build datasets and dataloaders
 
     # Communication task
+    if "n_training_files" in game_params["dataset"]:
+        n_files = game_params["dataset"]["n_training_files"]
+    else:
+        n_files = None
 
     train_loader = build_image_dataloader(game_type=game_params["game_type"],
                                           dataset_dir=game_params["dataset"]["path"],
-                                          n_files = game_params["dataset"]["n_training_files"],
+                                          n_files = n_files,
                                           agent_names=population.agent_names,
                                           population_probs=population.pairs_prob,
                                           training_params=training_params,
