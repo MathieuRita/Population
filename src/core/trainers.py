@@ -627,8 +627,9 @@ class TrainerCustom(TrainerPopulation):
             if epoch % train_comm_and_check_gradient == 0:
                 self.pretrain_optimal_listener(epoch=epoch)
                 train_communication_mi_loss_senders, train_communication_loss_receivers, \
-                    mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders, train_metrics = \
-                    self.train_communication_and_keep_gradients(compute_metrics=True)
+                mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders,ps_gradient_senders, \
+                train_metrics = \
+                self.train_communication_and_keep_gradients(compute_metrics=True)
 
                 for sender_id in mean_gradient_tot_senders:
                     self.writer.add_scalar(f'{sender_id}/grad_tot',
@@ -637,6 +638,8 @@ class TrainerCustom(TrainerPopulation):
                                            mean_gradient_fun_senders[sender_id]["communication"], epoch)
                     self.writer.add_scalar(f'{sender_id}/grad_coo',
                                            mean_gradient_coo_senders[sender_id]["communication"], epoch)
+                    self.writer.add_scalar(f'{sender_id}/ps_gradient',
+                                           ps_gradient_senders[sender_id]["communication"], epoch)
 
 
             if epoch % train_communication_and_mi_freq == 0:
@@ -856,6 +859,7 @@ class TrainerCustom(TrainerPopulation):
         mean_gradient_tot_senders = {}
         mean_gradient_fun_senders = {}
         mean_gradient_coo_senders = {}
+        ps_gradient_senders = {}
         mean_loss_receivers = {}
         n_batches = {}
         mean_metrics = {}
@@ -880,6 +884,7 @@ class TrainerCustom(TrainerPopulation):
                 mean_gradient_tot_senders[sender_id] = {task: 0.}
                 mean_gradient_fun_senders[sender_id] = {task: 0.}
                 mean_gradient_coo_senders[sender_id] = {task: 0.}
+                ps_gradient_senders[sender_id] = {task:0.}
                 n_batches[sender_id] = {task: 0}
             if receiver_id not in mean_loss_receivers:
                 mean_loss_receivers[receiver_id] = {task: 0.}
@@ -932,16 +937,19 @@ class TrainerCustom(TrainerPopulation):
 
             grad_tot_value=0.
             grad_fun_value=0.
+            ps_value = 0.
             grad_coo_value = 0.
 
             for i in range(len(grads_tot)):
                 grad_tot_value += (grads_tot[i] ** 2).mean().item()
                 grad_fun_value += (grads_opt[i] ** 2).mean().item()
-                grad_coo_value += ((grads_tot[i]-grads_opt[i]) ** 2).mean().item()
+                ps_value += ((grads_tot[i]*grads_opt[i])/(grads_tot[i].sum()*grads_opt[i].sum())).sum().item()
+
 
             mean_gradient_tot_senders[sender_id][task] += grad_tot_value
             mean_gradient_fun_senders[sender_id][task] += grad_fun_value
             mean_gradient_coo_senders[sender_id][task] += grad_coo_value
+            ps_gradient_senders[sender_id][task] += ps_value
 
             if compute_metrics:
                 # Store metrics
@@ -973,6 +981,8 @@ class TrainerCustom(TrainerPopulation):
                                      for sender_id in mean_gradient_fun_senders}
         mean_gradient_coo_senders = {sender_id: _div_dict(mean_gradient_coo_senders[sender_id], n_batches[sender_id])
                                      for sender_id in mean_gradient_coo_senders}
+        ps_gradient_senders = {sender_id: _div_dict(ps_gradient_senders[sender_id], n_batches[sender_id])
+                                     for sender_id in ps_gradient_senders}
 
 
         if compute_metrics:
@@ -984,6 +994,7 @@ class TrainerCustom(TrainerPopulation):
                mean_gradient_tot_senders, \
                mean_gradient_fun_senders, \
                mean_gradient_coo_senders, \
+               ps_gradient_senders, \
                mean_metrics
 
     def pretrain_optimal_listener(self, epoch: int, reset: bool = False, threshold=1e-3):
