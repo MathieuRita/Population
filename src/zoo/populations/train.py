@@ -50,6 +50,9 @@ def main(params):
     agent_repertory = parse_json(opts.agents_json)
     training_params = parse_json(opts.training_json)
 
+    if "train_comm_and_check_gradient" not in training_params:
+        training_params["train_comm_and_check_gradient"]=10000000000
+
     # Create directories
     if opts.log_dir and not os.path.exists(opts.log_dir):
         os.mkdir(opts.log_dir)
@@ -194,6 +197,7 @@ def main(params):
                   train_imitation_freq=training_params["train_imitation_freq"],
                   train_custom_freq=training_params["train_custom_freq"],
                   train_communication_and_mi_freq = training_params["train_communication_and_mi_freq"],
+                  train_comm_and_check_gradient = training_params["train_comm_and_check_gradient"],
                   train_kl_freq=training_params["train_kl_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],

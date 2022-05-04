@@ -569,6 +569,7 @@ class TrainerCustom(TrainerPopulation):
               train_custom_freq: int = 100000,
               train_broadcasting_freq: int = 1000000,
               train_communication_and_mi_freq : int = 1000000,
+              train_comm_and_check_gradient : int = 10000000,
               train_kl_freq : int = 10000000,
               evaluator_freq: int = 1000000,
               save_models_freq : int = 10000000,
@@ -622,6 +623,20 @@ class TrainerCustom(TrainerPopulation):
                 #    self.save_error(epoch=epoch, save=True)
                 #else:
                 #    self.save_error(epoch=epoch, save=False)
+
+            if epoch % train_comm_and_check_gradient == 0:
+                self.pretrain_optimal_listener(epoch=epoch)
+                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics, \
+                    mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders= \
+                    self.train_communication_and_keep_gradients()
+
+                for sender_id in mean_gradient_tot_senders:
+                    self.writer.add_scalar(f'{sender_id}/grad_tot',
+                                           mean_gradient_tot_senders[sender_id]["communication"], epoch)
+                    self.writer.add_scalar(f'{sender_id}/grad_fun',
+                                           mean_gradient_fun_senders[sender_id]["communication"], epoch)
+                    self.writer.add_scalar(f'{sender_id}/grad_coo',
+                                           mean_gradient_coo_senders[sender_id]["communication"], epoch)
 
 
             if epoch % train_communication_and_mi_freq == 0:
@@ -833,6 +848,146 @@ class TrainerCustom(TrainerPopulation):
                 n_batch+=1
 
         self.writer.add_scalar(f'{receiver_id}_reset/Loss val sp',mean_val_loss/n_batch, epoch)
+
+    def train_communication_and_keep_gradients(self, compute_metrics: bool = False):
+
+        mean_loss_senders = {}
+        mean_h_x_m_senders = {}
+        mean_gradient_tot_senders = {}
+        mean_gradient_fun_senders = {}
+        mean_gradient_coo_senders = {}
+        mean_loss_receivers = {}
+        n_batches = {}
+        mean_metrics = {}
+
+        self.game.train()
+
+        for batch in self.train_loader:
+
+            grads_opt=[]
+            grads_tot=[]
+
+            sender_id, receiver_id = batch.sender_id, batch.receiver_id
+            agent_sender = self.population.agents[sender_id]
+            agent_receiver = self.population.agents[receiver_id]
+            optimal_receiver_id = agent_sender.optimal_listener
+
+            task = "communication"
+
+            if sender_id not in mean_loss_senders:
+                mean_loss_senders[sender_id] = {task: 0.}
+                mean_h_x_m_senders[sender_id] = {task : 0.}
+                mean_gradient_tot_senders[sender_id] = {task: 0.}
+                mean_gradient_fun_senders[sender_id] = {task: 0.}
+                mean_gradient_coo_senders[sender_id] = {task: 0.}
+                n_batches[sender_id] = {task: 0}
+            if receiver_id not in mean_loss_receivers:
+                mean_loss_receivers[receiver_id] = {task: 0.}
+                n_batches[receiver_id] = {task: 0}
+
+            p_sender = th.rand(1)[0]
+            p_receiver = th.rand(1)[0]
+
+            # Forward pass optimal listener
+            batch_opt = move_to((batch.data,sender_id,optimal_receiver_id), self.device)
+
+            metrics = self.game(batch_opt, compute_metrics=compute_metrics)
+
+            # Sender
+            if p_sender < agent_sender.tasks[task]["p_step"]:
+                agent_sender.tasks[task]["optimizer"].zero_grad()
+                agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
+                agent_sender.tasks[task]["loss_value"].register_hook(lambda grad: grad)
+
+            mean_h_x_m_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
+
+            for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
+                gradient, *_ = weight.grad.data
+                grads_opt.append(gradient)
+
+
+            batch = move_to(batch, self.device)
+
+            metrics = self.game(batch, compute_metrics=compute_metrics)
+
+            # Sender
+            if p_sender < agent_sender.tasks[task]["p_step"]:
+                agent_sender.tasks[task]["optimizer"].zero_grad()
+                agent_sender.tasks[task]["loss_value"].register_hook(lambda grad: grad)
+                agent_sender.tasks[task]["loss_value"].backward()
+                agent_sender.tasks[task]["optimizer"].step()
+
+            for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
+                gradient, *_ = weight.grad.data
+                grads_tot.append(gradient)
+
+            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
+            n_batches[sender_id][task] += 1
+
+            # Receiver
+            if p_receiver < agent_receiver.tasks[task]["p_step"]:
+                agent_receiver.tasks[task]["optimizer"].zero_grad()
+                agent_receiver.tasks[task]["loss_value"].backward()
+                agent_receiver.tasks[task]["optimizer"].step()
+
+            mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
+            n_batches[receiver_id][task] += 1
+
+            grad_tot_value=0.
+            grad_fun_value=0.
+            grad_coo_value = 0.
+
+            for i in range(len(grads_tot)):
+                grad_tot_value+=(grads_tot[i] ** 2).mean().item()
+                grad_fun_value += (grads_opt[i] ** 2).mean().item()
+                grad_coo_value += ((grads_tot[i]-grads_opt[i]) ** 2).mean().item()
+
+            mean_gradient_tot_senders[sender_id][task] += grad_tot_value
+            mean_gradient_fun_senders[sender_id][task] += grad_fun_value
+            mean_gradient_coo_senders[sender_id][task] += grad_coo_value
+
+            if compute_metrics:
+                # Store metrics
+                if sender_id not in mean_metrics:
+                    mean_metrics[sender_id] = {"accuracy": 0.,
+                                               "accuracy_tot": 0.,
+                                               "sender_entropy": 0.,
+                                               "sender_log_prob": 0.,
+                                               "message_length": 0.}
+                if receiver_id not in mean_metrics:
+                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot":0.,"entropy":0.}
+
+                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"]
+                mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"]
+                mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
+                mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
+                mean_metrics[sender_id]["message_length"] += metrics["message_length"]
+                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"]
+                mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"]
+                mean_metrics[receiver_id]["entropy"] += metrics["entropy_receiver"]
+
+        mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
+                             for sender_id in mean_loss_senders}
+        mean_loss_receivers = {receiver_id: _div_dict(mean_loss_receivers[receiver_id], n_batches[receiver_id])
+                               for receiver_id in mean_loss_receivers}
+        mean_gradient_tot_senders = {sender_id: _div_dict(mean_gradient_tot_senders[sender_id], n_batches[sender_id])
+                                    for sender_id in mean_gradient_tot_senders}
+        mean_gradient_fun_senders = {sender_id: _div_dict(mean_gradient_fun_senders[sender_id], n_batches[sender_id])
+                                     for sender_id in mean_gradient_fun_senders}
+        mean_gradient_coo_senders = {sender_id: _div_dict(mean_gradient_coo_senders[sender_id], n_batches[sender_id])
+                                     for sender_id in mean_gradient_coo_senders}
+
+
+        if compute_metrics:
+            for agt in mean_metrics:
+                mean_metrics[agt] = _div_dict(mean_metrics[agt], n_batches[agt][task])
+
+        return mean_loss_senders, \
+               mean_loss_receivers, \
+               mean_gradient_tot_senders, \
+               mean_gradient_fun_senders, \
+               mean_gradient_coo_senders, \
+               mean_metrics
 
     def pretrain_optimal_listener(self, epoch: int, reset: bool = False, threshold=1e-3):
 
