@@ -906,7 +906,7 @@ class TrainerCustom(TrainerPopulation):
                 for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_opt.append(gradient)
-                for index, weight in enumerate(agent_sender.object_encoder.parameters(), start=1):
+                for index, weight in enumerate(agent_sender.object_encoder.encoder.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_tot.append(gradient)
 
@@ -924,7 +924,7 @@ class TrainerCustom(TrainerPopulation):
                 for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_tot.append(gradient)
-                for index, weight in enumerate(agent_sender.object_encoder.parameters(), start=1):
+                for index, weight in enumerate(agent_sender.object_encoder.encoder.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_tot.append(gradient)
                 agent_sender.tasks[task]["optimizer"].step()
