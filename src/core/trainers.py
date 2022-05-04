@@ -891,7 +891,9 @@ class TrainerCustom(TrainerPopulation):
             # Forward pass optimal listener
             batch_opt = move_to((batch.data,sender_id,optimal_receiver_id), self.device)
 
-            _ = self.game(batch_opt, compute_metrics=compute_metrics)
+            metrics = self.game(batch_opt, compute_metrics=compute_metrics)
+
+            print(metrics[sender_id]["accuracy"],agent_sender.tasks[task]["loss_value"])
 
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
@@ -905,10 +907,11 @@ class TrainerCustom(TrainerPopulation):
                 gradient, *_ = weight.grad.data
                 grads_opt.append(gradient)
 
-
             batch = move_to(batch, self.device)
 
             metrics = self.game(batch, compute_metrics=compute_metrics)
+
+            print(metrics[sender_id]["accuracy"],agent_sender.tasks[task]["loss_value"])
 
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
