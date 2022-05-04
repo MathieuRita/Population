@@ -870,7 +870,7 @@ class TrainerCustom(TrainerPopulation):
             sender_id, receiver_id = batch.sender_id, batch.receiver_id
             agent_sender = self.population.agents[sender_id]
             agent_receiver = self.population.agents[receiver_id]
-            optimal_receiver_id = agent_sender.optimal_listener
+            optimal_receiver_id = agent_sender.optimal_listener["train"]
 
             task = "communication"
 
