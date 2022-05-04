@@ -626,8 +626,8 @@ class TrainerCustom(TrainerPopulation):
 
             if epoch % train_comm_and_check_gradient == 0:
                 self.pretrain_optimal_listener(epoch=epoch)
-                train_communication_mi_loss_senders, train_communication_loss_receivers, train_metrics, \
-                    mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders= \
+                train_communication_mi_loss_senders, train_communication_loss_receivers, \
+                    mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders, train_metrics = \
                     self.train_communication_and_keep_gradients()
 
                 for sender_id in mean_gradient_tot_senders:
