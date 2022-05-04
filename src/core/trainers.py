@@ -906,6 +906,9 @@ class TrainerCustom(TrainerPopulation):
                 for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_opt.append(gradient)
+                for index, weight in enumerate(agent_sender.object_encoder.parameters(), start=1):
+                    gradient, *_ = weight.grad.data.clone()
+                    grads_tot.append(gradient)
 
             mean_h_x_m_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
 
@@ -919,6 +922,9 @@ class TrainerCustom(TrainerPopulation):
                 agent_sender.tasks[task]["loss_value"].backward()
                 agent_sender.tasks[task]["loss_value"].register_hook(lambda grad: grad)
                 for index, weight in enumerate(agent_sender.sender.parameters(), start=1):
+                    gradient, *_ = weight.grad.data.clone()
+                    grads_tot.append(gradient)
+                for index, weight in enumerate(agent_sender.object_encoder.parameters(), start=1):
                     gradient, *_ = weight.grad.data.clone()
                     grads_tot.append(gradient)
                 agent_sender.tasks[task]["optimizer"].step()
