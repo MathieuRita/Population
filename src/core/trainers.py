@@ -893,7 +893,7 @@ class TrainerCustom(TrainerPopulation):
 
             metrics = self.game(batch_opt, compute_metrics=compute_metrics)
 
-            print(metrics[sender_id]["accuracy"],agent_sender.tasks[task]["loss_value"])
+            print(metrics["accuracy"],agent_sender.tasks[task]["loss_value"])
 
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
@@ -911,7 +911,7 @@ class TrainerCustom(TrainerPopulation):
 
             metrics = self.game(batch, compute_metrics=compute_metrics)
 
-            print(metrics[sender_id]["accuracy"],agent_sender.tasks[task]["loss_value"])
+            print(metrics["accuracy"],agent_sender.tasks[task]["loss_value"])
 
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
@@ -941,6 +941,7 @@ class TrainerCustom(TrainerPopulation):
             grad_coo_value = 0.
 
             for i in range(len(grads_tot)):
+                print((grads_tot[i]-grads_opt[i]))
                 grad_tot_value += (grads_tot[i] ** 2).mean().item()
                 grad_fun_value += (grads_opt[i] ** 2).mean().item()
                 grad_coo_value += ((grads_tot[i]-grads_opt[i]) ** 2).mean().item()
