@@ -628,7 +628,7 @@ class TrainerCustom(TrainerPopulation):
                 self.pretrain_optimal_listener(epoch=epoch)
                 train_communication_mi_loss_senders, train_communication_loss_receivers, \
                     mean_gradient_tot_senders, mean_gradient_fun_senders, mean_gradient_coo_senders, train_metrics = \
-                    self.train_communication_and_keep_gradients()
+                    self.train_communication_and_keep_gradients(compute_metrics=True)
 
                 for sender_id in mean_gradient_tot_senders:
                     self.writer.add_scalar(f'{sender_id}/grad_tot',
