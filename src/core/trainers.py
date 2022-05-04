@@ -891,7 +891,7 @@ class TrainerCustom(TrainerPopulation):
             # Forward pass optimal listener
             batch_opt = move_to((batch.data,sender_id,optimal_receiver_id), self.device)
 
-            metrics = self.game(batch_opt, compute_metrics=compute_metrics)
+            _ = self.game(batch_opt, compute_metrics=compute_metrics)
 
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
@@ -913,7 +913,7 @@ class TrainerCustom(TrainerPopulation):
             # Sender
             if p_sender < agent_sender.tasks[task]["p_step"]:
                 agent_sender.tasks[task]["optimizer"].zero_grad()
-                agent_sender.tasks[task]["loss_value"].backward()
+                agent_sender.tasks[task]["loss_value"].backward(retain_graph=True)
                 agent_sender.tasks[task]["loss_value"].register_hook(lambda grad: grad)
                 agent_sender.tasks[task]["optimizer"].step()
 
