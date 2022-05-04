@@ -944,7 +944,7 @@ class TrainerCustom(TrainerPopulation):
                 grad_tot_value += (grads_tot[i] ** 2).mean().item()
                 grad_fun_value += (grads_opt[i] ** 2).mean().item()
                 grad_coo_value += ((grads_tot[i]-grads_opt[i]) ** 2).mean().item()
-                ps_value += ((grads_tot[i]*grads_opt[i])/(grads_tot[i].sum()*grads_opt[i].sum())).sum().item()
+                #ps_value += ((grads_tot[i]*grads_opt[i])/(grads_tot[i].sum()*grads_opt[i].sum())).sum().item()
 
 
             mean_gradient_tot_senders[sender_id][task] += grad_tot_value
