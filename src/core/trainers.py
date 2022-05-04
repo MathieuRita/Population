@@ -938,7 +938,7 @@ class TrainerCustom(TrainerPopulation):
             grad_coo_value = 0.
 
             for i in range(len(grads_tot)):
-                grad_tot_value+=(grads_tot[i] ** 2).mean().item()
+                grad_tot_value += (grads_tot[i] ** 2).mean().item()
                 grad_fun_value += (grads_opt[i] ** 2).mean().item()
                 grad_coo_value += ((grads_tot[i]-grads_opt[i]) ** 2).mean().item()
 
