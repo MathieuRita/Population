@@ -750,8 +750,11 @@ class TrainerCustom(TrainerPopulation):
                 self.mi_step += 1
                 early_stop_step += 1
 
+                #cond = (len(val_losses) > 20 and (
+                #            val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) or early_stop_step == 1000)
+
                 cond = (len(val_losses) > 20 and (
-                            val_losses[-1] > np.mean(val_losses[-20:]) - 0.0001) or early_stop_step == 1000)
+                        val_losses[-1] > np.mean(val_losses[-10:]) - 0.0001) or early_stop_step == 1000)
 
                 if cond or early_stop_step>max_steps:
                     continue_training = False
@@ -1171,68 +1174,69 @@ class TrainerCustom(TrainerPopulation):
 
         for batch in self.train_loader:
 
-            inputs = batch.data
-            inputs = inputs[th.randperm(inputs.size()[0])]
+            if batch.sender_id is not None:
+                inputs = batch.data
+                inputs = inputs[th.randperm(inputs.size()[0])]
 
-            sender_id, receiver_id = batch.sender_id, batch.receiver_id
-            agent_sender = self.population.agents[sender_id]
-            agent_receiver = self.population.agents[receiver_id]
+                sender_id, receiver_id = batch.sender_id, batch.receiver_id
+                agent_sender = self.population.agents[sender_id]
+                agent_receiver = self.population.agents[receiver_id]
 
-            optimal_listener_id = agent_sender.optimal_listener["train"]
+                optimal_listener_id = agent_sender.optimal_listener["train"]
 
-            weights = {receiver_id: agent_sender.weights["communication"],
-                       optimal_listener_id: agent_sender.weights["MI"]}
+                weights = {receiver_id: agent_sender.weights["communication"],
+                           optimal_listener_id: agent_sender.weights["MI"]}
 
-            task = "communication"
+                task = "communication"
 
-            if sender_id not in mean_loss_senders:
-                mean_loss_senders[sender_id] = {task: 0.}
-                n_batches[sender_id] = {task: 0}
-            if receiver_id not in mean_loss_receivers:
-                mean_loss_receivers[receiver_id] = {task: 0.}
-                n_batches[receiver_id] = {task: 0}
+                if sender_id not in mean_loss_senders:
+                    mean_loss_senders[sender_id] = {task: 0.}
+                    n_batches[sender_id] = {task: 0}
+                if receiver_id not in mean_loss_receivers:
+                    mean_loss_receivers[receiver_id] = {task: 0.}
+                    n_batches[receiver_id] = {task: 0}
 
-            batch = move_to((inputs, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
+                batch = move_to((inputs, sender_id, [receiver_id, optimal_listener_id], weights), self.device)
 
-            metrics = self.game.communication_multi_listener_instance(*batch,
-                                                                      compute_metrics=compute_metrics)
+                metrics = self.game.communication_multi_listener_instance(*batch,
+                                                                          compute_metrics=compute_metrics)
 
-            # Sender
-            if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
-                agent_sender.tasks[task]["optimizer"].zero_grad()
-                agent_sender.tasks[task]["loss_value"].backward()
-                agent_sender.tasks[task]["optimizer"].step()
+                # Sender
+                if th.rand(1)[0] < agent_sender.tasks[task]["p_step"]:
+                    agent_sender.tasks[task]["optimizer"].zero_grad()
+                    agent_sender.tasks[task]["loss_value"].backward()
+                    agent_sender.tasks[task]["optimizer"].step()
 
-            mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
-            n_batches[sender_id][task] += 1
+                mean_loss_senders[sender_id][task] += agent_sender.tasks[task]["loss_value"].item()
+                n_batches[sender_id][task] += 1
 
-            # Receiver
-            if th.rand(1)[0] < agent_receiver.tasks[task]["p_step"]:
-                agent_receiver.tasks[task]["optimizer"].zero_grad()
-                agent_receiver.tasks[task]["loss_value"].backward()
-                agent_receiver.tasks[task]["optimizer"].step()
+                # Receiver
+                if th.rand(1)[0] < agent_receiver.tasks[task]["p_step"]:
+                    agent_receiver.tasks[task]["optimizer"].zero_grad()
+                    agent_receiver.tasks[task]["loss_value"].backward()
+                    agent_receiver.tasks[task]["optimizer"].step()
 
-            mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
-            n_batches[receiver_id][task] += 1
+                mean_loss_receivers[receiver_id][task] += agent_receiver.tasks[task]["loss_value"].item()
+                n_batches[receiver_id][task] += 1
 
-            if compute_metrics:
-                # Store metrics
-                if sender_id not in mean_metrics:
-                    mean_metrics[sender_id] = {"accuracy": 0.,
-                                               "accuracy_tot" : 0.,
-                                               "sender_entropy": 0.,
-                                               "sender_log_prob": 0.,
-                                               "message_length": 0.}
-                if receiver_id not in mean_metrics:
-                    mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot" : 0.}
+                if compute_metrics:
+                    # Store metrics
+                    if sender_id not in mean_metrics:
+                        mean_metrics[sender_id] = {"accuracy": 0.,
+                                                   "accuracy_tot" : 0.,
+                                                   "sender_entropy": 0.,
+                                                   "sender_log_prob": 0.,
+                                                   "message_length": 0.}
+                    if receiver_id not in mean_metrics:
+                        mean_metrics[receiver_id] = {"accuracy": 0.,"accuracy_tot" : 0.}
 
-                mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
-                mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
-                mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
-                mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
-                mean_metrics[sender_id]["message_length"] += metrics["message_length"]
-                mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
-                mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
+                    mean_metrics[sender_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                    mean_metrics[sender_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
+                    mean_metrics[sender_id]["sender_entropy"] += metrics["sender_entropy"]
+                    mean_metrics[sender_id]["sender_log_prob"] += metrics["sender_log_prob"].sum(1).mean().item()
+                    mean_metrics[sender_id]["message_length"] += metrics["message_length"]
+                    mean_metrics[receiver_id]["accuracy"] += metrics["accuracy"][receiver_id]
+                    mean_metrics[receiver_id]["accuracy_tot"] += metrics["accuracy_tot"][receiver_id]
 
         mean_loss_senders = {sender_id: _div_dict(mean_loss_senders[sender_id], n_batches[sender_id])
                              for sender_id in mean_loss_senders}
