@@ -708,6 +708,7 @@ class TrainerCustom(TrainerPopulation):
                 for batch in self.train_loader:
                     if batch.sender_id is not None:
                         inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                        sender_id = "sender_default_reco"
                         inputs = inputs[th.randperm(inputs.size()[0])]
                         agent_receiver = self.population.agents[receiver_id]
                         batch = move_to((inputs, sender_id, receiver_id), self.device)
@@ -732,7 +733,10 @@ class TrainerCustom(TrainerPopulation):
                 with th.no_grad():
                     for batch in self.val_loader:
                         if batch.sender_id is not None:
-                            batch = move_to(batch, self.device)
+                            #batch = move_to(batch, self.device)
+                            inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                            sender_id = "sender_default_reco"
+                            batch = move_to((inputs, sender_id, receiver_id), self.device)
 
                             metrics = self.game(batch, compute_metrics=True)
 
@@ -779,6 +783,7 @@ class TrainerCustom(TrainerPopulation):
 
                     if batch.sender_id is not None:
                         inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                        sender_id = "sender_default_reco"
                         inputs = inputs[th.randperm(inputs.size()[0])]
                         agent_receiver = self.population.agents[receiver_id]
                         batch = move_to((inputs, sender_id, receiver_id), self.device)
@@ -830,6 +835,7 @@ class TrainerCustom(TrainerPopulation):
             for batch in self.train_loader:
 
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                sender_id = "sender_default_reco"
                 inputs = inputs[th.randperm(inputs.size()[0])]
                 agent_receiver = self.population.agents[batch.receiver_id]
                 batch = move_to((inputs, sender_id, receiver_id), self.device)
@@ -848,6 +854,7 @@ class TrainerCustom(TrainerPopulation):
             n_batch = 0
             for batch in self.val_loader:
                 inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                sender_id = "sender_default_reco"
                 agent_receiver = self.population.agents[receiver_id]
                 batch = move_to((inputs, sender_id, receiver_id), self.device)
 
