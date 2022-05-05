@@ -706,20 +706,20 @@ class TrainerCustom(TrainerPopulation):
                 n_batch = 0
 
                 for batch in self.train_loader:
+                    if batch.sender_id is not None:
+                        inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                        inputs = inputs[th.randperm(inputs.size()[0])]
+                        agent_receiver = self.population.agents[receiver_id]
+                        batch = move_to((inputs, sender_id, receiver_id), self.device)
 
-                    inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
-                    inputs = inputs[th.randperm(inputs.size()[0])]
-                    agent_receiver = self.population.agents[receiver_id]
-                    batch = move_to((inputs, sender_id, receiver_id), self.device)
+                        _ = self.game(batch)
 
-                    _ = self.game(batch)
+                        agent_receiver.tasks[task]["optimizer"].zero_grad()
+                        agent_receiver.tasks[task]["loss_value"].backward()
+                        agent_receiver.tasks[task]["optimizer"].step()
 
-                    agent_receiver.tasks[task]["optimizer"].zero_grad()
-                    agent_receiver.tasks[task]["loss_value"].backward()
-                    agent_receiver.tasks[task]["optimizer"].step()
-
-                    mean_loss += agent_receiver.tasks[task]["loss_value"].item()
-                    n_batch+=1
+                        mean_loss += agent_receiver.tasks[task]["loss_value"].item()
+                        n_batch+=1
 
                 self.writer.add_scalar(f'{receiver_id}_reset/loss',mean_loss/n_batch, self.mi_step)
 
@@ -731,13 +731,14 @@ class TrainerCustom(TrainerPopulation):
 
                 with th.no_grad():
                     for batch in self.val_loader:
-                        batch = move_to(batch, self.device)
+                        if batch.sender_id is not None:
+                            batch = move_to(batch, self.device)
 
-                        metrics = self.game(batch, compute_metrics=True)
+                            metrics = self.game(batch, compute_metrics=True)
 
-                        mean_val_acc += metrics["accuracy"].detach().item()
-                        mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
-                        n_batch += 1
+                            mean_val_acc += metrics["accuracy"].detach().item()
+                            mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
+                            n_batch += 1
 
                 val_losses.append(mean_val_loss / n_batch)
 
@@ -773,18 +774,19 @@ class TrainerCustom(TrainerPopulation):
 
                 for batch in self.train_loader:
 
-                    inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
-                    inputs = inputs[th.randperm(inputs.size()[0])]
-                    agent_receiver = self.population.agents[receiver_id]
-                    batch = move_to((inputs, sender_id, receiver_id), self.device)
+                    if batch.sender_id is not None:
+                        inputs, sender_id, receiver_id = batch.data, batch.sender_id, batch.receiver_id
+                        inputs = inputs[th.randperm(inputs.size()[0])]
+                        agent_receiver = self.population.agents[receiver_id]
+                        batch = move_to((inputs, sender_id, receiver_id), self.device)
 
-                    _ = self.game(batch)
+                        _ = self.game(batch)
 
-                    agent_receiver.tasks[task]["optimizer"].zero_grad()
-                    agent_receiver.tasks[task]["loss_value"].backward()
-                    agent_receiver.tasks[task]["optimizer"].step()
-                    mean_loss += agent_receiver.tasks[task]["loss_value"].item()
-                    n_batch += 1
+                        agent_receiver.tasks[task]["optimizer"].zero_grad()
+                        agent_receiver.tasks[task]["loss_value"].backward()
+                        agent_receiver.tasks[task]["optimizer"].step()
+                        mean_loss += agent_receiver.tasks[task]["loss_value"].item()
+                        n_batch += 1
 
                 self.writer.add_scalar(f'{receiver_id}_reset/loss',mean_loss/n_batch, self.mi_step)
 
@@ -794,13 +796,14 @@ class TrainerCustom(TrainerPopulation):
 
                 with th.no_grad():
                     for batch in self.val_loader:
-                        batch = move_to(batch, self.device)
+                        if batch.sender_id is not None:
+                            batch = move_to(batch, self.device)
 
-                        metrics = self.game(batch, compute_metrics=True)
+                            metrics = self.game(batch, compute_metrics=True)
 
-                        mean_val_acc += metrics["accuracy"].detach().item()
-                        mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
-                        n_batch += 1
+                            mean_val_acc += metrics["accuracy"].detach().item()
+                            mean_val_loss += agent_receiver.tasks[task]["loss_value"].item()
+                            n_batch += 1
 
                 self.writer.add_scalar(f'{receiver_id}_reset/val_accuracy',
                                        mean_val_acc / n_batch, self.mi_step)
