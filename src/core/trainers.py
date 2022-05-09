@@ -1045,6 +1045,8 @@ class TrainerCustom(TrainerPopulation):
             for batch in self.train_loader:
 
                 inputs, sender_id = batch.data, batch.sender_id
+                optimal_listener_id = agent_sender.optimal_listener["train"]
+                optimal_listener = self.population.agents[optimal_listener_id]
                 inputs = inputs[th.randperm(inputs.size()[0])]
                 batch = move_to((inputs, sender_id, optimal_listener_id), self.device)
 

@@ -216,6 +216,7 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
             self.files = [th.load(f"{dataset_dir}/{f}") for f in os.listdir(dataset_dir) if mode in f]
             self.n_files = len(self.files)
 
+        print(len(files),self.n_files)
         self.seed = seed
         self.random_state = np.random.RandomState(self.seed)
 
