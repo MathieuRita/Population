@@ -394,7 +394,7 @@ class StaticEvaluatorImage:
             for agent_name in self.agents_to_evaluate:
                 agent = self.population.agents[agent_name]
                 if agent.sender is not None:
-                    topographic_similarity_results[agent_name] = defaultdict(list)
+                    topographic_similarity_results[agent_name] = list()
 
                     test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "test" in f]
 
