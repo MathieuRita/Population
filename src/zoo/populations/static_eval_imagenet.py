@@ -25,9 +25,6 @@ def get_params(params):
     parser.add_argument('--eval_json', type=str, help="Path to eval info")
 
     # Dataset dir
-    parser.add_argument('--dataset_dir', type=str, help="Path to dataset dir")
-
-    # Dataset dir
     parser.add_argument('--save_dir', type=str, help="Path to dataset dir")
 
     args = parser.parse_args(params)
@@ -62,7 +59,7 @@ def main(params):
                                             eval_receiver_id = eval_params["eval_receiver_id"],
                                             agent_repertory=agent_repertory,
                                             game_params=game_params,
-                                            dataset_dir=opts.dataset_dir,
+                                            dataset_dir=game_params["dataset"]["path"],
                                             image_dataset = eval_params["image_dataset"],
                                             save_dir = opts.save_dir,
                                             device = eval_params["device"])
