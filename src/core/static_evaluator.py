@@ -1,10 +1,12 @@
 import torch as th
 import numpy as np
+import os
 from scipy.stats import spearmanr
-from .utils import move_to, find_lengths
+from .utils import move_to, find_lengths, from_att_to_one_hot_celeba
 from .language_metrics import compute_language_similarity
 from .agents import get_agent
 from collections import defaultdict
+from torch.nn import CosineSimilarity
 
 
 class StaticEvaluator:
@@ -325,6 +327,176 @@ class StaticEvaluator:
             raise NotImplementedError
 
 
+class StaticEvaluatorImage:
+
+    def __init__(self,
+                 game,
+                 population,
+                 metrics_to_measure,
+                 agents_to_evaluate,
+                 eval_receiver_id,
+                 agent_repertory,
+                 game_params,
+                 dataset_dir,
+                 image_dataset,
+                 save_dir,
+                 device: str = "cpu") -> None:
+
+        self.game = game
+        self.population = population
+        self.device = th.device(device)
+        self.agents_to_evaluate = agents_to_evaluate
+        self.metrics_to_measure = metrics_to_measure
+        self.eval_receiver_id = eval_receiver_id
+        self.agent_repertory = agent_repertory
+        self.game_params = game_params
+        self.dataset_dir = dataset_dir
+        self.image_dataset = image_dataset
+        self.save_dir = save_dir
+
+    def step(self,
+             print_results: bool = False,
+             save_results: bool = False) -> None:
+
+        if "topographic_similarity" in self.metrics_to_measure:
+            if self.image_dataset=="imagenet":
+                topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
+                topographic_similarity_attributes=None
+            elif self.image_dataset=="celeba":
+                topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
+                topographic_similarity_attributes = self.estimate_topographic_similarity(distance_input="common_attributes")
+            else:
+                raise("Specify a known type of image dataset")
+        else:
+            topographic_similarity = None
+
+        if save_results:
+            self.save_results(save_dir=self.save_dir,
+                              topographic_similarity_cosine=topographic_similarity_cosine,
+                              topographic_similarity_attributes=topographic_similarity_attributes)
+
+        if print_results:
+            self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
+                              topographic_similarity_attributes=topographic_similarity_attributes)
+
+    def estimate_topographic_similarity(self,
+                                        distance_input: str = "cosine_similarity",
+                                        distance_message: str = "edit_distance",
+                                        N_sampling: int = 100,
+                                        batch_size: int = 1000) -> dict:
+
+        topographic_similarity_results = dict()
+
+        self.game.train()
+
+        with th.no_grad():
+
+            for agent_name in self.agents_to_evaluate:
+                agent = self.population.agents[agent_name]
+                if agent.sender is not None:
+                    topographic_similarity_results[agent_name] = defaultdict(list)
+
+                    test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "test" in f]
+
+                    dataset = test_set
+
+                    # Train
+                    for _ in range(N_sampling):
+
+                        # Sample random file
+                        random_file_id = np.random.choice(len(dataset))
+                        random_file = dataset[random_file_id]
+
+                        # Select random split inside the file
+                        random_samples_ids_1 = np.random.choice(len(random_file), batch_size, replace=False)
+                        random_samples_ids_2 = np.random.choice(len(random_file), batch_size, replace=False)
+                        if distance_input == "cosine_similarity":
+                            inputs_1 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(self.device)
+                            inputs_2 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(self.device)
+                        elif distance_input == "common_attributes":
+                            inputs_1 = th.Tensor(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
+                            inputs_2 = th.Tensor(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
+                        else:
+                            raise("Specify a known distance")
+
+                        inputs_embedding_1 = agent.encode_object(inputs_1)
+                        messages_1, _, _ = agent.send(inputs_embedding_1)
+                        messages_len_1 = find_lengths(messages_1)
+                        messages_1, messages_len_1 = messages_1.cpu().numpy(), messages_len_1.cpu().numpy()
+
+                        inputs_embedding_2 = agent.encode_object(inputs_2)
+                        messages_2, _, _ = agent.send(inputs_embedding_2)
+                        messages_len_2 = find_lengths(messages_2)
+                        messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
+
+                        if distance_input == "cosine_similarity":
+                            cos = CosineSimilarity(dim=1)
+                            distances_inputs = 1-cos(inputs_1,inputs_2)
+                        if distance_input == "common_attributes":
+                            equal_att = 1 - 1 * ((inputs_1 - inputs_2) == 0).cpu().numpy()
+                            distances_inputs = np.mean(equal_att,
+                                                       axis=1)
+
+                        else:
+                            raise NotImplementedError
+
+                        if distance_message == "edit_distance":
+                            distances_messages = 1 - compute_language_similarity(messages_1=messages_1,
+                                                                                 messages_2=messages_2,
+                                                                                 len_messages_1=messages_len_1,
+                                                                                 len_messages_2=messages_len_2)
+                        else:
+                            raise NotImplementedError
+
+                        top_sim = spearmanr(distances_inputs, distances_messages).correlation
+
+                        topographic_similarity_results[agent_name].append(top_sim)
+
+        return topographic_similarity_results
+
+    def save_results(self,
+                     save_dir: str,
+                     topographic_similarity_cosine: dict = None,
+                     topographic_similarity_attributes: dict = None) -> None:
+
+        # Topographic similarity
+        if topographic_similarity_cosine is not None:
+            for agent_name in topographic_similarity_cosine:
+                    np.save(f"{save_dir}/topsim_cosine_{agent_name}.npy",
+                            topographic_similarity_cosine[agent_name])
+
+        if topographic_similarity_attributes is not None:
+            for agent_name in topographic_similarity_attributes:
+                    np.save(f"{save_dir}/topsim_attributes_{agent_name}.npy",
+                            topographic_similarity_attributes[agent_name])
+
+    def print_results(self,
+                      topographic_similarity_cosine: dict = None,
+                      topographic_similarity_attributes: dict = None):
+
+        # Topographic similarity
+        if topographic_similarity_cosine is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY### \n")
+            for agent_name in topographic_similarity_cosine:
+                print(f"Sender : {agent_name}")
+                ts_values = topographic_similarity_cosine[agent_name]
+                print(f"Cosine  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
+
+        if topographic_similarity_attributes is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY### \n")
+            for agent_name in topographic_similarity_attributes:
+                print(f"Sender : {agent_name}")
+                ts_values = topographic_similarity_attributes[agent_name]
+                print(f"Attributes  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
+
 def get_static_evaluator(game,
                          population,
                          metrics_to_measure,
@@ -334,16 +506,32 @@ def get_static_evaluator(game,
                          game_params,
                          dataset_dir,
                          save_dir,
+                         image_dataset : str =None,
                          device: str = "cpu"):
-    evaluator = StaticEvaluator(game=game,
-                                population=population,
-                                metrics_to_measure=metrics_to_measure,
-                                agents_to_evaluate=agents_to_evaluate,
-                                eval_receiver_id=eval_receiver_id,
-                                agent_repertory=agent_repertory,
-                                game_params=game_params,
-                                dataset_dir=dataset_dir,
-                                save_dir=save_dir,
-                                device=device)
+
+    if image_dataset is None:
+        evaluator = StaticEvaluator(game=game,
+                                    population=population,
+                                    metrics_to_measure=metrics_to_measure,
+                                    agents_to_evaluate=agents_to_evaluate,
+                                    eval_receiver_id=eval_receiver_id,
+                                    agent_repertory=agent_repertory,
+                                    game_params=game_params,
+                                    dataset_dir=dataset_dir,
+                                    save_dir=save_dir,
+                                    device=device)
+
+    else:
+        evaluator = StaticEvaluatorImage(game=game,
+                                        population=population,
+                                        metrics_to_measure=metrics_to_measure,
+                                        agents_to_evaluate=agents_to_evaluate,
+                                        eval_receiver_id=eval_receiver_id,
+                                        agent_repertory=agent_repertory,
+                                        game_params=game_params,
+                                        dataset_dir=dataset_dir,
+                                        save_dir=save_dir,
+                                        image_dataset = image_dataset,
+                                        device=device)
 
     return evaluator

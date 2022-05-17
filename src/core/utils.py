@@ -1,6 +1,7 @@
 from typing import Any
 from collections import defaultdict
 import torch as th
+import numpy as np
 
 def find_lengths(messages: th.Tensor) -> th.Tensor:
     """
@@ -55,3 +56,6 @@ def move_to(x: Any, device: th.device)-> Any:
             x[k] = move_to(v, device)
         return x
     return x
+
+def from_att_to_one_hot_celeba(attribute_dict):
+    return 1*np.array([v for k,v in attribute_dict.items()])
