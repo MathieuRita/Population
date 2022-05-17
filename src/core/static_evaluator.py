@@ -437,7 +437,7 @@ class StaticEvaluatorImage:
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
-                            distances_inputs = 1-cos(inputs_1,inputs_2)
+                            distances_inputs = 1-cos(inputs_1,inputs_2).cpu().numpy()
                         elif distance_input == "common_attributes":
                             equal_att = 1 - 1 * ((inputs_1 - inputs_2) == 0).cpu().numpy()
                             distances_inputs = np.mean(equal_att,
