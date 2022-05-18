@@ -474,10 +474,10 @@ class StaticEvaluator:
 
         if h_x_m_tot is not None:
             print("\n### CONDITIONAL ENTROPY TOT### \n")
-            for agent_name in h_x_m:
+            for agent_name in h_x_m_tot:
                 print(f"Sender : {agent_name}")
-                h_value = h_x_m[agent_name]
-                accuracy_h = accuracy_h_x_m[agent_name]
+                h_value = h_x_m_tot[agent_name]
+                accuracy_h = accuracy_h_x_m_tot[agent_name]
                 print(f"Measure : {h_value} (accuracy = {accuracy_h})")
 
 
