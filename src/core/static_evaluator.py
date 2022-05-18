@@ -49,9 +49,9 @@ class StaticEvaluator:
             h_x_m, accuracy_h_x_m, val_losses_results, val_accuracies_results = None, None, None, None
 
         if "h_x_m_tot" in self.metrics_to_measure:
-            h_x_m_tot, accuracy_h_x_m_tot = self.estimate_h_x_m_tot()
+            h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = self.estimate_h_x_m_tot()
         else:
-            h_x_m_tot, accuracy_h_x_m_tot = None, None
+            h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = None, None, None, None
 
         if "success" in self.metrics_to_measure:
             raise NotImplementedError
@@ -65,6 +65,8 @@ class StaticEvaluator:
                               accuracy_h_x_m = accuracy_h_x_m,
                               h_x_m_tot=h_x_m_tot,
                               accuracy_h_x_m_tot=accuracy_h_x_m_tot,
+                              test_losses_results=test_losses_results,
+                              test_accuracies_results=test_accuracies_results,
                               success=success,
                               val_losses_results=val_losses_results,
                               val_accuracies_results=val_accuracies_results)
@@ -266,15 +268,26 @@ class StaticEvaluator:
 
     def estimate_h_x_m_tot(self,
                            batch_size: int = 1024,
-                           n_batch_val : int = 5):
+                           n_batch_val : int = 10):
 
         h_x_m_results = defaultdict()
+        test_losses_results = defaultdict()
+        test_accuracies_results = defaultdict()
         accuracy_results = defaultdict()
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         for agent_name in self.agents_to_evaluate:
 
             agent = self.population.agents[agent_name]
+
+            train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
+            val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
+            test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
+
+            splits = {"train": train_split,
+                      "val": val_split,
+                      "test": test_split}
+
             if agent.sender is not None:
                 h_x_m_results[agent_name] = list
                 accuracy_results[agent_name] = list
@@ -337,13 +350,38 @@ class StaticEvaluator:
 
                     step += 1
 
-                    if step == 100000 : continue_training = False
+                    if step == 10000 : continue_training = False
 
-                h_x_m_results[agent_name].append(np.mean(losses[-5:]))
-                accuracy_results[agent_name].append(np.mean(accuracies[-5:]))
+                test_losses=[]
+                test_accuracies=[]
+
+                with th.no_grad():
+
+                    mean_test_loss = 0.
+                    mean_test_acc = 0.
+
+                    for _ in range(n_batch_val):
+                        batch_data = full_dataset[splits["test"]]
+
+                        eval_receiver = self.population.agents[self.eval_receiver_id]
+                        batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
+                        metrics = self.game(batch, compute_metrics=True)
+
+                        mean_test_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
+                        mean_test_acc += metrics["accuracy"].detach().item()
+
+                    test_losses.append(mean_test_loss / n_batch_val)
+                    test_accuracies.append(mean_test_acc / n_batch_val)
+
+                test_losses_results[agent_name] = test_losses
+                test_accuracies_results[agent_name] = test_accuracies
+
+                h_x_m_results[agent_name].append(np.mean(losses[-10:]))
+                accuracy_results[agent_name].append(np.mean(accuracies[-10:]))
                 print(f"Done measure : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
+                print(f"Done measure test : {np.mean(test_losses[-5:])} / {np.mean(test_accuracies[-5:])}")
 
-        return h_x_m_results, accuracy_results
+        return h_x_m_results, accuracy_results, test_losses_results, test_accuracies_results
 
     def compute_success(self):
 
@@ -356,6 +394,8 @@ class StaticEvaluator:
                      accuracy_h_x_m: dict = None,
                      h_x_m_tot : dict = None,
                      accuracy_h_x_m_tot : dict = None,
+                     test_losses_results : dict = None,
+                     test_accuracies_results : dict = None,
                      success: dict = None,
                      val_losses_results: dict = None,
                      val_accuracies_results: dict = None) -> None:
@@ -378,10 +418,16 @@ class StaticEvaluator:
                     np.save(f"{save_dir}/h_x_m_tot_{agent_name}.npy",
                             h_x_m_tot[agent_name])
 
+                    np.save(f"{save_dir}/h_x_m_tot_test_{agent_name}.npy",
+                            test_losses_results[agent_name])
+
+
         if accuracy_h_x_m_tot is not None:
             for agent_name in accuracy_h_x_m_tot:
                     np.save(f"{save_dir}/accuracy_h_x_m_tot_{agent_name}.npy",
                             accuracy_h_x_m_tot[agent_name])
+                    np.save(f"{save_dir}/accuracy_h_x_m_tot_test_{agent_name}.npy",
+                            test_accuracies_results[agent_name])
 
         if accuracy_h_x_m is not None:
             for agent_name in accuracy_h_x_m:
