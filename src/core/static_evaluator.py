@@ -48,6 +48,11 @@ class StaticEvaluator:
         else:
             h_x_m, accuracy_h_x_m, val_losses_results, val_accuracies_results = None, None, None, None
 
+        if "h_x_m_tot" in self.metrics_to_measure:
+            h_x_m_tot, accuracy_h_x_m_tot = self.estimate_h_x_m_tot()
+        else:
+            h_x_m_tot, accuracy_h_x_m_tot = None, None
+
         if "success" in self.metrics_to_measure:
             raise NotImplementedError
         else:
@@ -58,6 +63,8 @@ class StaticEvaluator:
                               topographic_similarity=topographic_similarity,
                               h_x_m=h_x_m,
                               accuracy_h_x_m = accuracy_h_x_m,
+                              h_x_m_tot=h_x_m_tot,
+                              accuracy_h_x_m_tot=accuracy_h_x_m_tot,
                               success=success,
                               val_losses_results=val_losses_results,
                               val_accuracies_results=val_accuracies_results)
@@ -66,6 +73,8 @@ class StaticEvaluator:
             self.print_results(topographic_similarity=topographic_similarity,
                                h_x_m=h_x_m,
                                accuracy_h_x_m=accuracy_h_x_m,
+                               h_x_m_tot=h_x_m_tot,
+                               accuracy_h_x_m_tot=accuracy_h_x_m_tot,
                                success=success,
                                val_losses_results=val_losses_results,
                                val_accuracies_results=val_accuracies_results)
@@ -255,6 +264,87 @@ class StaticEvaluator:
 
         return h_x_m_results, accuracy_results, val_losses_results, val_accuracies_results
 
+    def estimate_h_x_m_tot(self,
+                           batch_size: int = 1024,
+                           n_batch_val : int = 5):
+
+        h_x_m_results = defaultdict()
+        accuracy_results = defaultdict()
+        full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
+
+        for agent_name in self.agents_to_evaluate:
+
+            agent = self.population.agents[agent_name]
+            if agent.sender is not None:
+                h_x_m_results[agent_name] = list
+                accuracy_results[agent_name] = list
+
+                self.population.agents[self.eval_receiver_id] = get_agent(agent_name=self.eval_receiver_id,
+                                                                          agent_repertory=self.agent_repertory,
+                                                                          game_params=self.game_params,
+                                                                          device=self.device)
+
+                self.game.train()
+                dataset = full_dataset
+                task = "communication"
+
+                losses = []
+                accuracies = []
+
+
+                step = 0
+                continue_training = True
+
+                while continue_training:
+
+                    # Prepare dataset
+                    n_batch = max(round(len(dataset) / batch_size),1)
+                    permutation = th.multinomial(th.ones(len(dataset)),
+                                                 len(dataset),
+                                                 replacement=False)
+
+                    if n_batch * batch_size - len(dataset)<len(dataset):
+                        replacement=False
+                    else:
+                        replacement = True
+
+                    batch_fill = th.multinomial(th.ones(len(dataset)),
+                                                n_batch * batch_size - len(dataset),
+                                                replacement=replacement)
+
+                    permutation = th.cat((permutation,batch_fill),dim=0)
+
+                    mean_loss = 0.
+                    mean_accuracy = 0.
+
+                    for i in range(n_batch):
+                        batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
+
+                        eval_receiver = self.population.agents[self.eval_receiver_id]
+                        batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
+                        metrics = self.game(batch, compute_metrics=True)
+
+                        eval_receiver.tasks[task]["optimizer"].zero_grad()
+                        eval_receiver.tasks[task]["loss_value"].backward()
+                        eval_receiver.tasks[task]["optimizer"].step()
+
+                        mean_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
+                        mean_accuracy += metrics["accuracy"].detach().item()
+
+                    print(mean_loss/n_batch)
+                    losses.append(mean_loss / n_batch)
+                    accuracies.append(mean_accuracy / n_batch)
+
+                    step += 1
+
+                    if step == 100000 : continue_training = False
+
+                h_x_m_results[agent_name].append(np.mean(losses[-5:]))
+                accuracy_results[agent_name].append(np.mean(accuracies[-5:]))
+                print(f"Done measure : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
+
+        return h_x_m_results, accuracy_results
+
     def compute_success(self):
 
         raise NotImplementedError
@@ -264,6 +354,8 @@ class StaticEvaluator:
                      topographic_similarity: dict = None,
                      h_x_m: dict = None,
                      accuracy_h_x_m: dict = None,
+                     h_x_m_tot : dict = None,
+                     accuracy_h_x_m_tot : dict = None,
                      success: dict = None,
                      val_losses_results: dict = None,
                      val_accuracies_results: dict = None) -> None:
@@ -280,6 +372,16 @@ class StaticEvaluator:
                 for dataset_type in h_x_m[agent_name]:
                     np.save(f"{save_dir}/h_x_m_{agent_name}_{dataset_type}.npy",
                             h_x_m[agent_name][dataset_type])
+
+        if h_x_m_tot is not None:
+            for agent_name in h_x_m_tot:
+                    np.save(f"{save_dir}/h_x_m_tot_{agent_name}.npy",
+                            h_x_m_tot[agent_name])
+
+        if accuracy_h_x_m_tot is not None:
+            for agent_name in accuracy_h_x_m_tot:
+                    np.save(f"{save_dir}/accuracy_h_x_m_tot_{agent_name}.npy",
+                            accuracy_h_x_m_tot[agent_name])
 
         if accuracy_h_x_m is not None:
             for agent_name in accuracy_h_x_m:
@@ -298,6 +400,8 @@ class StaticEvaluator:
                       topographic_similarity: dict = None,
                       h_x_m: dict = None,
                       accuracy_h_x_m: dict = None,
+                      h_x_m_tot: dict = None,
+                      accuracy_h_x_m_tot: dict = None,
                       success: dict = None,
                       val_losses_results: dict = None,
                       val_accuracies_results: dict = None):
@@ -321,6 +425,14 @@ class StaticEvaluator:
                     print(f"{dataset_type} : {h_value} (accuracy = {accuracy_h})")
                 print(f"Minimal validation loss = {np.min(val_losses_results[agent_name])}")
                 print(f"Maximal validation accuracy = {np.max(val_accuracies_results[agent_name])}")
+
+        if h_x_m_tot is not None:
+            print("\n### CONDITIONAL ENTROPY TOT### \n")
+            for agent_name in h_x_m:
+                print(f"Sender : {agent_name}")
+                h_value = h_x_m[agent_name]
+                accuracy_h = accuracy_h_x_m[agent_name]
+                print(f"Measure : {h_value} (accuracy = {accuracy_h})")
 
 
         if success is not None:
