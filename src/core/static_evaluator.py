@@ -272,8 +272,8 @@ class StaticEvaluator:
 
         h_x_m_results = defaultdict()
         test_losses_results = defaultdict()
-        test_accuracies_results = defaultdict()
-        accuracy_results = defaultdict()
+        test_accuracies_results = defaultdict(list)
+        accuracy_results = defaultdict(list)
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         for agent_name in self.agents_to_evaluate:
@@ -289,8 +289,8 @@ class StaticEvaluator:
                       "test": test_split}
 
             if agent.sender is not None:
-                h_x_m_results[agent_name] = list
-                accuracy_results[agent_name] = list
+                h_x_m_results[agent_name] = list()
+                accuracy_results[agent_name] = list()
 
                 self.population.agents[self.eval_receiver_id] = get_agent(agent_name=self.eval_receiver_id,
                                                                           agent_repertory=self.agent_repertory,
@@ -350,7 +350,7 @@ class StaticEvaluator:
 
                     step += 1
 
-                    if step == 10000 : continue_training = False
+                    if step == 2 : continue_training = False
 
                 test_losses=[]
                 test_accuracies=[]
