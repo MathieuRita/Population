@@ -417,9 +417,15 @@ class StaticEvaluatorImage:
                                 [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(self.device)
                         elif distance_input == "common_attributes":
                             inputs_1 = th.Tensor(
-                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
                                 self.device)
                             inputs_2 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
+                            att_1 = th.Tensor(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
+                            att_2 = th.Tensor(
                                 [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_2]]).to(
                                 self.device)
                         else:
@@ -439,7 +445,7 @@ class StaticEvaluatorImage:
                             cos = CosineSimilarity(dim=1)
                             distances_inputs = 1-cos(inputs_1,inputs_2).cpu().numpy()
                         elif distance_input == "common_attributes":
-                            equal_att = 1 - 1 * ((inputs_1 - inputs_2) == 0).cpu().numpy()
+                            equal_att = 1 - 1 * ((att_1 - att_2) == 0).cpu().numpy()
                             distances_inputs = np.mean(equal_att,
                                                        axis=1)
 
