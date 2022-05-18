@@ -350,7 +350,7 @@ class StaticEvaluator:
 
                     step += 1
 
-                    if step == 2 : continue_training = False
+                    if step == 15000 : continue_training = False
 
                 test_losses=[]
                 test_accuracies=[]
