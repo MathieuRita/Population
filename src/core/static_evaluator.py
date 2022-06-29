@@ -481,7 +481,7 @@ class StaticEvaluator:
 
                     step += 1
 
-                    if step == 2000 : continue_training = False
+                    if step == 6000 : continue_training = False
 
                 print(accuracies)
                 speed_of_learning[agent_name] = np.min(np.where(np.array(accuracies) >= acc_threshold)[0])
