@@ -58,6 +58,21 @@ class StaticEvaluator:
         else:
             success = None
 
+        if "speed_of_learning_listener" in self.metrics_to_measure:
+            speed_of_learning_listener = self.estimate_speed_of_learning_listener()
+        else:
+            speed_of_learning_listener = None
+
+        if "speed_of_learning_speaker" in self.metrics_to_measure:
+            raise NotImplementedError
+        else:
+            speed_of_learning_speaker = None
+
+        if "success" in self.metrics_to_measure:
+            raise NotImplementedError
+        else:
+            success = None
+
         if save_results:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
@@ -69,7 +84,9 @@ class StaticEvaluator:
                               test_accuracies_results=test_accuracies_results,
                               success=success,
                               val_losses_results=val_losses_results,
-                              val_accuracies_results=val_accuracies_results)
+                              val_accuracies_results=val_accuracies_results,
+                              speed_of_learning_listener=speed_of_learning_listener,
+                              speed_of_learning_speaker=speed_of_learning_speaker)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
@@ -79,7 +96,9 @@ class StaticEvaluator:
                                accuracy_h_x_m_tot=accuracy_h_x_m_tot,
                                success=success,
                                val_losses_results=val_losses_results,
-                               val_accuracies_results=val_accuracies_results)
+                               val_accuracies_results=val_accuracies_results,
+                               speed_of_learning_listener=speed_of_learning_listener,
+                               speed_of_learning_speaker=speed_of_learning_speaker)
 
     def estimate_topographic_similarity(self,
                                         distance_input: str = "common_attributes",
@@ -344,7 +363,8 @@ class StaticEvaluator:
                         mean_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
                         mean_accuracy += metrics["accuracy"].detach().item()
 
-                    print(mean_loss/n_batch)
+                    if step%1000==0:
+                        print(mean_loss/n_batch)
                     losses.append(mean_loss / n_batch)
                     accuracies.append(mean_accuracy / n_batch)
 
@@ -383,6 +403,100 @@ class StaticEvaluator:
 
         return h_x_m_results, accuracy_results, test_losses_results, test_accuracies_results
 
+    def estimate_speed_of_learning_listener(self,
+                                            batch_size: int = 1024,
+                                            acc_threshold=0.99
+                                            ):
+
+
+        speed_of_learning = defaultdict()
+        full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
+
+        for agent_name in self.agents_to_evaluate:
+            agent = self.population.agents[agent_name]
+
+            train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
+            val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
+            test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
+
+            splits = {"train": train_split,
+                      "val": val_split,
+                      "test": test_split}
+
+            if agent.sender is not None:
+
+                self.population.agents[self.eval_receiver_id] = get_agent(agent_name=self.eval_receiver_id,
+                                                                          agent_repertory=self.agent_repertory,
+                                                                          game_params=self.game_params,
+                                                                          device=self.device)
+
+                self.game.train()
+                dataset = full_dataset[splits['train']]
+                task = "communication"
+
+                losses = []
+                accuracies = []
+
+                step = 0
+                continue_training = True
+
+                while continue_training:
+
+                    # Prepare dataset
+                    n_batch = max(round(len(dataset) / batch_size),1)
+                    permutation = th.multinomial(th.ones(len(dataset)),
+                                                 len(dataset),
+                                                 replacement=False)
+
+                    if n_batch * batch_size - len(dataset)<len(dataset):
+                        replacement=False
+                    else:
+                        replacement = True
+
+                    batch_fill = th.multinomial(th.ones(len(dataset)),
+                                                n_batch * batch_size - len(dataset),
+                                                replacement=replacement)
+
+                    permutation = th.cat((permutation,batch_fill),dim=0)
+
+                    mean_loss = 0.
+                    mean_accuracy = 0.
+
+                    for i in range(n_batch):
+                        batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
+
+                        eval_receiver = self.population.agents[self.eval_receiver_id]
+                        batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
+                        metrics = self.game(batch, compute_metrics=True)
+
+                        eval_receiver.tasks[task]["optimizer"].zero_grad()
+                        eval_receiver.tasks[task]["loss_value"].backward()
+                        eval_receiver.tasks[task]["optimizer"].step()
+
+                        mean_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
+                        mean_accuracy += metrics["accuracy"].detach().item()
+
+                    losses.append(mean_loss / n_batch)
+                    accuracies.append(mean_accuracy / n_batch)
+
+                    step += 1
+
+                    if step == 2000 : continue_training = False
+
+            speed_of_learning[agent_name] = np.min(np.where(np.array(accuracies) >= acc_threshold)[0])
+
+        return speed_of_learning
+
+    def estimate_speed_of_learning_speaker(self,
+                                           training_procedure="supervision"):
+
+        #if training_procedure=="supervision":
+        #elif training_procedure=="reinforcement":
+        #else:
+        #    raise AssertionError
+
+        raise NotImplementedError
+
     def compute_success(self):
 
         raise NotImplementedError
@@ -398,7 +512,9 @@ class StaticEvaluator:
                      test_accuracies_results : dict = None,
                      success: dict = None,
                      val_losses_results: dict = None,
-                     val_accuracies_results: dict = None) -> None:
+                     val_accuracies_results: dict = None,
+                     speed_of_learning_listener : dict = None,
+                     speed_of_learning_speaker : dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -439,6 +555,20 @@ class StaticEvaluator:
                 np.save(f"{save_dir}/val_accuracy_{agent_name}.npy",
                         val_accuracies_results[agent_name])
 
+        if speed_of_learning_listener is not None:
+            for agent_name in speed_of_learning_listener:
+                np.save(f"{save_dir}/speed_of_learning_listener_{agent_name}.npy",
+                        speed_of_learning_listener[agent_name])
+                np.save(f"{save_dir}/speed_of_learning_listener_{agent_name}.npy",
+                        speed_of_learning_listener[agent_name])
+
+        if speed_of_learning_speaker is not None:
+            for agent_name in speed_of_learning_speaker:
+                np.save(f"{save_dir}/speed_of_learning_speaker_{agent_name}.npy",
+                        speed_of_learning_speaker[agent_name])
+                np.save(f"{save_dir}/speed_of_learning_speaker_{agent_name}.npy",
+                        speed_of_learning_speaker[agent_name])
+
         if success is not None:
             raise NotImplementedError
 
@@ -450,7 +580,9 @@ class StaticEvaluator:
                       accuracy_h_x_m_tot: dict = None,
                       success: dict = None,
                       val_losses_results: dict = None,
-                      val_accuracies_results: dict = None):
+                      val_accuracies_results: dict = None,
+                      speed_of_learning_listener : dict = None,
+                      speed_of_learning_speaker : dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
