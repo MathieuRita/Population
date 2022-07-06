@@ -204,6 +204,7 @@ class ReconstructionGame(nn.Module):
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
                                                                        messages,
                                                                        return_whole_log_probs=True)
+
         log_imitation = -1 * cross_entropy_imitation(sender_log_prob=log_probs_imitation,
                                                      target_messages=messages)
 
