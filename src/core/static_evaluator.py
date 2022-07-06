@@ -432,7 +432,7 @@ class StaticEvaluator:
 
                 self.game.train()
                 dataset = full_dataset[splits['train']]
-                task = "communication"
+                task = "imitation"
 
                 losses = []
                 accuracies = []
