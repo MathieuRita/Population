@@ -82,7 +82,7 @@ class _ReconstructionIterator():
         self.broadcasting = broadcasting
         self.batch_size = batch_size
         self.batches_generated = 0
-        self.mode = mode
+        self.mode =  mode
         self.task = task
         self.random_state = random_state
 
@@ -330,6 +330,57 @@ def build_one_hot_dataset(object_params: dict, n_elements: int) -> th.Tensor:
         dataset = th.nn.functional.one_hot(dataset, num_classes=n_values)
 
     return dataset
+
+def build_one_hot_dataset_with_specific_distribution(object_params: dict, n_elements: int) -> th.Tensor:
+
+    n_attributes = object_params["n_attributes"]
+    n_values_per_attribute = object_params["n_values_per_attribute"]
+    attribute_distributions = object_params["attribute_distributions"]
+    max_values = np.max(n_values_per_attribute)
+
+    # Building probability over values for each attribute
+
+    attribute_probs = []
+
+    for idx_attribute in range(n_attributes):
+        if attribute_distributions[idx_attribute] == "uniform":
+            probs = [1] * n_values_per_attribute[idx_attribute]
+            probs += [0] * (max_values - n_values_per_attribute[idx_attribute])
+            probs = np.array(probs, dtype=np.float32)
+        elif attribute_distributions[idx_attribute] == "powerlaw":
+            probs = 1 / np.arange(1, n_values_per_attribute[idx_attribute] + 1, dtype=np.float32)
+            probs = np.concatenate((probs, [0.] * (max_values - n_values_per_attribute[idx_attribute])))
+        else:
+            raise "Specify a know distribution"
+
+        probs /= np.sum(probs)
+
+        attribute_probs.append(probs)
+
+    attribute_probs = th.Tensor(np.stack(attribute_probs, axis=0))
+
+    # Build the one-hot dataset by sampling over the probs
+
+    dataset = th.stack([th.multinomial(attribute_probs[i], num_samples=n_elements, replacement=True) \
+                        for i in range(n_attributes)], dim=1).to(th.int64)
+
+    dataset = th.nn.functional.one_hot(dataset, num_classes=n_elements)
+
+    return dataset
+
+def get_all_one_hot_elements(object_params: dict) -> th.Tensor:
+    n_attributes = object_params["n_attributes"]
+    n_values_per_attribute = object_params["n_values_per_attribute"]
+    max_values = np.max(n_values_per_attribute)
+
+    product_list=(np.arange(n_values_per_attribute[i]) for i in range(n_attributes))
+
+    dataset = th.Tensor(list(itertools.product(*product_list))).to(th.int64)
+
+    dataset = th.nn.functional.one_hot(dataset, num_classes=max_values)
+
+    return dataset
+
 
 
 def build_target_messages(n_elements: int, pretrained_language: str, channel_params: dict) -> th.Tensor:
