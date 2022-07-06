@@ -558,8 +558,6 @@ class StaticEvaluator:
 
                         losses.append(mean_loss / n_batch)
 
-                        print(mean_loss/n_batch)
-
                         step += 1
 
                         if step == 100: continue_training = False
@@ -568,7 +566,7 @@ class StaticEvaluator:
                     #    speed_of_learning[agent_name] = np.min(np.where(np.array(losses) >= loss_threshold)[0])
                     #else:
                     #    speed_of_learning[agent_name] = -1
-                    speed_of_learning = losses[-1]
+                    speed_of_learning[agent_name] = losses[-1]
 
         else:
             raise AssertionError
