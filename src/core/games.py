@@ -199,7 +199,8 @@ class ReconstructionGame(nn.Module):
         messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
 
         # Imitator tries to imitate messages
-        inputs_imitation = (1 - agent_imitator.tasks[task]["lm_mode"]) * inputs
+        #inputs_imitation = (1 - agent_imitator.tasks[task]["lm_mode"]) * inputs
+        inputs_imitation = inputs
 
         _, log_probs_imitation = agent_imitator.get_log_prob_m_given_x(inputs_imitation,
                                                                        messages,
