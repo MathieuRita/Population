@@ -492,7 +492,6 @@ class StaticEvaluator:
 
     def estimate_speed_of_learning_speaker(self,
                                            batch_size: int = 1024,
-                                           loss_threshold=0.1,
                                            training_procedure="supervision"):
 
         if training_procedure=="supervision":
@@ -563,12 +562,13 @@ class StaticEvaluator:
 
                         step += 1
 
-                        if step == 10000: continue_training = False
+                        if step == 100: continue_training = False
 
-                    if len(np.where(np.array(accuracies) >= loss_threshold)[0]) > 0:
-                        speed_of_learning[agent_name] = np.min(np.where(np.array(losses) >= loss_threshold)[0])
-                    else:
-                        speed_of_learning[agent_name] = -1
+                    #if len(np.where(np.array(accuracies) >= loss_threshold)[0]) > 0:
+                    #    speed_of_learning[agent_name] = np.min(np.where(np.array(losses) >= loss_threshold)[0])
+                    #else:
+                    #    speed_of_learning[agent_name] = -1
+                    speed_of_learning = losses[-1]
 
         else:
             raise AssertionError
