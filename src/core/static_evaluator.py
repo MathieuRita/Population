@@ -546,7 +546,8 @@ class StaticEvaluator:
                         mean_loss = 0.
 
                         for i in range(n_batch):
-                            batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
+                            batch_data = move_to(dataset[permutation[i * batch_size:(i + 1) * batch_size]],
+                                                 self.device)
 
                             self.game.imitation_instance(batch_data,agent_name,"imitator")
 
