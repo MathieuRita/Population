@@ -87,6 +87,7 @@ def main(params):
                                                   split_proportion=training_params["split_train_val"],
                                                   agent_names=population.agent_names,
                                                   population_dataset_type=population_params['dataset_type'],
+                                                  total_number_elements=val_dataset.size(0),
                                                   seed=training_params["seed"])
 
     if opts.dataset_save_dir:
