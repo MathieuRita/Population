@@ -127,14 +127,14 @@ def main(params):
                                           mode="test")
 
     # Mutual information task
-    mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
-                                         dataset=full_dataset,
-                                         agent_names=population.agent_names,
-                                         population_split=population_split,
-                                         population_probs=population.pairs_prob,
-                                         training_params=training_params,
-                                         task="MI",
-                                         mode="train")
+    #mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+    #                                     dataset=full_dataset,
+    #                                     agent_names=population.agent_names,
+    #                                     population_split=population_split,
+    #                                     population_probs=population.pairs_prob,
+    #                                     training_params=training_params,
+    #                                     task="MI",
+    #                                     mode="train")
 
     # Imitation loaders
     if sum(population_params['is_imitator'])>0.:
@@ -180,7 +180,7 @@ def main(params):
     trainer = build_trainer(game=game,
                             evaluator=evaluator,
                             train_loader=train_loader,
-                            mi_loader=mi_loader,
+                            #mi_loader=mi_loader,
                             val_loader=val_loader,
                             test_loader=test_loader,
                             imitation_loader=imitation_loader,
