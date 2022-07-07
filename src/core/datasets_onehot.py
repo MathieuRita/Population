@@ -598,10 +598,14 @@ def save_dataset(dataset_save_dir: str,
     th.save(full_dataset, f"{dataset_save_dir}/full_dataset.pt")
 
     for agent_name in population_split:
-        th.save(population_split[agent_name]["train_split"], f"{dataset_save_dir}/{agent_name}_train_split.pt")
-        th.save(population_split[agent_name]["val_split"], f"{dataset_save_dir}/{agent_name}_val_split.pt")
-        th.save(population_split[agent_name]["test_split"], f"{dataset_save_dir}/{agent_name}_test_split.pt")
-        th.save(population_split[agent_name]["MI_split"], f"{dataset_save_dir}/{agent_name}_MI_split.pt")
+        if "train_split" in population_split[agent_name]:
+            th.save(population_split[agent_name]["train_split"], f"{dataset_save_dir}/{agent_name}_train_split.pt")
+        if "val_split" in population_split[agent_name]:
+            th.save(population_split[agent_name]["val_split"], f"{dataset_save_dir}/{agent_name}_val_split.pt")
+        if "test_split" in population_split[agent_name]:
+            th.save(population_split[agent_name]["test_split"], f"{dataset_save_dir}/{agent_name}_test_split.pt")
+        if "MI_split" in population_split[agent_name]:
+            th.save(population_split[agent_name]["MI_split"], f"{dataset_save_dir}/{agent_name}_MI_split.pt")
 
 
 def build_one_hot_dataloader(game_type: str,
