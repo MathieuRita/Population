@@ -398,6 +398,7 @@ def split_data_into_population(dataset_size: int,
                                agent_names: list,
                                split_proportion: float = 0.8,
                                population_dataset_type: str = "unique",
+                               total_number_elements : int = None,
                                seed: int = 19) -> dict:
     data_split = {}
 
@@ -415,6 +416,14 @@ def split_data_into_population(dataset_size: int,
             data_split[agent_name]["val_split"] = val_split
             data_split[agent_name]["test_split"] = test_split
             data_split[agent_name]["MI_split"] = random_permut
+
+    elif population_dataset_type=="expe_non_uniform":
+        
+        for agent_name in agent_names:
+            data_split[agent_name] = {}
+            data_split[agent_name]["train_split"] = np.arange(dataset_size)
+            data_split[agent_name]["val_split"] = np.arange(total_number_elements)
+            data_split[agent_name]["test_split"] = np.arange(total_number_elements)
 
     else:
         raise "Specify a known population dataset type"
