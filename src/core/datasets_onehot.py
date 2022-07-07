@@ -305,6 +305,166 @@ class _UnidirectionalIterator():
 
         return batch_data, target_messages
 
+class ReconstructionDataLoaderSpecificDistribution(th.utils.data.DataLoader):
+
+    def __init__(self,
+                 object_params,
+                 agent_names,
+                 population_probs: th.Tensor,
+                 population_split: dict,
+                 batches_per_epoch: int,
+                 batch_size: int,
+                 imitation_probs: th.Tensor = None,
+                 task: str = "communication",
+                 broadcasting: bool = False,
+                 mode: str = "train",
+                 seed: int = None):
+
+        self.object_params = object_params
+        self.agent_names = agent_names
+        self.population_probs = population_probs
+        self.imitation_probs = imitation_probs
+        self.population_split = population_split
+        self.batches_per_epoch = batches_per_epoch
+        self.batch_size = batch_size
+        self.task = task
+        self.broadcasting = broadcasting
+        self.mode = mode
+        self.seed = seed
+        if seed is None:
+            seed = np.random.randint(0, 2 ** 32)
+        else:
+            self.seed = seed
+        self.random_state = np.random.RandomState(self.seed)
+
+        n_attributes = object_params["n_attributes"]
+        n_values_per_attribute = object_params["n_values_per_attribute"]
+        attribute_distributions = object_params["attribute_distributions"]
+        max_values = np.max(n_values_per_attribute)
+
+        # Building probability over values for each attribute
+
+        attribute_probs = []
+
+        for idx_attribute in range(n_attributes):
+            if attribute_distributions[idx_attribute] == "uniform":
+                probs = [1] * n_values_per_attribute[idx_attribute]
+                probs += [0] * (max_values - n_values_per_attribute[idx_attribute])
+                probs = np.array(probs, dtype=np.float32)
+            elif attribute_distributions[idx_attribute] == "powerlaw":
+                probs = 1 / np.arange(1, n_values_per_attribute[idx_attribute] + 1, dtype=np.float32)
+                probs = np.concatenate((probs, [0.] * (max_values - n_values_per_attribute[idx_attribute])))
+            else:
+                raise "Specify a know distribution"
+
+            probs /= np.sum(probs)
+
+            attribute_probs.append(probs)
+
+        attribute_probs = th.Tensor(np.stack(attribute_probs, axis=0))
+
+        self.attribute_probs = attribute_probs
+        self.max_values = max_values
+
+
+    def __iter__(self):
+
+        return _ReconstructionIteratorSpecificDistribution(attribute_probs=self.attribute_probs,
+                                                           max_values=self.max_values,
+                                                           agent_names=self.agent_names,
+                                                           population_probs=self.population_probs,
+                                                           imitation_probs=self.imitation_probs,
+                                                           population_split=self.population_split,
+                                                           n_batches_per_epoch=self.batches_per_epoch,
+                                                           batch_size=self.batch_size,
+                                                           task=self.task,
+                                                           broadcasting=self.broadcasting,
+                                                           mode=self.mode,
+                                                           random_state=self.random_state)
+
+
+class _ReconstructionIteratorSpecificDistribution():
+
+    def __init__(self,
+                 attribute_probs,
+                 max_values,
+                 agent_names,
+                 population_probs,
+                 population_split,
+                 n_batches_per_epoch,
+                 batch_size,
+                 imitation_probs: th.Tensor = None,
+                 task: str = "communication",
+                 broadcasting: bool = False,
+                 mode: str = "train",
+                 random_state=None):
+
+        self.attribute_probs = attribute_probs
+        self.max_values = max_values
+        self.agent_names = agent_names
+        self.grid_names = [(agent_names[i], agent_names[j]) for i in range(len(agent_names)) \
+                           for j in range(len(agent_names))]
+        self.population_probs = population_probs.flatten()
+        self.imitation_probs = imitation_probs
+        self.population_split = population_split
+        self.n_batches_per_epoch = n_batches_per_epoch
+        self.broadcasting = broadcasting
+        self.batch_size = batch_size
+        self.batches_generated = 0
+        self.mode =  mode
+        self.task = task
+        self.random_state = random_state
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+
+        if self.batches_generated >= self.n_batches_per_epoch:
+            raise StopIteration()
+
+        # Build the one-hot dataset by sampling over the probs
+
+        dataset = th.stack([th.multinomial(attribute_probs[i], num_samples=n_elements, replacement=True) \
+                            for i in range(n_attributes)], dim=1).to(th.int64)
+
+        dataset = th.nn.functional.one_hot(dataset, num_classes=n_elements)
+
+
+
+
+        # Sample pair sender_id, receiver_id
+        sampled_pair_id = th.multinomial(self.population_probs, 1)
+        sender_id, receiver_id = self.grid_names[sampled_pair_id]
+        if self.imitation_probs is not None:
+            imitator_id = self.agent_names[th.multinomial(self.imitation_probs, 1)[0]]
+        else:
+            imitator_id = None
+
+
+        self.batches_generated += 1
+
+        if self.task == "communication":
+            batch = CommunicationBatch(data=batch_data,
+                                       sender_id=sender_id,
+                                       receiver_id=receiver_id)
+        elif self.task == "imitation":
+            batch = ImitationBatch(data=batch_data,
+                                   sender_id=sender_id,
+                                   imitator_id=imitator_id)
+        elif self.task == "MI":
+            batch = MIBatch(data=batch_data,
+                            sender_id=sender_id)
+
+        if self.broadcasting:
+            receiver_ids = [pair[1] for j, pair in enumerate(self.grid_names)
+                            if pair[0] == sender_id and self.population_probs[j] > 0]
+
+            batch = BroadcastingBatch(data=batch_data,
+                                      sender_id=sender_id,
+                                      receiver_ids=receiver_ids)
+
+        return batch
 
 def build_one_hot_dataset(object_params: dict, n_elements: int) -> th.Tensor:
     n_attributes = object_params["n_attributes"]
@@ -364,7 +524,7 @@ def build_one_hot_dataset_with_specific_distribution(object_params: dict, n_elem
     dataset = th.stack([th.multinomial(attribute_probs[i], num_samples=n_elements, replacement=True) \
                         for i in range(n_attributes)], dim=1).to(th.int64)
 
-    dataset = th.nn.functional.one_hot(dataset, num_classes=n_elements)
+    dataset = th.nn.functional.one_hot(dataset, num_classes=max_values)
 
     return dataset
 
