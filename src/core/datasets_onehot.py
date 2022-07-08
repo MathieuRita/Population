@@ -510,6 +510,9 @@ def build_one_hot_dataset_with_specific_distribution(object_params: dict, n_elem
         elif attribute_distributions[idx_attribute] == "powerlaw":
             probs = 1 / np.arange(1, n_values_per_attribute[idx_attribute] + 1, dtype=np.float32)
             probs = np.concatenate((probs, [0.] * (max_values - n_values_per_attribute[idx_attribute])))
+        elif attribute_distributions[idx_attribute] == "ramp":
+            probs = np.arange(1, attribute["n_elements"] + 1, dtype=np.float32)[::-1]
+            probs = np.concatenate((probs, [0.] * (max_elements - attribute["n_elements"])))
         else:
             raise "Specify a know distribution"
 
