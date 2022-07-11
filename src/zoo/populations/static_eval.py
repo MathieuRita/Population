@@ -44,6 +44,8 @@ def main(params):
     agent_repertory = parse_json(opts.agents_json)
     if "eval_receiver_id" not in eval_params:
         eval_params["eval_receiver_id"] = None
+    if "uniform_sampling" not in eval_params:
+        eval_params["uniform_sampling"] = True
 
     # Build population
     population = build_population(population_params=population_params,
@@ -66,6 +68,7 @@ def main(params):
                                             game_params=game_params,
                                             dataset_dir=opts.dataset_dir,
                                             save_dir = opts.save_dir,
+                                            uniform_sampling = eval_params["uniform_sampling"],
                                             device = eval_params["device"])
 
     static_evaluator.step(print_results = True, save_results = True)
