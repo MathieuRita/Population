@@ -612,27 +612,31 @@ class StaticEvaluator:
                                 dataset = full_dataset[splits[split_type]]
 
                             for _ in range(n_steps):
+                                if not self.uniform_sampling and split_type != "train":
+                                    n_batch = 1
+                                    permutation=th.arange(len(dataset))
+                                    batch_size=len(permutation)
+                                else:
+                                    # Prepare dataset
+                                    n_batch = max(round(len(dataset) / batch_size), 1)
+                                    permutation = th.multinomial(th.ones(len(dataset)),
+                                                                 len(dataset),
+                                                                 replacement=False)
 
-                                # Prepare dataset
-                                n_batch = max(round(len(dataset) / batch_size), 1)
-                                permutation = th.multinomial(th.ones(len(dataset)),
-                                                             len(dataset),
-                                                             replacement=False)
+                                    if len(dataset)<n_batch * batch_size:
 
-                                if len(dataset)<n_batch * batch_size:
+                                        if n_batch * batch_size - len(dataset) < len(dataset):
+                                            replacement = False
+                                        else:
+                                            replacement = True
 
-                                    if n_batch * batch_size - len(dataset) < len(dataset):
-                                        replacement = False
-                                    else:
-                                        replacement = True
+                                        batch_fill = th.multinomial(th.ones(len(dataset)),
+                                                                    n_batch * batch_size - len(dataset),
+                                                                    replacement=replacement)
 
-                                    batch_fill = th.multinomial(th.ones(len(dataset)),
-                                                                n_batch * batch_size - len(dataset),
-                                                                replacement=replacement)
+                                        permutation = th.cat((permutation, batch_fill), dim=0)
 
-                                    permutation = th.cat((permutation, batch_fill), dim=0)
-
-                                mean_accuracy = 0.
+                                    mean_accuracy = 0.
 
                                 for i in range(n_batch):
                                     batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
