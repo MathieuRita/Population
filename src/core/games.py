@@ -78,7 +78,10 @@ class ReconstructionGame(nn.Module):
 
         if compute_metrics:
             # accuracy
-            metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            if reduce:
+                metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            else:
+                metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction")
             # accuracy tot
             metrics["accuracy_tot"] = accuracy(inputs, output_receiver, game_mode="reconstruction",
                                                all_attributes_equal=True).mean()

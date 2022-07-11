@@ -5,6 +5,7 @@ from scipy.stats import spearmanr
 from .utils import move_to, find_lengths, from_att_to_one_hot_celeba
 from .language_metrics import compute_language_similarity
 from .agents import get_agent
+from .datasets_onehot import get_all_one_hot_elements
 from collections import defaultdict
 from torch.nn import CosineSimilarity
 
@@ -21,6 +22,7 @@ class StaticEvaluator:
                  game_params,
                  dataset_dir,
                  save_dir,
+                 uniform_sampling : bool = True,
                  device: str = "cpu") -> None:
 
         self.game = game
@@ -31,6 +33,7 @@ class StaticEvaluator:
         self.eval_receiver_id = eval_receiver_id
         self.agent_repertory = agent_repertory
         self.game_params = game_params
+        self.uniform_sampling = uniform_sampling
         self.dataset_dir = dataset_dir
         self.save_dir = save_dir
 
@@ -54,7 +57,7 @@ class StaticEvaluator:
             h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = None, None, None, None
 
         if "success" in self.metrics_to_measure:
-            raise NotImplementedError
+            success = compute_success()
         else:
             success = None
 
@@ -67,11 +70,6 @@ class StaticEvaluator:
             speed_of_learning_speaker = self.estimate_speed_of_learning_speaker()
         else:
             speed_of_learning_speaker = None
-
-        if "success" in self.metrics_to_measure:
-            raise NotImplementedError
-        else:
-            success = None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -573,7 +571,81 @@ class StaticEvaluator:
 
         return speed_of_learning
 
-    def compute_success(self):
+    def compute_success(self,
+                        batch_size=1024,
+                        n_steps=10):
+
+        accuracy_results = defaultdict()
+        full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
+
+        for sender_name in self.agents_to_evaluate:
+
+            agent_sender = self.population.agents[sender_name]
+
+            if agent_sender.sender is not None:
+
+                accuracy_results[sender_name] = defaultdict()
+
+                for receiver_name in self.agents_to_evaluate:
+
+                    agent_receiver = self.population.agents[receiver_name]
+                    accuracy_results[sender_name][receiver_name] = defaultdict()
+
+                    if agent_receiver.receiver is not None:
+
+                        train_split = th.load(f"{self.dataset_dir}/{sender_name}_train_split.pt")
+                        val_split = th.load(f"{self.dataset_dir}/{sender_name}_val_split.pt")
+                        test_split = th.load(f"{self.dataset_dir}/{sender_name}_test_split.pt")
+
+                        splits = {"train": train_split,
+                                  "val": val_split,
+                                  "test": test_split}
+
+                        for split_type in splits:
+
+                            accuracy_results[sender_name][receiver_name][split_type] = list()
+
+                            self.game.train()
+                            if not self.uniform_sampling and split_type!="train":
+                                dataset = get_all_one_hot_elements(self.game_params["objects"])
+                            else:
+                                dataset = full_dataset[splits[split_type]]
+
+                            for _ in range(n_steps):
+
+                                # Prepare dataset
+                                n_batch = max(round(len(dataset) / batch_size), 1)
+                                permutation = th.multinomial(th.ones(len(dataset)),
+                                                             len(dataset),
+                                                             replacement=False)
+
+                                if n_batch * batch_size - len(dataset) < len(dataset):
+                                    replacement = False
+                                else:
+                                    replacement = True
+
+                                batch_fill = th.multinomial(th.ones(len(dataset)),
+                                                            n_batch * batch_size - len(dataset),
+                                                            replacement=replacement)
+
+                                permutation = th.cat((permutation, batch_fill), dim=0)
+
+                                mean_accuracy = 0.
+
+                                for i in range(n_batch):
+                                    batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
+
+                                    batch = move_to((batch_data, sender_name, receiver_name), self.device)
+                                    metrics = self.game(batch, compute_metrics=True, reduce = False)
+                                    mean_accuracy += metrics["accuracy"].detach().cpu().numpy()
+
+                                accuracy_results[sender_name][receiver_name][split_type].append(mean_accuracy / n_batch)
+
+                            accuracy_results[sender_name][receiver_name][split_type] = \
+                                th.stack(accuracy_results[sender_name][receiver_name][split_type]).mean(0)
+        return accuracy_results
+
+    def get_messages(self):
 
         raise NotImplementedError
 
@@ -646,7 +718,12 @@ class StaticEvaluator:
                         speed_of_learning_speaker[agent_name])
 
         if success is not None:
-            raise NotImplementedError
+            for sender_name in success:
+                for receiver_name in success[sender_name]:
+                    for split_type in success[sender_name][receiver_name]:
+                        mean_accuracy = success[sender_name][receiver_name][split_type]
+                        np.save(f"{save_dir}/accuracy_{sender_name}_{receiver_name}_{split_type}.npy",
+                                mean_accuracy)
 
     def print_results(self,
                       topographic_similarity: dict = None,
@@ -701,7 +778,12 @@ class StaticEvaluator:
                 print(f'Speed of imitating = {speed_of_learning_value}')
 
         if success is not None:
-            raise NotImplementedError
+            for sender_name in success:
+                for receiver_name in success[sender_name]:
+                    for split_type in success[sender_name][receiver_name]:
+                        mean_accuracy = success[sender_name][receiver_name][split_type]
+                        print(f"Sender : {sender_name} ; Receiver : {receiver_name}")
+                        print(f"accuracy_{split_type} = {mean_accuracy}")
 
 
 class StaticEvaluatorImage:
