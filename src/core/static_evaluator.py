@@ -632,7 +632,6 @@ class StaticEvaluator:
 
                                     permutation = th.cat((permutation, batch_fill), dim=0)
 
-
                                 mean_accuracy = 0.
 
                                 for i in range(n_batch):
@@ -645,7 +644,7 @@ class StaticEvaluator:
                                 accuracy_results[sender_name][receiver_name][split_type].append(mean_accuracy / n_batch)
 
                             accuracy_results[sender_name][receiver_name][split_type] = \
-                                th.stack(accuracy_results[sender_name][receiver_name][split_type]).mean(0)
+                                np.stack(accuracy_results[sender_name][receiver_name][split_type]).mean(0)
         return accuracy_results
 
     def get_messages(self):
