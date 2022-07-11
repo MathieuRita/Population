@@ -972,6 +972,7 @@ def get_static_evaluator(game,
                          dataset_dir,
                          save_dir,
                          image_dataset : str =None,
+                         uniform_sampling : bool = True,
                          device: str = "cpu"):
 
     if image_dataset is None:
@@ -982,6 +983,7 @@ def get_static_evaluator(game,
                                     eval_receiver_id=eval_receiver_id,
                                     agent_repertory=agent_repertory,
                                     game_params=game_params,
+                                    uniform_sampling=uniform_sampling,
                                     dataset_dir=dataset_dir,
                                     save_dir=save_dir,
                                     device=device)
