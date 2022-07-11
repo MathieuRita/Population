@@ -611,9 +611,6 @@ class StaticEvaluator:
                             else:
                                 dataset = full_dataset[splits[split_type]]
 
-                            print(split_type)
-                            print(dataset.size())
-
                             for _ in range(n_steps):
 
                                 # Prepare dataset
@@ -622,16 +619,19 @@ class StaticEvaluator:
                                                              len(dataset),
                                                              replacement=False)
 
-                                if n_batch * batch_size - len(dataset) < len(dataset):
-                                    replacement = False
-                                else:
-                                    replacement = True
+                                if len(dataset)<n_batch * batch_size:
 
-                                batch_fill = th.multinomial(th.ones(len(dataset)),
-                                                            n_batch * batch_size - len(dataset),
-                                                            replacement=replacement)
+                                    if n_batch * batch_size - len(dataset) < len(dataset):
+                                        replacement = False
+                                    else:
+                                        replacement = True
 
-                                permutation = th.cat((permutation, batch_fill), dim=0)
+                                    batch_fill = th.multinomial(th.ones(len(dataset)),
+                                                                n_batch * batch_size - len(dataset),
+                                                                replacement=replacement)
+
+                                    permutation = th.cat((permutation, batch_fill), dim=0)
+
 
                                 mean_accuracy = 0.
 
