@@ -603,6 +603,8 @@ class StaticEvaluator:
 
                         for split_type in splits:
 
+                            print(split_type)
+
                             accuracy_results[sender_name][receiver_name][split_type] = list()
 
                             self.game.train()
@@ -636,14 +638,17 @@ class StaticEvaluator:
 
                                         permutation = th.cat((permutation, batch_fill), dim=0)
 
-                                    mean_accuracy = 0.
+                                mean_accuracy = None
 
                                 for i in range(n_batch):
                                     batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
 
                                     batch = move_to((batch_data, sender_name, receiver_name), self.device)
                                     metrics = self.game(batch, compute_metrics=True, reduce = False)
-                                    mean_accuracy += metrics["accuracy"].detach().cpu().numpy()
+                                    if mean_accuracy is None:
+                                        mean_accuracy = metrics["accuracy"].detach().cpu().numpy()
+                                    else:
+                                        mean_accuracy += metrics["accuracy"].detach().cpu().numpy()
 
                                 accuracy_results[sender_name][receiver_name][split_type].append(mean_accuracy / n_batch)
 
