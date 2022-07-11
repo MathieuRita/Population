@@ -611,6 +611,9 @@ class StaticEvaluator:
                             else:
                                 dataset = full_dataset[splits[split_type]]
 
+                            print(split_type)
+                            print(dataset.size())
+
                             for _ in range(n_steps):
 
                                 # Prepare dataset
