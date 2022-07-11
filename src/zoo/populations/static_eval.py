@@ -42,6 +42,8 @@ def main(params):
     game_params = parse_json(opts.game_json)
     eval_params = parse_json(opts.eval_json)
     agent_repertory = parse_json(opts.agents_json)
+    if "eval_receiver_id" not in eval_params:
+        eval_params["eval_receiver_id"] = None
 
     # Build population
     population = build_population(population_params=population_params,
