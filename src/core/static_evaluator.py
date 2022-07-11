@@ -57,7 +57,7 @@ class StaticEvaluator:
             h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = None, None, None, None
 
         if "success" in self.metrics_to_measure:
-            success = compute_success()
+            success = self.compute_success()
         else:
             success = None
 
