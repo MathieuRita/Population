@@ -58,6 +58,7 @@ def accuracy(inputs,
              game_mode: str,
              sample: bool = False,
              all_attributes_equal: bool = False,
+             reduce_attributes : bool = True,
              idx_correct_object: int = 0) -> th.Tensor():
     if game_mode == "reconstruction":
         # Flatten inputs over values
@@ -75,7 +76,8 @@ def accuracy(inputs,
         if all_attributes_equal:
             acc = (1 * th.all(acc, dim=1)).float()  # [batch_size]
         else:
-            acc = (1 * acc).float().mean(dim=1)  # [batch_size]
+            acc = (1 * acc).float() # [batch_size,n_attributes]
+            if reduce_attributes: acc=acc.mean(dim=1) # [batch_size]
 
     elif game_mode == "referential":
         acc = 1 * (receiver_output.argmax(dim=1) == idx_correct_object).float()

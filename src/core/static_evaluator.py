@@ -603,8 +603,6 @@ class StaticEvaluator:
 
                         for split_type in splits:
 
-                            print(split_type)
-
                             accuracy_results[sender_name][receiver_name][split_type] = list()
 
                             self.game.train()
