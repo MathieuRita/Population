@@ -783,7 +783,7 @@ class StaticEvaluator:
             for agent_name in messages:
                 for split_type in messages[agent_name]:
                     np.save(f"{save_dir}/messages_{agent_name}_{split_type}.npy",
-                            messages[agent_name])
+                            messages[agent_name][split_type])
 
     def print_results(self,
                       topographic_similarity: dict = None,
