@@ -71,6 +71,11 @@ class StaticEvaluator:
         else:
             speed_of_learning_speaker = None
 
+        if "messages" in self.metrics_to_measure:
+            messages = self.get_messages()
+        else:
+            messages = None
+
         if save_results:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
@@ -84,7 +89,8 @@ class StaticEvaluator:
                               val_losses_results=val_losses_results,
                               val_accuracies_results=val_accuracies_results,
                               speed_of_learning_listener=speed_of_learning_listener,
-                              speed_of_learning_speaker=speed_of_learning_speaker)
+                              speed_of_learning_speaker=speed_of_learning_speaker,
+                              messages = messages)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
@@ -654,9 +660,47 @@ class StaticEvaluator:
                                 np.stack(accuracy_results[sender_name][receiver_name][split_type]).mean(0)
         return accuracy_results
 
-    def get_messages(self):
+    def get_messages(self,
+                     N_sampling: int = 100) -> dict:
 
-        raise NotImplementedError
+        messages = dict()
+        #full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
+
+        self.game.train()
+
+        with th.no_grad():
+
+            for agent_name in self.agents_to_evaluate:
+                agent = self.population.agents[agent_name]
+                if agent.sender is not None:
+                    messages[agent_name] = defaultdict(list)
+                    #train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
+                    val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
+                    #test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
+
+                    splits = {"val": val_split}
+
+                    for split_type in splits:
+
+                        if not self.uniform_sampling and split_type != "train":
+                            dataset = get_all_one_hot_elements(self.game_params["objects"])
+                        else:
+                            raise NotImplementedError # TO DO: case other datasets
+
+                        # Train
+                        for _ in range(N_sampling):
+
+                            inputs=dataset.to(self.device)
+
+                            inputs_embedding = agent.encode_object(inputs)
+                            m, _, _ = agent.send(inputs_embedding)
+                            m = m.cpu().numpy()
+
+                            messages[agent_name][split_type].append(m)
+
+                        messages[agent_name][split_type]=np.stack(messages[agent_name][split_type])
+
+        raise messages
 
     def save_results(self,
                      save_dir: str,
@@ -671,7 +715,8 @@ class StaticEvaluator:
                      val_losses_results: dict = None,
                      val_accuracies_results: dict = None,
                      speed_of_learning_listener : dict = None,
-                     speed_of_learning_speaker : dict = None) -> None:
+                     speed_of_learning_speaker : dict = None,
+                     messages : dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -733,6 +778,12 @@ class StaticEvaluator:
                         mean_accuracy = success[sender_name][receiver_name][split_type]
                         np.save(f"{save_dir}/accuracy_{sender_name}_{receiver_name}_{split_type}.npy",
                                 mean_accuracy)
+
+        if messages is not None:
+            for agent_name in messages:
+                for split_type in messages[agent_name]:
+                    np.save(f"{save_dir}/messages_{agent_name}_{split_type}.npy",
+                            messages[agent_name])
 
     def print_results(self,
                       topographic_similarity: dict = None,
