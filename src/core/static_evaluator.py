@@ -700,7 +700,7 @@ class StaticEvaluator:
 
                         messages[agent_name][split_type]=np.stack(messages[agent_name][split_type])
 
-        raise messages
+        return messages
 
     def save_results(self,
                      save_dir: str,
