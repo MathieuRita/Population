@@ -688,10 +688,10 @@ class StaticEvaluator:
                         else:
                             raise NotImplementedError # TO DO: case other datasets
 
-                        batches = [[i * batch_size, (i + 1) * batch_size] for i in range(N // batch_size) if
-                                   (i + 1) * N // batch_size <= N]
-                        if batches[-1][1] < N:
-                            batches.append([batches[-1][1], N])
+                        batches = [[i * batch_size, (i + 1) * batch_size] for i in range(len(dataset) // batch_size) if
+                                   (i + 1) * len(dataset) // batch_size <= len(dataset)]
+                        if batches[-1][1] < len(dataset):
+                            batches.append([batches[-1][1], len(dataset)])
 
                         # Train
                         for _ in range(N_sampling):
