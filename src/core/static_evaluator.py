@@ -661,6 +661,7 @@ class StaticEvaluator:
         return accuracy_results
 
     def get_messages(self,
+                     batch_size : int = 1000,
                      N_sampling: int = 100) -> dict:
 
         messages = dict()
@@ -687,16 +688,28 @@ class StaticEvaluator:
                         else:
                             raise NotImplementedError # TO DO: case other datasets
 
+                        batches = [[i * batch_size, (i + 1) * batch_size] for i in range(N // batch_size) if
+                                   (i + 1) * N // batch_size <= N]
+                        if batches[-1][1] < N:
+                            batches.append([batches[-1][1], N])
+
                         # Train
                         for _ in range(N_sampling):
 
-                            inputs=dataset.to(self.device)
+                            ms=[]
 
-                            inputs_embedding = agent.encode_object(inputs)
-                            m, _, _ = agent.send(inputs_embedding)
-                            m = m.cpu().numpy()
+                            for i in range(len(batches)):
 
-                            messages[agent_name][split_type].append(m)
+                                inputs=dataset[batches[i][0]:batches[i][1]].to(self.device)
+
+                                inputs_embedding = agent.encode_object(inputs)
+                                m, _, _ = agent.send(inputs_embedding)
+                                m = m.cpu().numpy()
+                                ms.append(m)
+
+                            ms=np.concatenate(ms,axis=0)
+
+                            messages[agent_name][split_type].append(ms)
 
                         messages[agent_name][split_type]=np.stack(messages[agent_name][split_type])
 
