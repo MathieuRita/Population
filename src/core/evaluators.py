@@ -751,6 +751,7 @@ class Evaluator:
         # Language similarity
         if self.metrics_to_measure["language_similarity"]<self.n_epochs:
             similarity_matrix = self.stored_metrics["language_similarity"][-1]
+            print(similarity_matrix)
             unique_sim = [similarity_matrix[i, j] for i in range(len(similarity_matrix) - 1) \
                           for j in range(i + 1, len(similarity_matrix))]
             self.writer.add_scalar(f'average_similarity', np.mean(unique_sim), iter)
