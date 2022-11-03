@@ -198,7 +198,6 @@ def main(params):
                   train_communication_and_mi_freq = training_params["train_communication_and_mi_freq"],
                   train_comm_and_check_gradient = training_params["train_comm_and_check_gradient"],
                   train_kl_freq=training_params["train_kl_freq"],
-                  reset_agents_freq=training_params["reset_agents_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],
                   save_models_freq=training_params["save_models_freq"],
