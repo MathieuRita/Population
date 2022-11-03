@@ -10,7 +10,7 @@ from src.core.population import build_population
 from src.core.evaluators import build_evaluator
 from src.core.datasets_onehot import build_one_hot_dataset, split_data_into_population, build_one_hot_dataloader
 from src.core.datasets_onehot import save_dataset
-from .utils import parse_json
+from .utils import parse_json, fill_missing_training_params
 
 
 def get_params(params):
@@ -49,9 +49,7 @@ def main(params):
     population_params = parse_json(opts.population_json)
     agent_repertory = parse_json(opts.agents_json)
     training_params = parse_json(opts.training_json)
-
-    if "train_comm_and_check_gradient" not in training_params:
-        training_params["train_comm_and_check_gradient"]=10000000000
+    training_params = fill_missing_training_params(training_params)
 
     # Create directories
     if opts.log_dir and not os.path.exists(opts.log_dir):
@@ -192,6 +190,7 @@ def main(params):
     #evaluator.step(0)
 
     trainer.train(n_epochs=training_params["n_epochs"],
+                  reset_agents_freq = training_params["reset_agents_freq"],
                   train_communication_freq=training_params["train_communication_freq"],
                   train_broadcasting_freq=training_params["train_broadcasting_freq"],
                   train_imitation_freq=training_params["train_imitation_freq"],
@@ -199,6 +198,7 @@ def main(params):
                   train_communication_and_mi_freq = training_params["train_communication_and_mi_freq"],
                   train_comm_and_check_gradient = training_params["train_comm_and_check_gradient"],
                   train_kl_freq=training_params["train_kl_freq"],
+                  reset_agents_freq=training_params["reset_agents_freq"],
                   validation_freq=training_params["validation_freq"],
                   evaluator_freq=training_params["evaluator_freq"],
                   save_models_freq=training_params["save_models_freq"],

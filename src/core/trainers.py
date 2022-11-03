@@ -49,16 +49,19 @@ class TrainerPopulation(object):
               train_imitation_freq: int = 100000,
               evaluator_freq: int = 1000000,
               save_models_freq : int = 100000,
+              reset_agents_freq : int = 1000000,
               print_evolution: bool = True):
 
         for epoch in range(self.start_epoch, n_epochs):
 
             if print_evolution: print(f"Epoch {epoch}")
+            
+            # Reset agents
+            if epoch % reset_agents_freq == 0 :
+                self.reset_agents()
 
             # Train communication
             if epoch % train_communication_freq == 0:
-                #if epoch%100==0:
-                #    self.reset_optimizer()
                 train_communication_loss_senders, train_communication_loss_receivers, train_metrics = \
                     self.train_communication(compute_metrics=True)  # dict,dict, dict
             else:
@@ -570,6 +573,7 @@ class TrainerCustom(TrainerPopulation):
               train_broadcasting_freq: int = 1000000,
               train_communication_and_mi_freq : int = 1000000,
               train_comm_and_check_gradient : int = 10000000,
+              reset_agents_freq : int = 1000000,
               train_kl_freq : int = 10000000,
               evaluator_freq: int = 1000000,
               save_models_freq : int = 10000000,
@@ -581,6 +585,10 @@ class TrainerCustom(TrainerPopulation):
         for epoch in range(self.start_epoch, n_epochs):
 
             if print_evolution: print(f"Epoch {epoch}")
+
+            # Reset agents
+            if epoch % reset_agents_freq == 0:
+                self.reset_agents()
 
             # Train communication
             if epoch % train_communication_freq == 0:

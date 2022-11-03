@@ -1,6 +1,7 @@
 import json
 import os
 import torch as th
+from collections import defaultdict
 
 
 # json parsers
@@ -148,8 +149,118 @@ def generate_json(experiments_dir: str,
     with open(f"{experiments_dir}/{experiment_name}/json/training.json", 'w') as outfile:
         json.dump(training_json, outfile)
 
+def fill_missing_training_params(training_params):
 
+    """
+    Assert that the minimum training parameters are given in the json with training params.
+    Set all the non-unsed params to values such that they have no effect on the training
+    """
 
+    # Minimal training parameters
+    assert "n_epochs" in training_params, \
+        "The number of epochs n_epochs in not indicated in the training params"
+    assert "device" in training_params, \
+        "The device in not indicated in the training params"
+    assert "split_train_val" in training_params, \
+        "The train/val ratio split_train_val in not indicated in the training params"
+    assert "batch_size" in training_params, \
+        "The batch_size batch_size in not indicated in the training params"
+    assert "train_batches_per_epoch" in training_params, \
+        "The number of batches per epoch train_batches_per_epoch in not indicated in the training params"
+    assert "n_epochs" in training_params, \
+        "The number of epochs n_epochs in not indicated in the training params"
+
+    # Main training params
+    if "seed" not in training_params:
+        training_params["seed"] = 1
+
+    if "MI_batch_size" not in training_params:
+        training_params["MI_batch_size"] = training_params["batch_size"]
+    if "val_batches_per_epoch" not in training_params:
+        training_params["val_batches_per_epoch"] = 1
+    if "test_batches_per_epoch" not in training_params:
+        training_params["test_batches_per_epoch"] = 1
+    if "MI_batches_per_epoch" not in training_params:
+        training_params["test_batches_per_epoch"] = 1
+
+    if "broadcast" not in training_params:
+        training_params["broadcast"] = 0
+
+    # Freq of training types
+    if "train_communication_freq" not in training_params:
+        training_params["train_communication_freq"] = 1
+    if "validation_freq" not in training_params: # Perf on the validation set
+        training_params["validation_freq"] = 1
+    if "evaluator_freq" not in training_params:
+        training_params["evaluator_freq"] = training_params["n_epochs"] + 1
+    if "reset_agents_freq" not in training_params:
+        training_params["reset_agents_freq"] = training_params["n_epochs"] + 1
+    if "train_broadcasting_freq" not in training_params:
+        training_params["train_broadcasting_freq"] = training_params["n_epochs"] + 1
+    if "train_imitation_freq" not in training_params:
+        training_params["train_imitation_freq"] = training_params["n_epochs"] + 1
+    if "train_mi_freq" not in training_params:
+        training_params["train_mi_freq"] = training_params["n_epochs"] + 1
+    if "train_custom_freq" not in training_params:
+        training_params["train_custom_freq"] = training_params["n_epochs"] + 1
+    if "train_communication_and_mi_freq" not in training_params:
+        training_params["train_communication_and_mi_freq"] = training_params["n_epochs"] + 1
+    if "train_kl_freq" not in training_params:
+        training_params["train_kl_freq"] = training_params["n_epochs"] + 1
+    if "train_mi_with_lm_freq" not in training_params:
+        training_params["train_mi_with_lm_freq"] = training_params["n_epochs"] + 1
+    if "train_comm_and_check_gradient" not in training_params:
+        training_params["train_comm_and_check_gradient"] = training_params["n_epochs"] + 1
+
+    # Save models frequency
+    if "save_models_freq" not in training_params:
+        training_params["save_models_freq"] = training_params["n_epochs"] + 1
+
+    # Evaluation metrics (for evaluator)
+    if "metrics_to_measure" not in training_params:
+        training_params["metrics_to_measure"] = defaultdict(int)
+
+    if "writing" not in training_params["metrics_to_measure"]: # frequency at which we write a metric
+        training_params["metrics_to_measure"]["writing"] = training_params["n_epochs"] + 1
+
+    if "topographic_similarity" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["topographic_similarity"] = training_params["n_epochs"] + 1
+    if "language_similarity" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["language_similarity"] = training_params["n_epochs"] + 1
+    if "reward_decomposition" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["reward_decomposition"] = training_params["n_epochs"] + 1
+    if "external_receiver_evaluation" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["external_receiver_evaluation"] = training_params["n_epochs"] + 1
+    if "similarity_to_init_languages" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["similarity_to_init_languages"] = training_params["n_epochs"] + 1
+    if "reward_decomposition" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["reward_decomposition"] = training_params["n_epochs"] + 1
+    if "similarity_to_init_languages" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["similarity_to_init_languages"] = training_params["n_epochs"] + 1
+    if "MI" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["MI"] = training_params["n_epochs"] + 1
+    if "overfitting" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["overfitting"] = training_params["n_epochs"] + 1
+    if "similarity_to_init_languages" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["similarity_to_init_languages"] = training_params["n_epochs"] + 1
+    if "divergence_to_untrained_speakers" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["divergence_to_untrained_speakers"] = training_params["n_epochs"] + 1
+    if "accuracy_with_untrained_speakers" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["accuracy_with_untrained_speakers"] = training_params["n_epochs"] + 1
+    if "accuracy_with_untrained_listeners" not in training_params["metrics_to_measure"]:
+        training_params["metrics_to_measure"]["accuracy_with_untrained_listeners"] = training_params["n_epochs"] + 1
+
+    # Eval receiver id for MI measures
+    if "eval_receiver_id" not in training_params:
+        training_params["eval_receiver_id"] = ""
+
+    # Custom training
+    if "custom_steps" not in training_params:
+        training_params["custom_steps"] = 0
+    if "custom_early_stopping" not in training_params:
+        training_params["custom_early_stopping"] = 0
+    if "max_steps" not in training_params:
+        training_params["max_steps"] = 0
 
 # For experiments
 
