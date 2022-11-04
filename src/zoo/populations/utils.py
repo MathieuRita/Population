@@ -262,6 +262,8 @@ def fill_missing_training_params(training_params):
     if "max_steps" not in training_params:
         training_params["max_steps"] = 0
 
+    return training_params
+
 # For experiments
 
 def find_lengths(messages: th.Tensor) -> th.Tensor:
