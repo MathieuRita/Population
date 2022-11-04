@@ -113,7 +113,6 @@ class ReconstructionGame(nn.Module):
                                               sender_id: th.Tensor,
                                               receiver_ids: list,
                                               weight_receivers: dict,
-                                              reward_noise: bool = False,
                                               compute_metrics: bool = False):
 
         """

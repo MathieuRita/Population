@@ -183,9 +183,6 @@ def fill_missing_training_params(training_params):
     if "MI_batches_per_epoch" not in training_params:
         training_params["MI_batches_per_epoch"] = 1
 
-    if "broadcast" not in training_params:
-        training_params["broadcast"] = 0
-
     # Freq of training types
     if "train_communication_freq" not in training_params:
         training_params["train_communication_freq"] = 1
