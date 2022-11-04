@@ -174,6 +174,9 @@ def fill_missing_training_params(training_params):
     if "seed" not in training_params:
         training_params["seed"] = 1
 
+    if "broadcast" not in training_params:
+        training_params["broadcast"] = 0
+
     if "MI_batch_size" not in training_params:
         training_params["MI_batch_size"] = training_params["batch_size"]
     if "val_batches_per_epoch" not in training_params:
@@ -185,7 +188,10 @@ def fill_missing_training_params(training_params):
 
     # Freq of training types
     if "train_communication_freq" not in training_params:
-        training_params["train_communication_freq"] = 1
+        if training_params["brodcast"]==0:
+            training_params["train_communication_freq"] = 1
+        else:
+            training_params["train_communication_freq"] = training_params["n_epochs"] + 1
     if "validation_freq" not in training_params: # Perf on the validation set
         training_params["validation_freq"] = 1
     if "evaluator_freq" not in training_params:
