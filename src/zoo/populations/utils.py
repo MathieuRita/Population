@@ -181,7 +181,7 @@ def fill_missing_training_params(training_params):
     if "test_batches_per_epoch" not in training_params:
         training_params["test_batches_per_epoch"] = 1
     if "MI_batches_per_epoch" not in training_params:
-        training_params["test_batches_per_epoch"] = 1
+        training_params["MI_batches_per_epoch"] = 1
 
     if "broadcast" not in training_params:
         training_params["broadcast"] = 0
