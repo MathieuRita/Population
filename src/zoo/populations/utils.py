@@ -188,7 +188,7 @@ def fill_missing_training_params(training_params):
 
     # Freq of training types
     if "train_communication_freq" not in training_params:
-        if training_params["brodcast"]==0:
+        if training_params["broadcast"]==0:
             training_params["train_communication_freq"] = 1
         else:
             training_params["train_communication_freq"] = training_params["n_epochs"] + 1
