@@ -113,9 +113,18 @@ class _ReconstructionIterator():
         self.batches_generated += 1
 
         if self.task == "communication":
-            batch = CommunicationBatch(data=batch_data,
-                                       sender_id=sender_id,
-                                       receiver_id=receiver_id)
+
+            if self.broadcasting and self.mode=="train":
+                receiver_ids = [pair[1] for j, pair in enumerate(self.grid_names)
+                                if pair[0] == sender_id and self.population_probs[j] > 0]
+
+                batch = BroadcastingBatch(data=batch_data,
+                                          sender_id=sender_id,
+                                          receiver_ids=receiver_ids)
+            else:
+                batch = CommunicationBatch(data=batch_data,
+                                           sender_id=sender_id,
+                                           receiver_id=receiver_id)
         elif self.task == "imitation":
             batch = ImitationBatch(data=batch_data,
                                    sender_id=sender_id,
@@ -123,14 +132,6 @@ class _ReconstructionIterator():
         elif self.task == "MI":
             batch = MIBatch(data=batch_data,
                             sender_id=sender_id)
-
-        if self.broadcasting:
-            receiver_ids = [pair[1] for j, pair in enumerate(self.grid_names)
-                            if pair[0] == sender_id and self.population_probs[j] > 0]
-
-            batch = BroadcastingBatch(data=batch_data,
-                                      sender_id=sender_id,
-                                      receiver_ids=receiver_ids)
 
         return batch
 
