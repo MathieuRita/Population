@@ -892,21 +892,26 @@ class StaticEvaluatorImage:
 
         if "topographic_similarity" in self.metrics_to_measure:
             if self.image_dataset=="imagenet":
-                topographic_similarity_scalar = self.estimate_topographic_similarity(distance_input="scalar_product")
-                topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
-                topographic_similarity_attributes=None
+                topographic_similarity_scalar,tot_distances_inputs_scalar, tot_distances_messages_scalar =\
+                    self.estimate_topographic_similarity(distance_input="scalar_product")
+                topographic_similarity_cosine,tot_distances_inputs_cosine, tot_distances_messages_cosine\
+                    = self.estimate_topographic_similarity(distance_input="cosine_similarity")
+                topographic_similarity_attributes,tot_distances_inputs, tot_distances_messages=None
             elif self.image_dataset=="celeba":
-                topographic_similarity_scalar = self.estimate_topographic_similarity(distance_input="scalar_product")
-                topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
-                topographic_similarity_attributes = self.estimate_topographic_similarity(distance_input="common_attributes")
+                topographic_similarity_scalar,tot_distances_inputs_scalar, tot_distances_messages_scalar = \
+                    self.estimate_topographic_similarity(distance_input="scalar_product")
+                topographic_similarity_cosine,tot_distances_inputs_cosine, tot_distances_messages_cosine =\
+                    self.estimate_topographic_similarity(distance_input="cosine_similarity")
+                topographic_similarity_attributes,tot_distances_inputs_attributes, tot_distances_messages_attributes = \
+                    self.estimate_topographic_similarity(distance_input="common_attributes")
             else:
                 raise("Specify a known type of image dataset")
-        else:
-            topographic_similarity = None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity_scalar=topographic_similarity_scalar,
+                              tot_distances_inputs_scalar=tot_distances_inputs_scalar,
+                              tot_distances_messages_scalar=tot_distances_messages_scalar,
                               topographic_similarity_cosine=topographic_similarity_cosine,
                               topographic_similarity_attributes=topographic_similarity_attributes)
 
@@ -922,6 +927,8 @@ class StaticEvaluatorImage:
                                         batch_size: int = 1000) -> dict:
 
         topographic_similarity_results = dict()
+        tot_distances_inputs = dict()
+        tot_distances_messages = dict()
 
         self.game.train()
 
@@ -931,6 +938,8 @@ class StaticEvaluatorImage:
                 agent = self.population.agents[agent_name]
                 if agent.sender is not None:
                     topographic_similarity_results[agent_name] = list()
+                    tot_distances_inputs[agent_name] = list()
+                    tot_distances_messages[agent_name] = list()
 
                     test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "test" in f]
 
@@ -1002,14 +1011,22 @@ class StaticEvaluatorImage:
                         top_sim = spearmanr(distances_inputs, distances_messages).correlation
 
                         topographic_similarity_results[agent_name].append(top_sim)
+                        tot_distances_inputs += distances_inputs
+                        tot_distances_messages += distances_messages
 
-        return topographic_similarity_results
+        return topographic_similarity_results, tot_distances_inputs, tot_distances_messages
 
     def save_results(self,
                      save_dir: str,
                      topographic_similarity_cosine: dict = None,
                      topographic_similarity_scalar: dict = None,
-                     topographic_similarity_attributes: dict = None) -> None:
+                     topographic_similarity_attributes: dict = None,
+                     tot_distances_messages_cosine: dict = None,
+                     tot_distances_inputs_cosine: dict = None,
+                     tot_distances_messages_attributes: dict = None,
+                     tot_distances_inputs_attributes: dict = None,
+                     tot_distances_messages_scalar : dict = None,
+                     tot_distances_inputs_scalar : dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity_cosine is not None:
@@ -1026,6 +1043,36 @@ class StaticEvaluatorImage:
             for agent_name in topographic_similarity_attributes:
                     np.save(f"{save_dir}/topsim_attributes_{agent_name}.npy",
                             topographic_similarity_attributes[agent_name])
+
+        if tot_distances_messages_cosine is not None:
+            for agent_name in tot_distances_messages_cosine:
+                    np.save(f"{save_dir}/distances_messages_cosine_{agent_name}.npy",
+                            tot_distances_messages_cosine[agent_name])
+
+        if tot_distances_inputs_cosine is not None:
+            for agent_name in tot_distances_inputs_cosine:
+                    np.save(f"{save_dir}/distances_inputs_cosine_{agent_name}.npy",
+                            tot_distances_inputs_cosine[agent_name])
+
+        if tot_distances_messages_scalar is not None:
+            for agent_name in tot_distances_messages_scalar:
+                np.save(f"{save_dir}/distances_messages_scalar_{agent_name}.npy",
+                        tot_distances_messages_scalar[agent_name])
+
+        if tot_distances_inputs_scalar is not None:
+            for agent_name in tot_distances_inputs_scalar:
+                np.save(f"{save_dir}/distances_inputs_scalar_{agent_name}.npy",
+                        tot_distances_inputs_scalar[agent_name])
+
+        if tot_distances_messages_attributes is not None:
+            for agent_name in tot_distances_messages_attributes:
+                np.save(f"{save_dir}/distances_messages_attributes_{agent_name}.npy",
+                        tot_distances_messages_attributes[agent_name])
+
+        if tot_distances_inputs_attributes is not None:
+            for agent_name in tot_distances_inputs_attributes:
+                np.save(f"{save_dir}/distances_inputs_attributes_{agent_name}.npy",
+                        tot_distances_inputs_attributes[agent_name])
 
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
