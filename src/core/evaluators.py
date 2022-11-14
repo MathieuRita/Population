@@ -570,6 +570,8 @@ class Evaluator:
                                                                          messages_2=messages_pairs[:, 1, :],
                                                                          len_messages_1=messages_len_pairs[:, 0],
                                                                          len_messages_2=messages_len_pairs[:, 1])
+                #elif dist_message == "common_symbols":
+                #    distances_messages = np.mean(1 - 1 * ((inputs_pairs[:, 0, :] - inputs_pairs[:, 1, :]) == 0), axis=1)
                 else:
                     raise NotImplementedError
 

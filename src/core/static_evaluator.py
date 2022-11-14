@@ -892,9 +892,11 @@ class StaticEvaluatorImage:
 
         if "topographic_similarity" in self.metrics_to_measure:
             if self.image_dataset=="imagenet":
+                topographic_similarity_scalar = self.estimate_topographic_similarity(distance_input="scalar_product")
                 topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
                 topographic_similarity_attributes=None
             elif self.image_dataset=="celeba":
+                topographic_similarity_scalar = self.estimate_topographic_similarity(distance_input="scalar_product")
                 topographic_similarity_cosine = self.estimate_topographic_similarity(distance_input="cosine_similarity")
                 topographic_similarity_attributes = self.estimate_topographic_similarity(distance_input="common_attributes")
             else:
@@ -904,11 +906,13 @@ class StaticEvaluatorImage:
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
+                              topographic_similarity_scalar=topographic_similarity_scalar,
                               topographic_similarity_cosine=topographic_similarity_cosine,
                               topographic_similarity_attributes=topographic_similarity_attributes)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
+                               topographic_similarity_scalar=topographic_similarity_scalar,
                               topographic_similarity_attributes=topographic_similarity_attributes)
 
     def estimate_topographic_similarity(self,
@@ -942,7 +946,7 @@ class StaticEvaluatorImage:
                         # Select random split inside the file
                         random_samples_ids_1 = np.random.choice(len(random_file), batch_size, replace=False)
                         random_samples_ids_2 = np.random.choice(len(random_file), batch_size, replace=False)
-                        if distance_input == "cosine_similarity":
+                        if distance_input == "cosine_similarity" or distance_input == "scalar_product":
                             inputs_1 = th.Tensor(
                                 [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(self.device)
                             inputs_2 = th.Tensor(
@@ -976,6 +980,9 @@ class StaticEvaluatorImage:
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
                             distances_inputs = 1-cos(inputs_1,inputs_2).cpu().numpy()
+                        elif distance_input == "scalar_product":
+                            cos = lambda a,b : (a*b).sum(1)
+                            distances_inputs = cos(inputs_1, inputs_2).cpu().numpy()
                         elif distance_input == "common_attributes":
                             equal_att = 1 - 1 * ((att_1 - att_2) == 0).cpu().numpy()
                             distances_inputs = np.mean(equal_att,
@@ -1001,6 +1008,7 @@ class StaticEvaluatorImage:
     def save_results(self,
                      save_dir: str,
                      topographic_similarity_cosine: dict = None,
+                     topographic_similarity_scalar: dict = None,
                      topographic_similarity_attributes: dict = None) -> None:
 
         # Topographic similarity
@@ -1009,6 +1017,11 @@ class StaticEvaluatorImage:
                     np.save(f"{save_dir}/topsim_cosine_{agent_name}.npy",
                             topographic_similarity_cosine[agent_name])
 
+        if topographic_similarity_scalar is not None:
+            for agent_name in topographic_similarity_scalar:
+                    np.save(f"{save_dir}/topsim_scalar_{agent_name}.npy",
+                            topographic_similarity_scalar[agent_name])
+
         if topographic_similarity_attributes is not None:
             for agent_name in topographic_similarity_attributes:
                     np.save(f"{save_dir}/topsim_attributes_{agent_name}.npy",
@@ -1016,19 +1029,27 @@ class StaticEvaluatorImage:
 
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
-                      topographic_similarity_attributes: dict = None):
+                      topographic_similarity_attributes: dict = None,
+                      topographic_similarity_scalar : dict = None):
 
         # Topographic similarity
         if topographic_similarity_cosine is not None:
-            print("\n### TOPOGRAPHIC SIMILARITY### \n")
+            print("\n### TOPOGRAPHIC SIMILARITY (COSINE)### \n")
             for agent_name in topographic_similarity_cosine:
                 print(f"Sender : {agent_name}")
                 ts_values = topographic_similarity_cosine[agent_name]
                 print(f"Cosine  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
 
+        if topographic_similarity_scalar is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY (SCALAR)### \n")
+            for agent_name in topographic_similarity_scalar:
+                print(f"Sender : {agent_name}")
+                ts_values = topographic_similarity_scalar[agent_name]
+                print(f"Scalar  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
 
         if topographic_similarity_attributes is not None:
-            print("\n### TOPOGRAPHIC SIMILARITY### \n")
+            print("\n### TOPOGRAPHIC SIMILARITY (ATTRIBUTES)### \n")
             for agent_name in topographic_similarity_attributes:
                 print(f"Sender : {agent_name}")
                 ts_values = topographic_similarity_attributes[agent_name]
