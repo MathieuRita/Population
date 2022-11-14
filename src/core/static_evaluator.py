@@ -913,11 +913,17 @@ class StaticEvaluatorImage:
                               tot_distances_inputs_scalar=tot_distances_inputs_scalar,
                               tot_distances_messages_scalar=tot_distances_messages_scalar,
                               topographic_similarity_cosine=topographic_similarity_cosine,
+                              tot_distances_inputs_cosine=tot_distances_inputs_cosine,
+                              tot_distances_messages_cosine=tot_distances_messages_cosine,
                               topographic_similarity_attributes=topographic_similarity_attributes)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
+                               tot_distances_inputs_cosine=tot_distances_inputs_cosine,
+                               tot_distances_messages_cosine=tot_distances_messages_cosine,
                                topographic_similarity_scalar=topographic_similarity_scalar,
+                               tot_distances_inputs_scalar=tot_distances_inputs_scalar,
+                               tot_distances_messages_scalar=tot_distances_messages_scalar,
                               topographic_similarity_attributes=topographic_similarity_attributes)
 
     def estimate_topographic_similarity(self,
