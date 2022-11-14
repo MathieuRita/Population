@@ -1011,8 +1011,8 @@ class StaticEvaluatorImage:
                         top_sim = spearmanr(distances_inputs, distances_messages).correlation
 
                         topographic_similarity_results[agent_name].append(top_sim)
-                        tot_distances_inputs += distances_inputs
-                        tot_distances_messages += distances_messages
+                        tot_distances_inputs[agent_name] += list(distances_inputs)
+                        tot_distances_messages[agent_name] += list(distances_messages)
 
         return topographic_similarity_results, tot_distances_inputs, tot_distances_messages
 
