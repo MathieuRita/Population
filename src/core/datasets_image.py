@@ -60,7 +60,7 @@ class _ReferentialIterator():
 
         # Select random split inside the file
         random_samples_ids = np.random.choice(len(random_file), self.batch_size, replace=False)
-        batch_data = th.Tensor([sample["logit"] for sample in np.array(random_file)[random_samples_ids]])
+        batch_data = th.Tensor(np.array([sample["logit"] for sample in np.array(random_file)[random_samples_ids]]))
 
         self.batches_generated += 1
 
@@ -167,7 +167,7 @@ class _ReferentialIteratorMemory():
 
         # Select random split inside the file
         random_samples_ids = np.random.choice(len(random_file), self.batch_size, replace=False)
-        batch_data = th.Tensor([sample["logit"] for sample in np.array(random_file)[random_samples_ids]])
+        batch_data = th.Tensor(np.array([sample["logit"] for sample in np.array(random_file)[random_samples_ids]]))
 
         self.batches_generated += 1
 
