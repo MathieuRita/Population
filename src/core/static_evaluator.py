@@ -1155,8 +1155,8 @@ class StaticEvaluatorImage:
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
-                        top_sim_message_projection = spearmanr(distances_inputs, distances_messages).correlation
-                        top_sim_input_projection = spearmanr(distances_inputs, distances_messages).correlation
+                        top_sim_message_projection = spearmanr(distances_messages, distances_projections).correlation
+                        top_sim_input_projection = spearmanr(distances_inputs, distances_projections).correlation
 
                         topographic_similarity_results_input_message[f'{couple["sender"]}_{couple["receiver"]}'].append(
                             top_sim_input_message)
