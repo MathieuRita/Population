@@ -101,7 +101,10 @@ def build_decoder(object_params: dict,
                                 embedding_size=embedding_size)
 
     elif object_params["object_type"] == "image_logit":
-        decoder = nn.Linear(embedding_size, projection_size)
+        if projection_size==-1:
+            decoder = nn.Linear(embedding_size, object_params["n_logits"])
+        else:
+            decoder = nn.Linear(embedding_size, projection_size)
 
     else:
         raise "Specify a known object type"
