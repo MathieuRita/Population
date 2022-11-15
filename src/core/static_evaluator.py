@@ -22,7 +22,7 @@ class StaticEvaluator:
                  game_params,
                  dataset_dir,
                  save_dir,
-                 uniform_sampling : bool = True,
+                 uniform_sampling: bool = True,
                  device: str = "cpu") -> None:
 
         self.game = game
@@ -52,9 +52,9 @@ class StaticEvaluator:
             h_x_m, accuracy_h_x_m, val_losses_results, val_accuracies_results = None, None, None, None
 
         if "h_x_m_tot" in self.metrics_to_measure:
-            h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = self.estimate_h_x_m_tot()
+            h_x_m_tot, accuracy_h_x_m_tot, test_losses_results, test_accuracies_results = self.estimate_h_x_m_tot()
         else:
-            h_x_m_tot, accuracy_h_x_m_tot,test_losses_results, test_accuracies_results = None, None, None, None
+            h_x_m_tot, accuracy_h_x_m_tot, test_losses_results, test_accuracies_results = None, None, None, None
 
         if "success" in self.metrics_to_measure:
             success = self.compute_success()
@@ -80,7 +80,7 @@ class StaticEvaluator:
             self.save_results(save_dir=self.save_dir,
                               topographic_similarity=topographic_similarity,
                               h_x_m=h_x_m,
-                              accuracy_h_x_m = accuracy_h_x_m,
+                              accuracy_h_x_m=accuracy_h_x_m,
                               h_x_m_tot=h_x_m_tot,
                               accuracy_h_x_m_tot=accuracy_h_x_m_tot,
                               test_losses_results=test_losses_results,
@@ -90,7 +90,7 @@ class StaticEvaluator:
                               val_accuracies_results=val_accuracies_results,
                               speed_of_learning_listener=speed_of_learning_listener,
                               speed_of_learning_speaker=speed_of_learning_speaker,
-                              messages = messages)
+                              messages=messages)
 
         if print_results:
             self.print_results(topographic_similarity=topographic_similarity,
@@ -176,7 +176,7 @@ class StaticEvaluator:
 
     def estimate_h_x_m(self,
                        batch_size: int = 1024,
-                       n_batch_val : int = 5):
+                       n_batch_val: int = 5):
 
         h_x_m_results = defaultdict()
         accuracy_results = defaultdict()
@@ -212,7 +212,7 @@ class StaticEvaluator:
                     losses = []
                     accuracies = []
 
-                    if split_type=="train": val_losses,val_accuracies = [], []
+                    if split_type == "train": val_losses, val_accuracies = [], []
 
                     step = 0
                     continue_training = True
@@ -220,13 +220,13 @@ class StaticEvaluator:
                     while continue_training:
 
                         # Prepare dataset
-                        n_batch = max(round(len(splits[split_type]) / batch_size),1)
+                        n_batch = max(round(len(splits[split_type]) / batch_size), 1)
                         permutation = th.multinomial(th.ones(len(splits[split_type])),
                                                      len(splits[split_type]),
                                                      replacement=False)
 
-                        if n_batch * batch_size - len(splits[split_type])<len(splits[split_type]):
-                            replacement=False
+                        if n_batch * batch_size - len(splits[split_type]) < len(splits[split_type]):
+                            replacement = False
                         else:
                             replacement = True
 
@@ -234,7 +234,7 @@ class StaticEvaluator:
                                                     n_batch * batch_size - len(splits[split_type]),
                                                     replacement=replacement)
 
-                        permutation = th.cat((permutation,batch_fill),dim=0)
+                        permutation = th.cat((permutation, batch_fill), dim=0)
 
                         mean_loss = 0.
                         mean_accuracy = 0.
@@ -256,33 +256,32 @@ class StaticEvaluator:
                         losses.append(mean_loss / n_batch)
                         accuracies.append(mean_accuracy / n_batch)
 
-                        if split_type=="train":
+                        if split_type == "train":
                             with th.no_grad():
 
-                                mean_val_loss=0.
-                                mean_val_acc=0.
+                                mean_val_loss = 0.
+                                mean_val_acc = 0.
 
                                 for _ in range(n_batch_val):
-
                                     batch_data = full_dataset[splits["val"]]
 
                                     eval_receiver = self.population.agents[self.eval_receiver_id]
                                     batch = move_to((batch_data, agent_name, self.eval_receiver_id), self.device)
                                     metrics = self.game(batch, compute_metrics=True)
 
-                                    mean_val_loss+=eval_receiver.tasks[task]["loss_value"].detach().item()
-                                    mean_val_acc+=metrics["accuracy"].detach().item()
+                                    mean_val_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
+                                    mean_val_acc += metrics["accuracy"].detach().item()
 
-                                val_losses.append(mean_val_loss/n_batch_val)
-                                val_accuracies.append(mean_val_acc/n_batch_val)
+                                val_losses.append(mean_val_loss / n_batch_val)
+                                val_accuracies.append(mean_val_acc / n_batch_val)
 
                         step += 1
 
-                        if step == 2500 : continue_training = False
+                        if step == 2500: continue_training = False
 
                     h_x_m_results[agent_name][split_type].append(np.mean(losses[-5:]))
                     accuracy_results[agent_name][split_type].append(np.mean(accuracies[-5:]))
-                    if split_type=="train":
+                    if split_type == "train":
                         val_losses_results[agent_name] = val_losses
                         val_accuracies_results[agent_name] = val_accuracies
                     print(f"Done split {split_type} : {np.mean(losses[-5:])} / {np.mean(accuracies[-5:])}")
@@ -291,7 +290,7 @@ class StaticEvaluator:
 
     def estimate_h_x_m_tot(self,
                            batch_size: int = 1024,
-                           n_batch_val : int = 10):
+                           n_batch_val: int = 10):
 
         h_x_m_results = defaultdict()
         test_losses_results = defaultdict()
@@ -327,20 +326,19 @@ class StaticEvaluator:
                 losses = []
                 accuracies = []
 
-
                 step = 0
                 continue_training = True
 
                 while continue_training:
 
                     # Prepare dataset
-                    n_batch = max(round(len(dataset) / batch_size),1)
+                    n_batch = max(round(len(dataset) / batch_size), 1)
                     permutation = th.multinomial(th.ones(len(dataset)),
                                                  len(dataset),
                                                  replacement=False)
 
-                    if n_batch * batch_size - len(dataset)<len(dataset):
-                        replacement=False
+                    if n_batch * batch_size - len(dataset) < len(dataset):
+                        replacement = False
                     else:
                         replacement = True
 
@@ -348,7 +346,7 @@ class StaticEvaluator:
                                                 n_batch * batch_size - len(dataset),
                                                 replacement=replacement)
 
-                    permutation = th.cat((permutation,batch_fill),dim=0)
+                    permutation = th.cat((permutation, batch_fill), dim=0)
 
                     mean_loss = 0.
                     mean_accuracy = 0.
@@ -367,17 +365,17 @@ class StaticEvaluator:
                         mean_loss += eval_receiver.tasks[task]["loss_value"].detach().item()
                         mean_accuracy += metrics["accuracy"].detach().item()
 
-                    if step%1000==0:
-                        print(mean_loss/n_batch)
+                    if step % 1000 == 0:
+                        print(mean_loss / n_batch)
                     losses.append(mean_loss / n_batch)
                     accuracies.append(mean_accuracy / n_batch)
 
                     step += 1
 
-                    if step == 15000 : continue_training = False
+                    if step == 15000: continue_training = False
 
-                test_losses=[]
-                test_accuracies=[]
+                test_losses = []
+                test_accuracies = []
 
                 with th.no_grad():
 
@@ -411,7 +409,6 @@ class StaticEvaluator:
                                             batch_size: int = 1024,
                                             acc_threshold=0.99
                                             ):
-
 
         speed_of_learning = defaultdict()
         full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
@@ -447,13 +444,13 @@ class StaticEvaluator:
                 while continue_training:
 
                     # Prepare dataset
-                    n_batch = max(round(len(dataset) / batch_size),1)
+                    n_batch = max(round(len(dataset) / batch_size), 1)
                     permutation = th.multinomial(th.ones(len(dataset)),
                                                  len(dataset),
                                                  replacement=False)
 
-                    if n_batch * batch_size - len(dataset)<len(dataset):
-                        replacement=False
+                    if n_batch * batch_size - len(dataset) < len(dataset):
+                        replacement = False
                     else:
                         replacement = True
 
@@ -461,7 +458,7 @@ class StaticEvaluator:
                                                 n_batch * batch_size - len(dataset),
                                                 replacement=replacement)
 
-                    permutation = th.cat((permutation,batch_fill),dim=0)
+                    permutation = th.cat((permutation, batch_fill), dim=0)
 
                     mean_loss = 0.
                     mean_accuracy = 0.
@@ -485,9 +482,9 @@ class StaticEvaluator:
 
                     step += 1
 
-                    if step == 10000 : continue_training = False
+                    if step == 10000: continue_training = False
 
-                if len(np.where(np.array(accuracies) >= acc_threshold)[0])>0:
+                if len(np.where(np.array(accuracies) >= acc_threshold)[0]) > 0:
                     speed_of_learning[agent_name] = np.min(np.where(np.array(accuracies) >= acc_threshold)[0])
                 else:
                     speed_of_learning[agent_name] = -1
@@ -498,7 +495,7 @@ class StaticEvaluator:
                                            batch_size: int = 1024,
                                            training_procedure="supervision"):
 
-        if training_procedure=="supervision":
+        if training_procedure == "supervision":
 
             speed_of_learning = defaultdict()
             full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
@@ -552,7 +549,7 @@ class StaticEvaluator:
                             batch_data = move_to(dataset[permutation[i * batch_size:(i + 1) * batch_size]],
                                                  self.device)
 
-                            self.game.imitation_instance(batch_data,agent_name,"imitator")
+                            self.game.imitation_instance(batch_data, agent_name, "imitator")
 
                             imitator.tasks[task]["optimizer"].zero_grad()
                             imitator.tasks[task]["loss_value"].backward()
@@ -566,9 +563,9 @@ class StaticEvaluator:
 
                         if step == 100: continue_training = False
 
-                    #if len(np.where(np.array(accuracies) >= loss_threshold)[0]) > 0:
+                    # if len(np.where(np.array(accuracies) >= loss_threshold)[0]) > 0:
                     #    speed_of_learning[agent_name] = np.min(np.where(np.array(losses) >= loss_threshold)[0])
-                    #else:
+                    # else:
                     #    speed_of_learning[agent_name] = -1
                     speed_of_learning[agent_name] = losses[-1]
 
@@ -612,7 +609,7 @@ class StaticEvaluator:
                             accuracy_results[sender_name][receiver_name][split_type] = list()
 
                             self.game.train()
-                            if not self.uniform_sampling and split_type!="train":
+                            if not self.uniform_sampling and split_type != "train":
                                 dataset = get_all_one_hot_elements(self.game_params["objects"])
                             else:
                                 dataset = full_dataset[splits[split_type]]
@@ -620,8 +617,8 @@ class StaticEvaluator:
                             for _ in range(n_steps):
                                 if not self.uniform_sampling and split_type != "train":
                                     n_batch = 1
-                                    permutation=th.arange(len(dataset))
-                                    batch_size=len(permutation)
+                                    permutation = th.arange(len(dataset))
+                                    batch_size = len(permutation)
                                 else:
                                     # Prepare dataset
                                     n_batch = max(round(len(dataset) / batch_size), 1)
@@ -629,7 +626,7 @@ class StaticEvaluator:
                                                                  len(dataset),
                                                                  replacement=False)
 
-                                    if len(dataset)<n_batch * batch_size:
+                                    if len(dataset) < n_batch * batch_size:
 
                                         if n_batch * batch_size - len(dataset) < len(dataset):
                                             replacement = False
@@ -648,7 +645,7 @@ class StaticEvaluator:
                                     batch_data = dataset[permutation[i * batch_size:(i + 1) * batch_size]]
 
                                     batch = move_to((batch_data, sender_name, receiver_name), self.device)
-                                    metrics = self.game(batch, compute_metrics=True, reduce = False)
+                                    metrics = self.game(batch, compute_metrics=True, reduce=False)
                                     if mean_accuracy is None:
                                         mean_accuracy = metrics["accuracy"].detach().cpu().numpy()
                                     else:
@@ -661,11 +658,11 @@ class StaticEvaluator:
         return accuracy_results
 
     def get_messages(self,
-                     batch_size : int = 1000,
+                     batch_size: int = 1000,
                      N_sampling: int = 100) -> dict:
 
         messages = dict()
-        #full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
+        # full_dataset = th.load(f"{self.dataset_dir}/full_dataset.pt")
 
         self.game.train()
 
@@ -675,9 +672,9 @@ class StaticEvaluator:
                 agent = self.population.agents[agent_name]
                 if agent.sender is not None:
                     messages[agent_name] = defaultdict(list)
-                    #train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
+                    # train_split = th.load(f"{self.dataset_dir}/{agent_name}_train_split.pt")
                     val_split = th.load(f"{self.dataset_dir}/{agent_name}_val_split.pt")
-                    #test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
+                    # test_split = th.load(f"{self.dataset_dir}/{agent_name}_test_split.pt")
 
                     splits = {"val": val_split}
 
@@ -686,7 +683,7 @@ class StaticEvaluator:
                         if not self.uniform_sampling and split_type != "train":
                             dataset = get_all_one_hot_elements(self.game_params["objects"])
                         else:
-                            raise NotImplementedError # TO DO: case other datasets
+                            raise NotImplementedError  # TO DO: case other datasets
 
                         batches = [[i * batch_size, (i + 1) * batch_size] for i in range(len(dataset) // batch_size) if
                                    (i + 1) * len(dataset) // batch_size <= len(dataset)]
@@ -696,22 +693,21 @@ class StaticEvaluator:
                         # Train
                         for _ in range(N_sampling):
 
-                            ms=[]
+                            ms = []
 
                             for i in range(len(batches)):
-
-                                inputs=dataset[batches[i][0]:batches[i][1]].to(self.device)
+                                inputs = dataset[batches[i][0]:batches[i][1]].to(self.device)
 
                                 inputs_embedding = agent.encode_object(inputs)
                                 m, _, _ = agent.send(inputs_embedding)
                                 m = m.cpu().numpy()
                                 ms.append(m)
 
-                            ms=np.concatenate(ms,axis=0)
+                            ms = np.concatenate(ms, axis=0)
 
                             messages[agent_name][split_type].append(ms)
 
-                        messages[agent_name][split_type]=np.stack(messages[agent_name][split_type])
+                        messages[agent_name][split_type] = np.stack(messages[agent_name][split_type])
 
         return messages
 
@@ -720,16 +716,16 @@ class StaticEvaluator:
                      topographic_similarity: dict = None,
                      h_x_m: dict = None,
                      accuracy_h_x_m: dict = None,
-                     h_x_m_tot : dict = None,
-                     accuracy_h_x_m_tot : dict = None,
-                     test_losses_results : dict = None,
-                     test_accuracies_results : dict = None,
+                     h_x_m_tot: dict = None,
+                     accuracy_h_x_m_tot: dict = None,
+                     test_losses_results: dict = None,
+                     test_accuracies_results: dict = None,
                      success: dict = None,
                      val_losses_results: dict = None,
                      val_accuracies_results: dict = None,
-                     speed_of_learning_listener : dict = None,
-                     speed_of_learning_speaker : dict = None,
-                     messages : dict = None) -> None:
+                     speed_of_learning_listener: dict = None,
+                     speed_of_learning_speaker: dict = None,
+                     messages: dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -746,19 +742,18 @@ class StaticEvaluator:
 
         if h_x_m_tot is not None:
             for agent_name in h_x_m_tot:
-                    np.save(f"{save_dir}/h_x_m_tot_{agent_name}.npy",
-                            h_x_m_tot[agent_name])
+                np.save(f"{save_dir}/h_x_m_tot_{agent_name}.npy",
+                        h_x_m_tot[agent_name])
 
-                    np.save(f"{save_dir}/h_x_m_tot_test_{agent_name}.npy",
-                            test_losses_results[agent_name])
-
+                np.save(f"{save_dir}/h_x_m_tot_test_{agent_name}.npy",
+                        test_losses_results[agent_name])
 
         if accuracy_h_x_m_tot is not None:
             for agent_name in accuracy_h_x_m_tot:
-                    np.save(f"{save_dir}/accuracy_h_x_m_tot_{agent_name}.npy",
-                            accuracy_h_x_m_tot[agent_name])
-                    np.save(f"{save_dir}/accuracy_h_x_m_tot_test_{agent_name}.npy",
-                            test_accuracies_results[agent_name])
+                np.save(f"{save_dir}/accuracy_h_x_m_tot_{agent_name}.npy",
+                        accuracy_h_x_m_tot[agent_name])
+                np.save(f"{save_dir}/accuracy_h_x_m_tot_test_{agent_name}.npy",
+                        test_accuracies_results[agent_name])
 
         if accuracy_h_x_m is not None:
             for agent_name in accuracy_h_x_m:
@@ -766,7 +761,7 @@ class StaticEvaluator:
                     np.save(f"{save_dir}/accuracy_h_x_m_{agent_name}_{dataset_type}.npy",
                             accuracy_h_x_m[agent_name][dataset_type])
                 np.save(f"{save_dir}/val_loss_{agent_name}.npy",
-                            val_losses_results[agent_name])
+                        val_losses_results[agent_name])
                 np.save(f"{save_dir}/val_accuracy_{agent_name}.npy",
                         val_accuracies_results[agent_name])
 
@@ -807,8 +802,8 @@ class StaticEvaluator:
                       success: dict = None,
                       val_losses_results: dict = None,
                       val_accuracies_results: dict = None,
-                      speed_of_learning_listener : dict = None,
-                      speed_of_learning_speaker : dict = None) -> None:
+                      speed_of_learning_listener: dict = None,
+                      speed_of_learning_speaker: dict = None) -> None:
 
         # Topographic similarity
         if topographic_similarity is not None:
@@ -872,12 +867,14 @@ class StaticEvaluatorImage:
                  dataset_dir,
                  image_dataset,
                  save_dir,
+                 couple_to_evaluate: dict = None,
                  device: str = "cpu") -> None:
 
         self.game = game
         self.population = population
         self.device = th.device(device)
         self.agents_to_evaluate = agents_to_evaluate
+        self.couple_to_evaluate = couple_to_evaluate
         self.metrics_to_measure = metrics_to_measure
         self.eval_receiver_id = eval_receiver_id
         self.agent_repertory = agent_repertory
@@ -891,21 +888,32 @@ class StaticEvaluatorImage:
              save_results: bool = False) -> None:
 
         if "topographic_similarity" in self.metrics_to_measure:
-            if self.image_dataset=="imagenet":
-                topographic_similarity_scalar,tot_distances_inputs_scalar, tot_distances_messages_scalar =\
+            if self.image_dataset == "imagenet":
+                topographic_similarity_scalar, tot_distances_inputs_scalar, tot_distances_messages_scalar = \
                     self.estimate_topographic_similarity(distance_input="scalar_product")
-                topographic_similarity_cosine,tot_distances_inputs_cosine, tot_distances_messages_cosine\
+                topographic_similarity_cosine, tot_distances_inputs_cosine, tot_distances_messages_cosine \
                     = self.estimate_topographic_similarity(distance_input="cosine_similarity")
-                topographic_similarity_attributes,tot_distances_inputs, tot_distances_messages=None
-            elif self.image_dataset=="celeba":
-                topographic_similarity_scalar,tot_distances_inputs_scalar, tot_distances_messages_scalar = \
+                topographic_similarity_attributes, tot_distances_inputs, tot_distances_messages = None
+            elif self.image_dataset == "celeba":
+                topographic_similarity_scalar, tot_distances_inputs_scalar, tot_distances_messages_scalar = \
                     self.estimate_topographic_similarity(distance_input="scalar_product")
-                topographic_similarity_cosine,tot_distances_inputs_cosine, tot_distances_messages_cosine =\
+                topographic_similarity_cosine, tot_distances_inputs_cosine, tot_distances_messages_cosine = \
                     self.estimate_topographic_similarity(distance_input="cosine_similarity")
-                topographic_similarity_attributes,tot_distances_inputs_attributes, tot_distances_messages_attributes = \
+                topographic_similarity_attributes, tot_distances_inputs_attributes, tot_distances_messages_attributes = \
                     self.estimate_topographic_similarity(distance_input="common_attributes")
             else:
-                raise("Specify a known type of image dataset")
+                raise ("Specify a known type of image dataset")
+
+        if "complete_topographic_similarity" in self.metrics_to_measure:
+            topographic_similarity_input_message, topographic_similarity_message_projection, \
+            topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
+            tot_distances_projections   = \
+                self.estimate_complete_topographic_similarity(distance_input="scalar_product",
+                                                              distance_projection="scalar_product")
+        else:
+            topographic_similarity_input_message, topographic_similarity_message_projection, \
+            topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
+            tot_distances_projections = None,None,None,None,None,None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -915,16 +923,22 @@ class StaticEvaluatorImage:
                               topographic_similarity_cosine=topographic_similarity_cosine,
                               tot_distances_inputs_cosine=tot_distances_inputs_cosine,
                               tot_distances_messages_cosine=tot_distances_messages_cosine,
-                              topographic_similarity_attributes=topographic_similarity_attributes)
+                              topographic_similarity_attributes=topographic_similarity_attributes,
+                              complete_topographic_similarity_input_message=topographic_similarity_input_message,
+                              complete_topographic_similarity_message_projection=topographic_similarity_message_projection,
+                              complete_topographic_similarity_input_projection=topographic_similarity_input_projection,
+                              tot_distances_inputs=tot_distances_inputs,
+                              tot_distances_messages=tot_distances_messages,
+                              tot_distances_projections=tot_distances_projections)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
-                               tot_distances_inputs_cosine=tot_distances_inputs_cosine,
-                               tot_distances_messages_cosine=tot_distances_messages_cosine,
                                topographic_similarity_scalar=topographic_similarity_scalar,
-                               tot_distances_inputs_scalar=tot_distances_inputs_scalar,
-                               tot_distances_messages_scalar=tot_distances_messages_scalar,
-                              topographic_similarity_attributes=topographic_similarity_attributes)
+                               topographic_similarity_attributes=topographic_similarity_attributes,
+                               complete_topographic_similarity_input_message=topographic_similarity_input_message,
+                               complete_topographic_similarity_message_projection=topographic_similarity_message_projection,
+                               complete_topographic_similarity_input_projection=topographic_similarity_input_projection
+                               )
 
     def estimate_topographic_similarity(self,
                                         distance_input: str = "cosine_similarity",
@@ -963,9 +977,11 @@ class StaticEvaluatorImage:
                         random_samples_ids_2 = np.random.choice(len(random_file), batch_size, replace=False)
                         if distance_input == "cosine_similarity" or distance_input == "scalar_product":
                             inputs_1 = th.Tensor(
-                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(self.device)
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
                             inputs_2 = th.Tensor(
-                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(self.device)
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
                         elif distance_input == "common_attributes":
                             inputs_1 = th.Tensor(
                                 [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
@@ -974,13 +990,15 @@ class StaticEvaluatorImage:
                                 [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(
                                 self.device)
                             att_1 = th.Tensor(
-                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in
+                                 np.array(random_file)[random_samples_ids_1]]).to(
                                 self.device)
                             att_2 = th.Tensor(
-                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in
+                                 np.array(random_file)[random_samples_ids_2]]).to(
                                 self.device)
                         else:
-                            raise("Specify a known distance")
+                            raise ("Specify a known distance")
 
                         inputs_embedding_1 = agent.encode_object(inputs_1)
                         messages_1, _, _ = agent.send(inputs_embedding_1)
@@ -994,9 +1012,9 @@ class StaticEvaluatorImage:
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
-                            distances_inputs = 1-cos(inputs_1,inputs_2).cpu().numpy()
+                            distances_inputs = 1 - cos(inputs_1, inputs_2).cpu().numpy()
                         elif distance_input == "scalar_product":
-                            cos = lambda a,b : (a*b).sum(1)
+                            cos = lambda a, b: (a * b).sum(1)
                             distances_inputs = cos(inputs_1, inputs_2).cpu().numpy()
                         elif distance_input == "common_attributes":
                             equal_att = 1 - 1 * ((att_1 - att_2) == 0).cpu().numpy()
@@ -1022,6 +1040,141 @@ class StaticEvaluatorImage:
 
         return topographic_similarity_results, tot_distances_inputs, tot_distances_messages
 
+    def estimate_complete_topographic_similarity(self,
+                                        distance_input: str = "cosine_similarity",
+                                        distance_message: str = "edit_distance",
+                                        distance_projection: str = "cosine_similarirty",
+                                        N_sampling: int = 100,
+                                        batch_size: int = 1000) -> dict:
+
+        topographic_similarity_results_input_message = dict()
+        topographic_similarity_results_message_projection = dict()
+        topographic_similarity_results_input_projection = dict()
+        tot_distances_inputs = dict()
+        tot_distances_messages = dict()
+        tot_distances_projections = dict()
+
+        self.game.train()
+
+        with th.no_grad():
+
+            for couple in self.couple_to_evaluate:
+                agent_sender = self.population.agents[couple["sender"]]
+                agent_receiver = self.population.agents[couple["receiver"]]
+                if agent_sender.sender is not None:
+                    topographic_similarity_results_input_message[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    topographic_similarity_results_message_projection[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    topographic_similarity_results_input_projection[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+
+                    test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "test" in f]
+
+                    dataset = test_set
+
+                    # Train
+                    for _ in range(N_sampling):
+
+                        # Sample random file
+                        random_file_id = np.random.choice(len(dataset))
+                        random_file = dataset[random_file_id]
+
+                        # Select random split inside the file
+                        random_samples_ids_1 = np.random.choice(len(random_file), batch_size, replace=False)
+                        random_samples_ids_2 = np.random.choice(len(random_file), batch_size, replace=False)
+                        if distance_input == "cosine_similarity" or distance_input == "scalar_product":
+                            inputs_1 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
+                            inputs_2 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
+                        elif distance_input == "common_attributes":
+                            inputs_1 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
+                            inputs_2 = th.Tensor(
+                                [sample["logit"] for sample in np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
+                            att_1 = th.Tensor(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in
+                                 np.array(random_file)[random_samples_ids_1]]).to(
+                                self.device)
+                            att_2 = th.Tensor(
+                                [from_att_to_one_hot_celeba(sample["attributes"]) for sample in
+                                 np.array(random_file)[random_samples_ids_2]]).to(
+                                self.device)
+                        else:
+                            raise ("Specify a known distance")
+
+                        inputs_embedding_1 = agent_sender.encode_object(inputs_1)
+                        messages_1, _, _ = agent_sender.send(inputs_embedding_1)
+                        messages_len_1 = find_lengths(messages_1)
+                        message_embedding_1 = agent_receiver.receive(messages_1)
+                        message_projection_1 = agent_receiver.reconstruct_from_message_embedding(message_embedding_1)
+                        messages_1, messages_len_1 = messages_1.cpu().numpy(), messages_len_1.cpu().numpy()
+
+                        inputs_embedding_2 = agent_sender.encode_object(inputs_2)
+                        messages_2, _, _ = agent_sender.send(inputs_embedding_2)
+                        messages_len_2 = find_lengths(messages_2)
+                        message_embedding_2 = agent_receiver.receive(messages_2)
+                        message_projection_2 = agent_receiver.reconstruct_from_message_embedding(message_embedding_2)
+                        messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
+
+                        if distance_input == "cosine_similarity":
+                            cos = CosineSimilarity(dim=1)
+                            distances_inputs = 1 - cos(inputs_1, inputs_2).cpu().numpy()
+                        elif distance_input == "scalar_product":
+                            cos = lambda a, b: (a * b).sum(1)
+                            distances_inputs = cos(inputs_1, inputs_2).cpu().numpy()
+                        elif distance_input == "common_attributes":
+                            equal_att = 1 - 1 * ((att_1 - att_2) == 0).cpu().numpy()
+                            distances_inputs = np.mean(equal_att,
+                                                       axis=1)
+                        else:
+                            raise NotImplementedError
+
+                        if distance_message == "edit_distance":
+                            distances_messages = 1 - compute_language_similarity(messages_1=messages_1,
+                                                                                 messages_2=messages_2,
+                                                                                 len_messages_1=messages_len_1,
+                                                                                 len_messages_2=messages_len_2)
+                        else:
+                            raise NotImplementedError
+
+                        if distance_projection == "cosine_similarity":
+                            cos = CosineSimilarity(dim=1)
+                            distances_projections = 1 - cos(message_projection_1, message_projection_2).cpu().numpy()
+                        elif distance_projection == "scalar_product":
+                            cos = lambda a, b: (a * b).sum(1)
+                            distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
+
+                        top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
+                        top_sim_message_projection = spearmanr(distances_inputs, distances_messages).correlation
+                        top_sim_input_projection = spearmanr(distances_inputs, distances_messages).correlation
+
+                        topographic_similarity_results_input_message[f'{couple["sender"]}_{couple["receiver"]}'].append(
+                            top_sim_input_message)
+                        topographic_similarity_results_message_projection[
+                            f'{couple["sender"]}_{couple["receiver"]}'].append(
+                            top_sim_message_projection)
+                        topographic_similarity_results_input_projection[
+                            f'{couple["sender"]}_{couple["receiver"]}'].append(
+                            top_sim_input_projection)
+
+                        tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] \
+                            += list(distances_inputs)
+                        tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] \
+                            += list(distances_messages)
+                        tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] \
+                            += list(distances_projections)
+
+        return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
+               topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
+               tot_distances_projections
+
+
     def save_results(self,
                      save_dir: str,
                      topographic_similarity_cosine: dict = None,
@@ -1031,34 +1184,41 @@ class StaticEvaluatorImage:
                      tot_distances_inputs_cosine: dict = None,
                      tot_distances_messages_attributes: dict = None,
                      tot_distances_inputs_attributes: dict = None,
-                     tot_distances_messages_scalar : dict = None,
-                     tot_distances_inputs_scalar : dict = None) -> None:
+                     tot_distances_messages_scalar: dict = None,
+                     tot_distances_inputs_scalar: dict = None,
+                     complete_topographic_similarity_input_message: dict = None,
+                     complete_topographic_similarity_message_projection: dict = None,
+                     complete_topographic_similarity_input_projection: dict = None,
+                     tot_distances_inputs: dict = None,
+                     tot_distances_messages: dict = None,
+                     tot_distances_projections: dict = None
+                     ) -> None:
 
         # Topographic similarity
         if topographic_similarity_cosine is not None:
             for agent_name in topographic_similarity_cosine:
-                    np.save(f"{save_dir}/topsim_cosine_{agent_name}.npy",
-                            topographic_similarity_cosine[agent_name])
+                np.save(f"{save_dir}/topsim_cosine_{agent_name}.npy",
+                        topographic_similarity_cosine[agent_name])
 
         if topographic_similarity_scalar is not None:
             for agent_name in topographic_similarity_scalar:
-                    np.save(f"{save_dir}/topsim_scalar_{agent_name}.npy",
-                            topographic_similarity_scalar[agent_name])
+                np.save(f"{save_dir}/topsim_scalar_{agent_name}.npy",
+                        topographic_similarity_scalar[agent_name])
 
         if topographic_similarity_attributes is not None:
             for agent_name in topographic_similarity_attributes:
-                    np.save(f"{save_dir}/topsim_attributes_{agent_name}.npy",
-                            topographic_similarity_attributes[agent_name])
+                np.save(f"{save_dir}/topsim_attributes_{agent_name}.npy",
+                        topographic_similarity_attributes[agent_name])
 
         if tot_distances_messages_cosine is not None:
             for agent_name in tot_distances_messages_cosine:
-                    np.save(f"{save_dir}/distances_messages_cosine_{agent_name}.npy",
-                            tot_distances_messages_cosine[agent_name])
+                np.save(f"{save_dir}/distances_messages_cosine_{agent_name}.npy",
+                        tot_distances_messages_cosine[agent_name])
 
         if tot_distances_inputs_cosine is not None:
             for agent_name in tot_distances_inputs_cosine:
-                    np.save(f"{save_dir}/distances_inputs_cosine_{agent_name}.npy",
-                            tot_distances_inputs_cosine[agent_name])
+                np.save(f"{save_dir}/distances_inputs_cosine_{agent_name}.npy",
+                        tot_distances_inputs_cosine[agent_name])
 
         if tot_distances_messages_scalar is not None:
             for agent_name in tot_distances_messages_scalar:
@@ -1080,10 +1240,44 @@ class StaticEvaluatorImage:
                 np.save(f"{save_dir}/distances_inputs_attributes_{agent_name}.npy",
                         tot_distances_inputs_attributes[agent_name])
 
+        if complete_topographic_similarity_input_message is not None:
+            for couple_name in complete_topographic_similarity_input_message:
+                np.save(f"{save_dir}/complete_topographic_similarity_input_message_{couple_name}.npy",
+                        complete_topographic_similarity_input_message[couple_name])
+
+        if complete_topographic_similarity_message_projection is not None:
+            for couple_name in complete_topographic_similarity_message_projection:
+                np.save(f"{save_dir}/complete_topographic_similarity_message_projection_{couple_name}.npy",
+                        complete_topographic_similarity_message_projection[couple_name])
+
+        if complete_topographic_similarity_input_projection is not None:
+            for couple_name in complete_topographic_similarity_input_projection:
+                np.save(f"{save_dir}/complete_topographic_similarity_input_projection_{couple_name}.npy",
+                        complete_topographic_similarity_input_projection[couple_name])
+
+        if tot_distances_inputs is not None:
+            for couple_name in tot_distances_inputs:
+                np.save(f"{save_dir}/tot_distances_inputs_{couple_name}.npy",
+                        tot_distances_inputs[couple_name])
+
+        if tot_distances_messages is not None:
+            for couple_name in tot_distances_messages:
+                np.save(f"{save_dir}/tot_distances_messages_{couple_name}.npy",
+                        tot_distances_messages[couple_name])
+
+        if tot_distances_projections is not None:
+            for couple_name in tot_distances_projections:
+                np.save(f"{save_dir}/tot_distances_projections_{couple_name}.npy",
+                        tot_distances_projections[couple_name])
+
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
                       topographic_similarity_attributes: dict = None,
-                      topographic_similarity_scalar : dict = None):
+                      topographic_similarity_scalar: dict = None,
+                      complete_topographic_similarity_input_message : dict = None,
+                      complete_topographic_similarity_message_projection: dict = None,
+                      complete_topographic_similarity_input_projection: dict = None,
+                      ):
 
         # Topographic similarity
         if topographic_similarity_cosine is not None:
@@ -1100,13 +1294,33 @@ class StaticEvaluatorImage:
                 ts_values = topographic_similarity_scalar[agent_name]
                 print(f"Scalar  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
 
-
         if topographic_similarity_attributes is not None:
             print("\n### TOPOGRAPHIC SIMILARITY (ATTRIBUTES)### \n")
             for agent_name in topographic_similarity_attributes:
                 print(f"Sender : {agent_name}")
                 ts_values = topographic_similarity_attributes[agent_name]
                 print(f"Attributes  : mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
+        if complete_topographic_similarity_input_message is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY (INPUT/MESSAGE)### \n")
+            for couple_name in complete_topographic_similarity_input_message:
+                print(f"Sender : {couple_name}")
+                ts_values = complete_topographic_similarity_input_message[couple_name]
+                print(f"mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
+        if complete_topographic_similarity_input_projection is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY (INPUT/PROJECTION)### \n")
+            for couple_name in complete_topographic_similarity_input_projection:
+                print(f"Sender : {couple_name}")
+                ts_values = complete_topographic_similarity_input_projection[couple_name]
+                print(f"mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
+
+        if complete_topographic_similarity_message_projection is not None:
+            print("\n### TOPOGRAPHIC SIMILARITY (MESSAGE/PROJECTION)### \n")
+            for couple_name in complete_topographic_similarity_message_projection:
+                print(f"Sender : {couple_name}")
+                ts_values = complete_topographic_similarity_message_projection[couple_name]
+                print(f"mean={np.mean(ts_values)}, std = {np.std(ts_values)}")
 
 
 def get_static_evaluator(game,
@@ -1118,10 +1332,10 @@ def get_static_evaluator(game,
                          game_params,
                          dataset_dir,
                          save_dir,
-                         image_dataset : str =None,
-                         uniform_sampling : bool = True,
+                         couple_to_evaluate: dict = None,
+                         image_dataset: str = None,
+                         uniform_sampling: bool = True,
                          device: str = "cpu"):
-
     if image_dataset is None:
         evaluator = StaticEvaluator(game=game,
                                     population=population,
@@ -1137,15 +1351,16 @@ def get_static_evaluator(game,
 
     else:
         evaluator = StaticEvaluatorImage(game=game,
-                                        population=population,
-                                        metrics_to_measure=metrics_to_measure,
-                                        agents_to_evaluate=agents_to_evaluate,
-                                        eval_receiver_id=eval_receiver_id,
-                                        agent_repertory=agent_repertory,
-                                        game_params=game_params,
-                                        dataset_dir=dataset_dir,
-                                        save_dir=save_dir,
-                                        image_dataset = image_dataset,
-                                        device=device)
+                                         population=population,
+                                         metrics_to_measure=metrics_to_measure,
+                                         agents_to_evaluate=agents_to_evaluate,
+                                         eval_receiver_id=eval_receiver_id,
+                                         agent_repertory=agent_repertory,
+                                         game_params=game_params,
+                                         dataset_dir=dataset_dir,
+                                         save_dir=save_dir,
+                                         image_dataset=image_dataset,
+                                         couple_to_evaluate=couple_to_evaluate,
+                                         device=device)
 
     return evaluator

@@ -61,6 +61,7 @@ def main(params):
                                             game_params=game_params,
                                             dataset_dir=game_params["dataset"]["path"],
                                             image_dataset = eval_params["image_dataset"],
+                                            couple_to_evaluate=eval_params["couple_to_evaluate"],
                                             save_dir = opts.save_dir,
                                             device = eval_params["device"])
 
