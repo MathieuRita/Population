@@ -911,13 +911,13 @@ class StaticEvaluatorImage:
         if "complete_topographic_similarity" in self.metrics_to_measure:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections   = \
+            tot_distances_projections,tot_distances_inputs_projections   = \
                 self.estimate_complete_topographic_similarity(distance_input="l2",
                                                               distance_projection="l2")
         else:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections = None,None,None,None,None,None
+            tot_distances_projections,tot_distances_inputs_projections = None,None,None,None,None,None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -933,7 +933,8 @@ class StaticEvaluatorImage:
                               complete_topographic_similarity_input_projection=topographic_similarity_input_projection,
                               tot_distances_inputs=tot_distances_inputs,
                               tot_distances_messages=tot_distances_messages,
-                              tot_distances_projections=tot_distances_projections)
+                              tot_distances_projections=tot_distances_projections,
+                              tot_distances_inputs_projections=tot_distances_inputs_projections)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
@@ -1057,6 +1058,7 @@ class StaticEvaluatorImage:
         tot_distances_inputs = dict()
         tot_distances_messages = dict()
         tot_distances_projections = dict()
+        tot_distances_inputs_projections = dict()
 
         self.game.train()
 
@@ -1072,6 +1074,7 @@ class StaticEvaluatorImage:
                     tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_inputs_projections[f'{couple["sender"]}_{couple["receiver"]}'] = list()
 
                     test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "train" in f]
 
@@ -1181,9 +1184,13 @@ class StaticEvaluatorImage:
                         tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_projections)
 
+                        l2_dist = lambda a, b: ((a - b) ** 2).sum(1)
+                        tot_distances_inputs_projections.append(l2_dist(inputs_1, message_projection_1).cpu().numpy())
+
+
         return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
                topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
-               tot_distances_projections
+               tot_distances_projections, tot_distances_inputs_projections
 
 
     def save_results(self,
@@ -1202,7 +1209,8 @@ class StaticEvaluatorImage:
                      complete_topographic_similarity_input_projection: dict = None,
                      tot_distances_inputs: dict = None,
                      tot_distances_messages: dict = None,
-                     tot_distances_projections: dict = None
+                     tot_distances_projections: dict = None,
+                     tot_distances_inputs_projections:dict = None
                      ) -> None:
 
         # Topographic similarity
@@ -1280,6 +1288,11 @@ class StaticEvaluatorImage:
             for couple_name in tot_distances_projections:
                 np.save(f"{save_dir}/tot_distances_projections_{couple_name}.npy",
                         tot_distances_projections[couple_name])
+
+        if tot_distances_inputs_projections is not None:
+            for couple_name in tot_distances_inputs_projections:
+                np.save(f"{save_dir}/tot_distances_projections_{couple_name}.npy",
+                        tot_distances_inputs_projections[couple_name])
 
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
