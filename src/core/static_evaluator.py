@@ -905,6 +905,8 @@ class StaticEvaluatorImage:
                 raise ("Specify a known type of image dataset")
         else:
             topographic_similarity_scalar, tot_distances_inputs_scalar, tot_distances_messages_scalar = None,None,None
+            topographic_similarity_cosine, tot_distances_inputs_cosine, tot_distances_messages_cosine = None, None, None
+            topographic_similarity_attributes, tot_distances_inputs, tot_distances_messages = None, None, None
 
         if "complete_topographic_similarity" in self.metrics_to_measure:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
