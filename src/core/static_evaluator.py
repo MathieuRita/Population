@@ -1045,9 +1045,9 @@ class StaticEvaluatorImage:
         return topographic_similarity_results, tot_distances_inputs, tot_distances_messages
 
     def estimate_complete_topographic_similarity(self,
-                                        distance_input: str = "cosine_similarity",
+                                        distance_input: str = "l2",
                                         distance_message: str = "edit_distance",
-                                        distance_projection: str = "cosine_similarirty",
+                                        distance_projection: str = "l2",
                                         N_sampling: int = 100,
                                         batch_size: int = 1000) -> dict:
 
@@ -1087,7 +1087,8 @@ class StaticEvaluatorImage:
                         # Select random split inside the file
                         random_samples_ids_1 = np.random.choice(len(random_file), batch_size, replace=False)
                         random_samples_ids_2 = np.random.choice(len(random_file), batch_size, replace=False)
-                        if distance_input == "cosine_similarity" or distance_input == "scalar_product":
+                        if distance_input == "cosine_similarity" or distance_input == "scalar_product" or \
+                                distance_input == "l2":
                             inputs_1 = th.Tensor(
                                 [sample["logit"] for sample in np.array(random_file)[random_samples_ids_1]]).to(
                                 self.device)
@@ -1129,6 +1130,9 @@ class StaticEvaluatorImage:
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
                             distances_inputs = 1 - cos(inputs_1, inputs_2).cpu().numpy()
+                        elif distance_input == "l2":
+                            l2_dist = lambda a, b : (a-b)**2
+                            distances_inputs = l2_dist(inputs_1,inputs_2).cpu().numpy()
                         elif distance_input == "scalar_product":
                             cos = lambda a, b: (a * b).sum(1)
                             distances_inputs = cos(inputs_1, inputs_2).cpu().numpy()
@@ -1153,6 +1157,9 @@ class StaticEvaluatorImage:
                         elif distance_projection == "scalar_product":
                             cos = lambda a, b: (a * b).sum(1)
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
+                        elif distance_projection == "l2":
+                            l2_dist = lambda a, b : (a-b)**2
+                            distances_inputs = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
                         top_sim_message_projection = spearmanr(distances_messages, distances_projections).correlation
