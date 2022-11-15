@@ -113,7 +113,10 @@ def build_object_projector(object_params: dict,
                            projection_size: int):
 
     if object_params["object_type"] == "image_logit":
-        projector = nn.Linear(object_params["n_logits"], projection_size)
+        if projection_size == -1:
+            projector = nn.Identity()
+        else:
+            projector = nn.Linear(object_params["n_logits"], projection_size)
     else:
         raise "Specify a known object type"
 

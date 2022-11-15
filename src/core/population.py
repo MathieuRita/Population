@@ -61,6 +61,8 @@ class Population(object):
                 th.save(agent.receiver.state_dict(), f"{save_dir}/{agent_name}_receiver_{add_info}.pt")
             if agent.object_decoder is not None:
                 th.save(agent.object_decoder.state_dict(), f"{save_dir}/{agent_name}_object_decoder_{add_info}.pt")
+            if agent.object_projecter is not None:
+                th.save(agent.object_projecter.state_dict(), f"{save_dir}/{agent_name}_object_projector_{add_info}.pt")
 
 class FullyConnectedPopulation(Population):
 
