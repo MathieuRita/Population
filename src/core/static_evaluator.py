@@ -1185,7 +1185,8 @@ class StaticEvaluatorImage:
                             += list(distances_projections)
 
                         l2_dist = lambda a, b: ((a - b) ** 2).sum(1)
-                        tot_distances_inputs_projections.append(l2_dist(inputs_1, message_projection_1).cpu().numpy())
+                        tot_distances_inputs_projections[f'{couple["sender"]}_{couple["receiver"]}'].append(
+                            l2_dist(inputs_1, message_projection_1).cpu().numpy())
 
 
         return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
