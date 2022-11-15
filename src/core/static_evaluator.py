@@ -1131,7 +1131,7 @@ class StaticEvaluatorImage:
                             cos = CosineSimilarity(dim=1)
                             distances_inputs = 1 - cos(inputs_1, inputs_2).cpu().numpy()
                         elif distance_input == "l2":
-                            l2_dist = lambda a, b : (a-b)**2
+                            l2_dist = lambda a, b : ((a-b)**2).sum(1)
                             distances_inputs = l2_dist(inputs_1,inputs_2).cpu().numpy()
                         elif distance_input == "scalar_product":
                             cos = lambda a, b: (a * b).sum(1)
@@ -1158,7 +1158,7 @@ class StaticEvaluatorImage:
                             cos = lambda a, b: (a * b).sum(1)
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
                         elif distance_projection == "l2":
-                            l2_dist = lambda a, b : (a-b)**2
+                            l2_dist = lambda a, b : ((a-b)**2).sum(1)
                             distances_projections = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
