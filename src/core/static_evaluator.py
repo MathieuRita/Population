@@ -1159,7 +1159,7 @@ class StaticEvaluatorImage:
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
                         elif distance_projection == "l2":
                             l2_dist = lambda a, b : (a-b)**2
-                            distances_inputs = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
+                            distances_projections = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
                         top_sim_message_projection = spearmanr(distances_messages, distances_projections).correlation
