@@ -436,7 +436,6 @@ class ReferentialGame(nn.Module):
 
         # Agent receiver encodes messages and distractors and predicts input objects
         message_embedding = agent_receiver.receive(messages)
-
         message_projection = agent_receiver.reconstruct_from_message_embedding(message_embedding)
         object_projection = agent_receiver.project_object(inputs)
 
@@ -518,7 +517,6 @@ class VisualReconstructionGame(nn.Module):
 
         # Agent receiver encodes messages and distractors and predicts input objects
         message_embedding = agent_receiver.receive(messages)
-
         message_projection = agent_receiver.reconstruct_from_message_embedding(message_embedding)
         object_projection = agent_receiver.project_object(inputs)
 
