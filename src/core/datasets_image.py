@@ -233,6 +233,7 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
                                             mode=self.mode,
                                             random_state=self.random_state)
 
+
 def build_image_dataloader(game_type: str,
                            dataset_dir: str,
                            training_params: dict,
@@ -241,7 +242,7 @@ def build_image_dataloader(game_type: str,
                            n_files: int = None,
                            mode: str = "train",
                            ) -> th.utils.data.DataLoader:
-    if game_type == "referential":
+    if game_type == "referential" or game_type =="visual_reconstruction":
 
         loader = ReferentialDataLoaderMemory(dataset_dir=dataset_dir,
                                                agent_names=agent_names,
