@@ -518,6 +518,9 @@ class VisualReconstructionGame(nn.Module):
         # Agent receiver encodes messages and distractors and predicts input objects
         message_embedding = agent_receiver.receive(messages)
         message_projection = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+        print(inputs)
+        print(agent_receiver)
+        print(agent_receiver.object_projector)
         object_projection = agent_receiver.project_object(inputs)
 
         loss_receiver= agent_receiver.compute_image_reconstruction_score(message_projection=message_projection,
