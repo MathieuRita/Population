@@ -337,7 +337,7 @@ def get_agent(agent_name: str,
     elif not agent_params["sender"] and agent_params["receiver"]:
 
         # Models
-        if game_params["game_type"]=="referential":
+        if game_params["game_type"]=="referential" or game_params["game_type"] == "visual_reconstruction":
             object_encoder = build_encoder(object_params=game_params["objects"],
                                            embedding_size=agent_params["receiver_params"]["receiver_embed_dim"])
             object_decoder = build_decoder(object_params=game_params["objects"],
