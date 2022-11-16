@@ -1081,7 +1081,8 @@ class StaticEvaluatorImage:
                     for _ in range(N_sampling):
 
                         # Sample random file
-                        random_file_id = np.random.choice(len(dataset))
+                        #random_file_id = np.random.choice(len(dataset))
+                        random_file_id = 0
                         random_file = dataset[random_file_id]
 
                         # Select random split inside the file
