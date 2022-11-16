@@ -867,6 +867,9 @@ class StaticEvaluatorImage:
                  dataset_dir,
                  image_dataset,
                  save_dir,
+                 distance_input,
+                 distance_message,
+                 distance_projection,
                  couple_to_evaluate: dict = None,
                  device: str = "cpu") -> None:
 
@@ -882,6 +885,9 @@ class StaticEvaluatorImage:
         self.dataset_dir = dataset_dir
         self.image_dataset = image_dataset
         self.save_dir = save_dir
+        self.distance_input = distance_input
+        self.distance_message = distance_message
+        self.distance_projection = distance_projection
 
     def step(self,
              print_results: bool = False,
@@ -911,13 +917,13 @@ class StaticEvaluatorImage:
         if "complete_topographic_similarity" in self.metrics_to_measure:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections   = \
-                self.estimate_complete_topographic_similarity(distance_input="l2",
-                                                              distance_projection="l2")
+            tot_distances_projections, tot_distances_projections_object   = \
+                self.estimate_complete_topographic_similarity(distance_input=self.distance_input,
+                                                              distance_projection=self.distance_projection)
         else:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections = None,None,None,None,None
+            tot_distances_projections, tot_distances_projections_object = None,None,None,None,None, None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -933,7 +939,8 @@ class StaticEvaluatorImage:
                               complete_topographic_similarity_input_projection=topographic_similarity_input_projection,
                               tot_distances_inputs=tot_distances_inputs,
                               tot_distances_messages=tot_distances_messages,
-                              tot_distances_projections=tot_distances_projections)
+                              tot_distances_projections=tot_distances_projections,
+                              tot_distances_projections_object=tot_distances_projections_object)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
@@ -1057,6 +1064,7 @@ class StaticEvaluatorImage:
         tot_distances_inputs = dict()
         tot_distances_messages = dict()
         tot_distances_projections = dict()
+        tot_distances_projections_object = dict()
 
         self.game.train()
 
@@ -1072,6 +1080,7 @@ class StaticEvaluatorImage:
                     tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_projections_object[f'{couple["sender"]}_{couple["receiver"]}'] = list()
 
                     test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "train" in f]
 
@@ -1120,6 +1129,7 @@ class StaticEvaluatorImage:
                         message_embedding_1 = agent_receiver.receive(messages_1)
                         message_projection_1 = agent_receiver.reconstruct_from_message_embedding(message_embedding_1)
                         messages_1, messages_len_1 = messages_1.cpu().numpy(), messages_len_1.cpu().numpy()
+                        object_projection_1 = agent_receiver.project_object(inputs_1)
 
                         inputs_embedding_2 = agent_sender.encode_object(inputs_2)
                         messages_2, _, _ = agent_sender.send(inputs_embedding_2)
@@ -1127,6 +1137,7 @@ class StaticEvaluatorImage:
                         message_embedding_2 = agent_receiver.receive(messages_2)
                         message_projection_2 = agent_receiver.reconstruct_from_message_embedding(message_embedding_2)
                         messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
+                        object_projection_2 = agent_receiver.project_object(inputs_2)
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
@@ -1155,12 +1166,15 @@ class StaticEvaluatorImage:
                         if distance_projection == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
                             distances_projections = 1 - cos(message_projection_1, message_projection_2).cpu().numpy()
+                            distances_projections_object = 1 - cos(object_projection_1,object_projection_2).cpu().numpy()
                         elif distance_projection == "scalar_product":
                             cos = lambda a, b: (a * b).sum(1)
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
+                            distances_projections_object = cos(object_projection_1, object_projection_2).cpu().numpy()
                         elif distance_projection == "l2":
                             l2_dist = lambda a, b : ((a-b)**2).sum(1)
                             distances_projections = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
+                            distances_projections_object = l2_dist(object_projection_1, object_projection_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
                         top_sim_message_projection = spearmanr(distances_messages, distances_projections).correlation
@@ -1181,11 +1195,13 @@ class StaticEvaluatorImage:
                             += list(distances_messages)
                         tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_projections)
+                        tot_distances_projections_object[f'{couple["sender"]}_{couple["receiver"]}'] \
+                            += list(distances_projections_object)
 
 
         return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
                topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
-               tot_distances_projections
+               tot_distances_projections, tot_distances_projections_object
 
 
     def save_results(self,
@@ -1205,7 +1221,7 @@ class StaticEvaluatorImage:
                      tot_distances_inputs: dict = None,
                      tot_distances_messages: dict = None,
                      tot_distances_projections: dict = None,
-                     tot_distances_inputs_projections:dict = None
+                     tot_distances_projections_object:dict = None
                      ) -> None:
 
         # Topographic similarity
@@ -1284,6 +1300,11 @@ class StaticEvaluatorImage:
                 np.save(f"{save_dir}/tot_distances_projections_{couple_name}.npy",
                         tot_distances_projections[couple_name])
 
+        if tot_distances_projections_object is not None:
+            for couple_name in tot_distances_projections_object:
+                np.save(f"{save_dir}/tot_distances_projections_object_{couple_name}.npy",
+                        tot_distances_projections_object[couple_name])
+
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
                       topographic_similarity_attributes: dict = None,
@@ -1346,6 +1367,9 @@ def get_static_evaluator(game,
                          game_params,
                          dataset_dir,
                          save_dir,
+                         distance_input,
+                         distance_message,
+                         distance_projection,
                          couple_to_evaluate: dict = None,
                          image_dataset: str = None,
                          uniform_sampling: bool = True,
@@ -1375,6 +1399,9 @@ def get_static_evaluator(game,
                                          save_dir=save_dir,
                                          image_dataset=image_dataset,
                                          couple_to_evaluate=couple_to_evaluate,
+                                         distance_input=distance_input,
+                                         distance_message=distance_message,
+                                         distance_projection=distance_projection,
                                          device=device)
 
     return evaluator

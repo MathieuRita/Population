@@ -39,6 +39,9 @@ def main(params):
     game_params = parse_json(opts.game_json)
     eval_params = parse_json(opts.eval_json)
     agent_repertory = parse_json(opts.agents_json)
+    if "distances" not in eval_params: eval_params["distances"] = {"input":"cosine_similarity",
+                                                                 "message":"edit_distance",
+                                                                 "projection":"cosine_similarity"}
 
     # Build population
     population = build_population(population_params=population_params,
@@ -63,6 +66,9 @@ def main(params):
                                             image_dataset = eval_params["image_dataset"],
                                             couple_to_evaluate=eval_params["couple_to_evaluate"],
                                             save_dir = opts.save_dir,
+                                            distance_input=eval_params["distances"]["input"],
+                                            distance_message=eval_params["distances"]["message"],
+                                            distance_projection=eval_params["distances"]["projection"],
                                             device = eval_params["device"])
 
     static_evaluator.step(print_results = True, save_results = True)
