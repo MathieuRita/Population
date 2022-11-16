@@ -111,6 +111,21 @@ class Agent(object):
 
         return probs, loss, accuracy
 
+    def compute_image_reconstruction_score(self,
+                                          message_projection: th.Tensor,
+                                          object_projection: th.Tensor):
+
+        # Expand dims across distractors axis
+
+        l2_dist = lambda a,b : ((a-b)**2).sum(1)
+
+        # Target
+        l2 = l2_dist(message_projection, object_projection)
+
+        loss = l2
+
+        return loss
+
     def compute_task_losses(self, inputs, sender_log_prob, sender_entropy, messages, receiver_output,
                             neg_log_imit=None):
 

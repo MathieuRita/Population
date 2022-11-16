@@ -491,6 +491,82 @@ class ReferentialGame(nn.Module):
 
         return metrics
 
+class VisualReconstructionGame(nn.Module):
+
+    def __init__(self,
+                 population: object):
+        super(VisualReconstructionGame, self).__init__()
+        self.population = population
+
+    def game_instance(self,
+                      inputs: th.Tensor,
+                      sender_id: th.Tensor,
+                      receiver_id: th.Tensor,
+                      compute_metrics: bool = False,
+                      reduce: bool = True):
+        """
+        :param x: tuple (sender_id,receiver_id,batch)
+        :return: (loss_sender,loss_receiver) [batch_size,batch_size]
+        """
+
+        agent_sender = self.population.agents[sender_id]
+        agent_receiver = self.population.agents[receiver_id]
+
+        # Agent sender sends message based on object
+        inputs_encoded = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_encoded)
+
+        # Agent receiver encodes messages and distractors and predicts input objects
+        message_embedding = agent_receiver.receive(messages)
+
+        message_projection = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+        object_projection = agent_receiver.project_object(inputs)
+
+        loss_receiver= agent_receiver.compute_image_reconstruction_score(message_projection=message_projection,
+                                                                          object_projection=object_projection)
+
+        task = "communication"
+
+        reward = - loss_receiver.detach()
+
+        loss_sender = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                               sender_log_prob=log_prob_sender,
+                                                               sender_entropy=entropy_sender,
+                                                               message=messages)
+
+        if reduce: loss_sender = loss_sender.mean()
+
+        agent_sender.tasks[task]["loss_value"] = loss_sender
+
+        if reduce: loss_receiver = loss_receiver.mean()
+
+        agent_receiver.tasks[task]["loss_value"] = loss_receiver
+
+        # Compute additional metrics
+        metrics = {}
+
+        if compute_metrics:
+            # accuracy
+            metrics["accuracy"] = loss_receiver.mean()
+            metrics["accuracy_tot"] = loss_receiver.mean()
+            # Sender log prob
+            metrics["sender_log_prob"] = log_prob_sender.detach()
+            # Sender entropy
+            metrics["sender_entropy"] = entropy_sender.mean().item()
+            # Raw messages
+            metrics["messages"] = messages
+            # Average message length
+            metrics["message_length"] = find_lengths(messages).float().mean().item()
+            # Receiver entropy
+            metrics["entropy_receiver"] = -1
+
+        return metrics
+
+    def forward(self, batch, compute_metrics: bool = False):
+        metrics = self.game_instance(*batch, compute_metrics=compute_metrics)
+
+        return metrics
+
 
 class ReconstructionImitationGame(nn.Module):
 
@@ -642,6 +718,9 @@ def build_game(game_params: dict,
         assert game_params["n_distractors"] is not None, "Specify a number of distractors to play the game"
         game = ReferentialGame(population=population,
                                n_distractors=game_params["n_distractors"])
+    elif game_params["game_type"] == "visual_reconstruction":
+        assert population is not None, "Specify a population to play the game"
+        game = VisualReconstructionGame(population=population)
     elif game_params["game_type"] == "speaker_pretraining":
         assert agent is not None, "Specify a Speaker agent to be pretrained"
         game = PretrainingGame(agent=agent)
