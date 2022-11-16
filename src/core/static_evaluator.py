@@ -912,8 +912,8 @@ class StaticEvaluatorImage:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
             tot_distances_projections   = \
-                self.estimate_complete_topographic_similarity(distance_input="l2",
-                                                              distance_projection="l2")
+                self.estimate_complete_topographic_similarity(distance_input="scalar_product",
+                                                              distance_projection="scalar_product")
         else:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
