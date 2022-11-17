@@ -1146,6 +1146,12 @@ class StaticEvaluatorImage:
                         messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
                         object_projection_2 = agent_receiver.project_object(inputs_2)
 
+                        probs_receiver, loss_receiver, accuracy = \
+                            agent_receiver.compute_referential_scores(message_projection=message_projection_1,
+                                                                      object_projection=object_projection_1,
+                                                                      n_distractors=1000)
+
+                        print(accuracy.mean())
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
