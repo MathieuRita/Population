@@ -1061,7 +1061,7 @@ class StaticEvaluatorImage:
                                         distance_message: str = "edit_distance",
                                         distance_projection: str = "l2",
                                         N_sampling: int = 100,
-                                        batch_size: int = 1000) -> dict:
+                                        batch_size: int = 4000) -> dict:
 
         topographic_similarity_results_input_message = dict()
         topographic_similarity_results_message_projection = dict()
@@ -1097,8 +1097,8 @@ class StaticEvaluatorImage:
                     for _ in range(N_sampling):
 
                         # Sample random file
-                        #random_file_id = np.random.choice(len(dataset))
-                        random_file_id = 0
+                        random_file_id = np.random.choice(len(dataset))
+                        #random_file_id = 0
                         random_file = dataset[random_file_id]
 
                         # Select random split inside the file
@@ -1146,12 +1146,6 @@ class StaticEvaluatorImage:
                         messages_2, messages_len_2 = messages_2.cpu().numpy(), messages_len_2.cpu().numpy()
                         object_projection_2 = agent_receiver.project_object(inputs_2)
 
-                        probs_receiver, loss_receiver, accuracy = \
-                            agent_receiver.compute_referential_scores(message_projection=message_projection_1,
-                                                                      object_projection=object_projection_1,
-                                                                      n_distractors=100)
-
-                        print(accuracy.mean())
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
