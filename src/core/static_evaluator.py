@@ -1149,7 +1149,7 @@ class StaticEvaluatorImage:
                         probs_receiver, loss_receiver, accuracy = \
                             agent_receiver.compute_referential_scores(message_projection=message_projection_1,
                                                                       object_projection=object_projection_1,
-                                                                      n_distractors=1000)
+                                                                      n_distractors=100)
 
                         print(accuracy.mean())
 
