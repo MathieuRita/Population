@@ -917,13 +917,14 @@ class StaticEvaluatorImage:
         if "complete_topographic_similarity" in self.metrics_to_measure:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections, tot_distances_projections_object   = \
+            tot_distances_projections, tot_distances_projections_object,tot_distances_projections_inputs   = \
                 self.estimate_complete_topographic_similarity(distance_input=self.distance_input,
                                                               distance_projection=self.distance_projection)
         else:
             topographic_similarity_input_message, topographic_similarity_message_projection, \
             topographic_similarity_input_projection, tot_distances_inputs, tot_distances_messages, \
-            tot_distances_projections, tot_distances_projections_object = None,None,None,None,None, None
+            tot_distances_projections, tot_distances_projections_object,\
+            tot_distances_projections_inputs= None,None,None,None,None, None, None, None
 
         if save_results:
             self.save_results(save_dir=self.save_dir,
@@ -940,7 +941,8 @@ class StaticEvaluatorImage:
                               tot_distances_inputs=tot_distances_inputs,
                               tot_distances_messages=tot_distances_messages,
                               tot_distances_projections=tot_distances_projections,
-                              tot_distances_projections_object=tot_distances_projections_object)
+                              tot_distances_projections_object=tot_distances_projections_object,
+                              tot_distances_projections_inputs=tot_distances_projections_inputs)
 
         if print_results:
             self.print_results(topographic_similarity_cosine=topographic_similarity_cosine,
@@ -1062,8 +1064,9 @@ class StaticEvaluatorImage:
         topographic_similarity_results_message_projection = dict()
         topographic_similarity_results_input_projection = dict()
         tot_distances_inputs = dict()
+        tot_distances_projections_inputs = dict()
         tot_distances_messages = dict()
-        tot_distances_projections = dict()
+        tot_distances_projections_message = dict()
         tot_distances_projections_object = dict()
 
         self.game.train()
@@ -1078,8 +1081,9 @@ class StaticEvaluatorImage:
                     topographic_similarity_results_message_projection[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     topographic_similarity_results_input_projection[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_projections_inputs[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] = list()
-                    tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] = list()
+                    tot_distances_projections_message[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_projections_object[f'{couple["sender"]}_{couple["receiver"]}'] = list()
 
                     test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "train" in f]
@@ -1167,14 +1171,17 @@ class StaticEvaluatorImage:
                             cos = CosineSimilarity(dim=1)
                             distances_projections = 1 - cos(message_projection_1, message_projection_2).cpu().numpy()
                             distances_projections_object = 1 - cos(object_projection_1,object_projection_2).cpu().numpy()
+                            distances_projections_inputs = 1 - cos(inputs_embedding_1,inputs_embedding_2).cpu().numpy()
                         elif distance_projection == "scalar_product":
                             cos = lambda a, b: (a * b).sum(1)
                             distances_projections = cos(message_projection_1, message_projection_2).cpu().numpy()
                             distances_projections_object = cos(object_projection_1, object_projection_2).cpu().numpy()
+                            distances_projections_inputs = cos(inputs_embedding_1, inputs_embedding_2).cpu().numpy()
                         elif distance_projection == "l2":
                             l2_dist = lambda a, b : ((a-b)**2).sum(1)
                             distances_projections = l2_dist(message_projection_1,message_projection_2).cpu().numpy()
                             distances_projections_object = l2_dist(object_projection_1, object_projection_2).cpu().numpy()
+                            distances_projections_inputs = l2_dist(inputs_embedding_1, inputs_embedding_2).cpu().numpy()
 
                         top_sim_input_message = spearmanr(distances_inputs, distances_messages).correlation
                         top_sim_message_projection = spearmanr(distances_messages, distances_projections).correlation
@@ -1191,9 +1198,11 @@ class StaticEvaluatorImage:
 
                         tot_distances_inputs[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_inputs)
+                        tot_distances_projections_inputs[f'{couple["sender"]}_{couple["receiver"]}'] \
+                            += list(distances_projections_inputs)
                         tot_distances_messages[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_messages)
-                        tot_distances_projections[f'{couple["sender"]}_{couple["receiver"]}'] \
+                        tot_distances_projections_message[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_projections)
                         tot_distances_projections_object[f'{couple["sender"]}_{couple["receiver"]}'] \
                             += list(distances_projections_object)
@@ -1201,7 +1210,7 @@ class StaticEvaluatorImage:
 
         return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
                topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
-               tot_distances_projections, tot_distances_projections_object
+               tot_distances_projections_message, tot_distances_projections_object, tot_distances_projections_inputs
 
 
     def save_results(self,
@@ -1221,7 +1230,8 @@ class StaticEvaluatorImage:
                      tot_distances_inputs: dict = None,
                      tot_distances_messages: dict = None,
                      tot_distances_projections: dict = None,
-                     tot_distances_projections_object:dict = None
+                     tot_distances_projections_object:dict = None,
+                     tot_distances_projections_inputs:dict = None
                      ) -> None:
 
         # Topographic similarity
@@ -1304,6 +1314,13 @@ class StaticEvaluatorImage:
             for couple_name in tot_distances_projections_object:
                 np.save(f"{save_dir}/tot_distances_projections_object_{couple_name}.npy",
                         tot_distances_projections_object[couple_name])
+
+        if tot_distances_projections_inputs is not None:
+            for couple_name in tot_distances_projections_inputs:
+                np.save(f"{save_dir}/tot_distances_projections_inputs_{couple_name}.npy",
+                        tot_distances_projections_inputs[couple_name])
+
+
 
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
