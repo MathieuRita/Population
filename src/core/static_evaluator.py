@@ -1214,7 +1214,7 @@ class StaticEvaluatorImage:
         return topographic_similarity_results_input_message, topographic_similarity_results_message_projection, \
                topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
                tot_distances_projections_message, tot_distances_projections_object, tot_distances_projections_inputs, \
-               message_projection_1, object_projection_1
+               message_projection_1.cpu().numpy(), object_projection_1.cpu().numpy()
 
 
     def save_results(self,
@@ -1327,14 +1327,12 @@ class StaticEvaluatorImage:
                         tot_distances_projections_inputs[couple_name])
 
         if object_projection is not None:
-            for couple_name in object_projection:
-                np.save(f"{save_dir}/object_projection_{couple_name}.npy",
-                        object_projection[couple_name])
+            np.save(f"{save_dir}/object_projection_{couple_name}.npy",
+                    object_projection)
 
         if message_projection is not None:
-            for couple_name in message_projection:
-                np.save(f"{save_dir}/message_projection_{couple_name}.npy",
-                        message_projection[couple_name])
+            np.save(f"{save_dir}/message_projection_{couple_name}.npy",
+                    message_projection)
 
     def print_results(self,
                       topographic_similarity_cosine: dict = None,
