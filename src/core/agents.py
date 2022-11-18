@@ -66,7 +66,9 @@ class Agent(object):
         return self.object_decoder(embedding)
 
     def project_object(self,object):
-        return self.object_projector(object)
+        out = self.object_projector(object)
+        out = nn.ReLU(out)
+        return out
 
     def compute_referential_scores(self,
                                   message_projection: th.Tensor,
