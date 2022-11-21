@@ -462,7 +462,10 @@ def get_optimizer(model_parameters: list,
                   'sgd': th.optim.SGD,
                   'adagrad': th.optim.Adagrad}
 
-    optimizer = optimizers[optimizer_name](model_parameters, lr=lr, weight_decay=weight_decay)
+    #optimizer = optimizers[optimizer_name](model_parameters, lr=lr, weight_decay=weight_decay)
+    optimizer = optimizers[optimizer_name](filter(lambda p: p.requires_grad,model_parameters),
+                                           lr=lr,
+                                           weight_decay=weight_decay)
 
     return optimizer
 
