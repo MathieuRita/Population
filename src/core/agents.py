@@ -67,8 +67,6 @@ class Agent(object):
 
     def project_object(self,object):
         out = self.object_projector(object)
-        m = nn.ReLU()
-        out = m(out)
         return out
 
     def compute_referential_scores(self,
