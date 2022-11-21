@@ -120,6 +120,8 @@ def build_object_projector(object_params: dict,
             projector = nn.Identity()
         else:
             projector = nn.Linear(object_params["n_logits"], projection_size)
+            for param in projector.parameters():
+                param.requires_grad = False
     else:
         raise "Specify a known object type"
 
