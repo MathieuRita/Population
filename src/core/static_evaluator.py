@@ -1090,7 +1090,7 @@ class StaticEvaluatorImage:
                     tot_distances_projections_message[f'{couple["sender"]}_{couple["receiver"]}'] = list()
                     tot_distances_projections_object[f'{couple["sender"]}_{couple["receiver"]}'] = list()
 
-                    test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "test" in f]
+                    test_set = [th.load(f"{self.dataset_dir}/{f}") for f in os.listdir(self.dataset_dir) if "valid" in f]
 
                     dataset = test_set
 
