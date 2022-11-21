@@ -120,10 +120,10 @@ def build_object_projector(object_params: dict,
             projector = nn.Identity()
         else:
             projector = nn.Linear(object_params["n_logits"], projection_size)
-            W1 = nn.Linear(object_params["n_logits"], projection_size)
-            A1 = nn.ReLU()
+            #W1 = nn.Linear(object_params["n_logits"], projection_size)
+            #A1 = nn.ReLU()
             #W2 = nn.Linear(projection_size, projection_size)
-            projector = nn.Sequential(W1, A1)
+            #projector = nn.Sequential(W1, A1,W2
 
             for param in projector.parameters():
                 param.requires_grad = False
