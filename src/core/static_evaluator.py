@@ -1131,6 +1131,8 @@ class StaticEvaluatorImage:
                         else:
                             raise ("Specify a known distance")
 
+                        agent_sender.training = False
+
                         inputs_embedding_1 = agent_sender.encode_object(inputs_1)
                         messages_1, _, _ = agent_sender.send(inputs_embedding_1)
                         messages_len_1 = find_lengths(messages_1)
