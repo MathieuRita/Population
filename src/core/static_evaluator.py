@@ -1073,7 +1073,7 @@ class StaticEvaluatorImage:
         tot_distances_projections_message = dict()
         tot_distances_projections_object = dict()
 
-        self.game.train()
+        self.game.eval()
 
         with th.no_grad():
 
