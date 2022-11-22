@@ -125,8 +125,8 @@ def build_object_projector(object_params: dict,
             #W2 = nn.Linear(projection_size, projection_size)
             #projector = nn.Sequential(W1, A1,W2
 
-            for param in projector.parameters():
-                param.requires_grad = False
+            #for param in projector.parameters():
+            #    param.requires_grad = False
     else:
         raise "Specify a known object type"
 
