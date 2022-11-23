@@ -1156,7 +1156,6 @@ class StaticEvaluatorImage:
                                                                       object_projection=object_projection_1,
                                                                       n_distractors=100)
 
-                        print(accuracy.mean())
 
                         if distance_input == "cosine_similarity":
                             cos = CosineSimilarity(dim=1)
@@ -1227,7 +1226,7 @@ class StaticEvaluatorImage:
                topographic_similarity_results_input_projection,tot_distances_inputs,tot_distances_messages,\
                tot_distances_projections_message, tot_distances_projections_object, tot_distances_projections_inputs, \
                message_projection_1.cpu().numpy(), object_projection_1.cpu().numpy(), inputs_embedding_1.cpu().numpy(), \
-               messages_1.cpu().numpy(), inputs_1.cpu().numpy()
+               messages_1, inputs_1.cpu().numpy()
 
 
     def save_results(self,
