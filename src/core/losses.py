@@ -110,10 +110,16 @@ class ReinforceLoss:
         if reward_type == "log":
             self.reward_fn = lambda inputs, receiver_output, log_imitation=None: \
                 -1 * cross_entropy(inputs, receiver_output)
-        elif reward_type == "accuracy":
-            self.reward_fn = lambda inputs, receiver_output, log_imitation=None: accuracy(inputs, receiver_output)
+        elif reward_type == "accuracy_reconstruction":
+            self.reward_fn = lambda inputs, receiver_output, log_imitation=None: accuracy(inputs,
+                                                                                          receiver_output,
+                                                                                          game_mode="reconstruction")
         elif reward_type == "referential_log":
             self.reward_fn = lambda inputs, receiver_output, log_imitation=None: get_log_prob_given_index(receiver_output)
+        elif reward_type == "accuracy_referential":
+            self.reward_fn = lambda inputs, receiver_output, log_imitation=None: accuracy(inputs,
+                                                                                          receiver_output,
+                                                                                          game_mode="referential")
         elif reward_type == "imitation":
             self.reward_fn = lambda inputs, receiver_output, log_imitation: log_imitation
         else:

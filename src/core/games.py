@@ -70,7 +70,6 @@ class ReconstructionGame(nn.Module):
         loss = agent_receiver.tasks[task]["loss"].compute(reward=reward,
                                                           receiver_output=output_receiver,
                                                           inputs=inputs,
-                                                          #receiver_entropy=receiver_sender
                                                           agent_type="receiver"
                                                           ) # reward is used for a RL loss
 
