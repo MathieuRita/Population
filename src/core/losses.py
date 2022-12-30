@@ -126,11 +126,34 @@ class ReinforceLoss:
 
     def compute(self,
                 reward: th.Tensor,
-                sender_log_prob: th.Tensor,
-                sender_entropy: th.Tensor,
-                message: th.Tensor,
-                inputs : th.Tensor = None,
-                receiver_output : th.Tensor = None):
+                sender_log_prob: th.Tensor = None,
+                sender_entropy: th.Tensor = None,
+                message: th.Tensor = None,
+                inputs: th.Tensor = None,
+                receiver_output: th.Tensor = None,
+                receiver_entropy : th.Tensor = None,
+                agent_type : str ="sender"
+                ):
+
+        if agent_type=="sender":
+            self.compute_sender(self,
+                                reward=reward,
+                                sender_log_prob = sender_log_prob,
+                                sender_entropy = sender_entropy,
+                                message = message)
+
+        if agent_type=="receiver":
+            self.compute_receiver(self,
+                                  reward=reward,
+                                  receiver_output = receiver_output,
+                                  receiver_entropy = receiver_entropy)
+
+
+    def compute_sender(self,
+                       reward: th.Tensor,
+                       sender_log_prob: th.Tensor,
+                       sender_entropy: th.Tensor,
+                       message: th.Tensor):
 
         """
         TO DO :
@@ -171,6 +194,42 @@ class ReinforceLoss:
 
         return loss
 
+    def compute_receiver(self,
+                       reward: th.Tensor,
+                       receiver_output: th.Tensor,
+                       receiver_entropy: th.Tensor):
+
+        """
+        TO DO :
+        - implement KL regularization
+
+        :param reward:
+        :param neg_log_imit:
+        :param receiver_output:
+        :param sender_entropy:
+        :param sender_log_prob:
+        :param inputs:
+        :param message:
+        :return:
+        """
+
+        # Log prob and entropy computation
+        receiver_log_prob = receiver_output.max(2).values.sum(1)
+        receiver_entropy = - receiver_output * th.exp(receiver_output)
+        receiver_entropy = receiver_entropy.sum(2).mean(1)
+
+        # Policy gradient loss
+        reward = self.baseline_fn(reward=reward)
+        policy_loss = - (reward * receiver_log_prob)  # [batch_size]
+
+        # Entropy regularization
+        entropy_regularization_penalty = self.entropy_reg_coef * receiver_entropy  # [batch_size]
+
+        loss = policy_loss - entropy_regularization_penalty  # [batch_size]
+
+        return loss
+
+
 
 class CrossEntropyLoss:
 
@@ -180,10 +239,8 @@ class CrossEntropyLoss:
     def compute(self,
                 inputs,
                 receiver_output,
-                reward: th.Tensor = None,
-                sender_log_prob: th.Tensor = None,
-                sender_entropy: th.Tensor = None,
-                message: th.Tensor = None):
+                receiver_entropy : th.Tensor = None,
+                agent_type : str = "receiver"):
         return cross_entropy(inputs, receiver_output, multi_attribute=self.multi_attribute)  # [batch_size]
 
 

@@ -59,19 +59,19 @@ class ReconstructionGame(nn.Module):
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         sender_log_prob=log_prob_sender,
                                                         sender_entropy=entropy_sender,
-                                                        message=messages
+                                                        message=messages,
+                                                        agent_type="sender"
                                                         )
 
         if reduce: loss = loss.mean()
 
         agent_sender.tasks[task]["loss_value"] = loss
 
-        loss = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
+        loss = agent_receiver.tasks[task]["loss"].compute(reward=reward,
                                                           receiver_output=output_receiver,
-                                                          reward=reward,
-                                                          sender_log_prob=log_prob_sender,
-                                                          sender_entropy=entropy_sender,
-                                                          message=messages
+                                                          inputs=inputs,
+                                                          #receiver_entropy=receiver_sender
+                                                          agent_type="receiver"
                                                           ) # reward is used for a RL loss
 
         if reduce: loss = loss.mean()
@@ -152,8 +152,12 @@ class ReconstructionGame(nn.Module):
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver).detach()
 
-            loss_receiver = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
-                                                                       receiver_output=output_receiver)
+            loss_receiver = agent_receiver.tasks[task]["loss"].compute(receiver_output=output_receiver,
+                                                                       inputs = inputs,
+                                                                       reward=reward,
+                                                                       #receiver_entropy = # TO DO,
+                                                                       agent_type = "receiver")
+            # reward is used for a RL loss
 
             agent_receiver.tasks[task]["loss_value"] = loss_receiver.mean()
 
@@ -168,7 +172,8 @@ class ReconstructionGame(nn.Module):
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=average_reward,
                                                                sender_log_prob=log_prob_sender,
                                                                sender_entropy=entropy_sender,
-                                                               message=messages
+                                                               message=messages,
+                                                               agent_type="sender"
                                                                )
 
         agent_sender.tasks[task]["loss_value"] = loss_sender.mean()
