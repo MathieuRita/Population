@@ -93,7 +93,7 @@ def baseline_norm(reward):
     return reward - reward.mean()
 
 
-# Senders
+# Specific losses
 class ReinforceLoss:
 
     def __init__(self,
@@ -128,7 +128,9 @@ class ReinforceLoss:
                 reward: th.Tensor,
                 sender_log_prob: th.Tensor,
                 sender_entropy: th.Tensor,
-                message: th.Tensor):
+                message: th.Tensor,
+                inputs : th.Tensor = None,
+                receiver_output : th.Tensor = None):
 
         """
         TO DO :
@@ -175,7 +177,13 @@ class CrossEntropyLoss:
     def __init__(self, multi_attribute: bool = False):
         self.multi_attribute = multi_attribute
 
-    def compute(self, inputs, receiver_output):
+    def compute(self,
+                inputs,
+                receiver_output,
+                reward: th.Tensor = None,
+                sender_log_prob: th.Tensor = None,
+                sender_entropy: th.Tensor = None,
+                message: th.Tensor = None):
         return cross_entropy(inputs, receiver_output, multi_attribute=self.multi_attribute)  # [batch_size]
 
 

@@ -5,6 +5,8 @@ import itertools
 import collections
 
 CommunicationBatch = collections.namedtuple("CommunicationBatch", ["data", "sender_id", "receiver_id"])
+CommunicationBatchWithAttributes = collections.namedtuple("CommunicationBatchWithAttributes",
+                                                          ["data","attributes", "sender_id", "receiver_id"])
 ImitationBatch = collections.namedtuple("ImitationBatch", ["data", "sender_id", "imitator_id"])
 MIBatch = collections.namedtuple("MIBatch", ["data", "sender_id"])
 BroadcastingBatch = collections.namedtuple("BroadcastingBatch", ["data", "sender_id", "receiver_ids"])
@@ -130,6 +132,7 @@ class _ReferentialIteratorMemory():
                  task: str = "communication",
                  broadcasting: bool = False,
                  mode: str = "train",
+                 return_attributes : bool = False,
                  random_state=None) -> None:
 
         self.dataset_dir = dataset_dir
@@ -145,6 +148,7 @@ class _ReferentialIteratorMemory():
         self.files = files
         self.n_files = n_files
         self.task = task
+        self.return_attributes = return_attributes
         self.random_state = random_state
 
     def __iter__(self):
@@ -168,13 +172,21 @@ class _ReferentialIteratorMemory():
         # Select random split inside the file
         random_samples_ids = np.random.choice(len(random_file), self.batch_size, replace=False)
         batch_data = th.Tensor(np.array([sample["logit"] for sample in np.array(random_file)[random_samples_ids]]))
+        if self.return_attributes:
+            attributes = th.Tensor(np.array([sample["attributes"] for sample in np.array(random_file)[random_samples_ids]]))
 
         self.batches_generated += 1
 
         if self.task == "communication":
-            batch = CommunicationBatch(data=batch_data,
-                                       sender_id=sender_id,
-                                       receiver_id=receiver_id)
+            if self.return_attributes:
+                batch = CommunicationBatchWithAttributes(data=batch_data,
+                                                         attributes=attributes,
+                                                         sender_id=sender_id,
+                                                         receiver_id=receiver_id)
+            else:
+                batch = CommunicationBatch(data=batch_data,
+                                           sender_id=sender_id,
+                                           receiver_id=receiver_id)
         elif self.task == "MI":
             batch = MIBatch(data=batch_data,
                             sender_id=sender_id)
@@ -200,13 +212,15 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
                  batch_size: int,
                  n_files : int = None,
                  mode: str = "train",
-                 seed: int = None):
+                 seed: int = None,
+                 return_attributes : bool = False):
 
         self.dataset_dir = dataset_dir
         self.agent_names = agent_names
         self.population_probs = population_probs
         self.batches_per_epoch = batches_per_epoch
         self.batch_size = batch_size
+        self.return_attributes = return_attributes
         self.mode = mode
         if n_files is not None:
             self.n_files = n_files
@@ -231,7 +245,8 @@ class ReferentialDataLoaderMemory(th.utils.data.DataLoader):
                                             n_batches_per_epoch=self.batches_per_epoch,
                                             batch_size=self.batch_size,
                                             mode=self.mode,
-                                            random_state=self.random_state)
+                                            random_state=self.random_state,
+                                            return_attributes=self.return_attributes)
 
 
 def build_image_dataloader(game_type: str,
