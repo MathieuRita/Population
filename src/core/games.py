@@ -100,8 +100,8 @@ class ReconstructionGame(nn.Module):
             # Average message length
             metrics["message_length"] = find_lengths(messages).float().mean().item()
             # Receiver entropy
-            log_prob_receiver = output_receiver.detach().sum(1)
-            entropy_receiver = (log_prob_receiver * th.exp(log_prob_receiver)).sum(1)
+            entropy_receiver = - output_receiver.detach() * th.exp(output_receiver.detach())
+            entropy_receiver = entropy_receiver.sum(2).mean(1)
             metrics["entropy_receiver"] = entropy_receiver.mean()
 
         return metrics
