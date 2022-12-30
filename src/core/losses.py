@@ -142,15 +142,15 @@ class ReinforceLoss:
                 ):
 
         if agent_type=="sender":
-            self.compute_sender(reward=reward,
-                                sender_log_prob = sender_log_prob,
-                                sender_entropy = sender_entropy,
-                                message = message)
+            return self.compute_sender(reward=reward,
+                                       sender_log_prob = sender_log_prob,
+                                       sender_entropy = sender_entropy,
+                                       message = message)
 
         if agent_type=="receiver":
-            self.compute_receiver(reward=reward,
-                                  receiver_output = receiver_output,
-                                  receiver_entropy = receiver_entropy)
+            return self.compute_receiver(reward=reward,
+                                         receiver_output = receiver_output,
+                                         receiver_entropy = receiver_entropy)
 
 
     def compute_sender(self,

@@ -52,8 +52,6 @@ class ReconstructionGame(nn.Module):
         message_embedding = agent_receiver.receive(messages)
         output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
 
-        print(output_receiver.size())
-
         task = "communication"
 
         reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
