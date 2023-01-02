@@ -1,6 +1,7 @@
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from torch.nn import CosineSimilarity
 import copy
 import numpy as np
@@ -64,6 +65,32 @@ class Agent(object):
 
     def reconstruct_from_message_embedding(self, embedding):
         return self.object_decoder(embedding)
+
+    def sample_candidates(self,output_receiver,sampling_mode="sample"):
+
+        """
+        Sample object based on logits
+        """
+        # Sample candidate objects
+        batch_size,n_att,n_val = output_receiver.size(0),output_receiver.size(1),output_receiver.size(2)
+        output_receiver = output_receiver.resize((batch_size*n_att,n_val))
+
+        distr = Categorical(logits= output_receiver)
+
+        entropy_receiver = distr.entropy()
+        entropy_receiver = entropy_receiver.resize((batch_size,n_att)).sum(1)
+
+        if sampling_mode=="sample":
+            candidates = distr.sample()
+        elif sampling_mode=="greedy":
+            candidates = distr.argmax(dim=1)
+
+        candidates = candidates.resize((batch_size,n_att)).sum(1)
+        log_prob_receiver = distr.log_prob(candidates)
+        log_prob_receiver = log_prob_receiver.resize((batch_size,n_att)).sum(1)
+
+        return candidates, log_prob_receiver, entropy_receiver
+
 
     def project_object(self,object):
         out = self.object_projector(object)

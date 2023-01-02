@@ -57,8 +57,8 @@ class ReconstructionGame(nn.Module):
         reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                             receiver_output=output_receiver).detach()
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                        sender_log_prob=log_prob_sender,
-                                                        sender_entropy=entropy_sender,
+                                                        log_prob=log_prob_sender,
+                                                        entropy=entropy_sender,
                                                         message=messages,
                                                         agent_type="sender"
                                                         )
@@ -67,11 +67,9 @@ class ReconstructionGame(nn.Module):
 
         agent_sender.tasks[task]["loss_value"] = loss
 
-        loss = agent_receiver.tasks[task]["loss"].compute(reward=reward,
-                                                          receiver_output=output_receiver,
+        loss = agent_receiver.tasks[task]["loss"].compute(receiver_output=output_receiver,
                                                           inputs=inputs,
-                                                          agent_type="receiver"
-                                                          ) # reward is used for a RL loss
+                                                          agent_type="receiver")
 
         if reduce: loss = loss.mean()
 
@@ -151,10 +149,8 @@ class ReconstructionGame(nn.Module):
             reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
                                                                 receiver_output=output_receiver).detach()
 
-            loss_receiver = agent_receiver.tasks[task]["loss"].compute(receiver_output=output_receiver,
-                                                                       inputs = inputs,
-                                                                       reward=reward,
-                                                                       #receiver_entropy = # TO DO,
+            loss_receiver = agent_receiver.tasks[task]["loss"].compute(inputs=inputs,
+                                                                       receiver_output=output_receiver,
                                                                        agent_type = "receiver")
             # reward is used for a RL loss
 
@@ -169,8 +165,8 @@ class ReconstructionGame(nn.Module):
         # average_reward=average_reward - 1.
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=average_reward,
-                                                               sender_log_prob=log_prob_sender,
-                                                               sender_entropy=entropy_sender,
+                                                               log_prob=log_prob_sender,
+                                                               entropy=entropy_sender,
                                                                message=messages,
                                                                agent_type="sender"
                                                                )
@@ -296,9 +292,10 @@ class ReconstructionGame(nn.Module):
         reward /= sum([v for _, v in weights.items()])
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                        sender_log_prob=log_prob_sender,
-                                                        sender_entropy=entropy_sender,
-                                                        message=messages
+                                                        log_prob=log_prob_sender,
+                                                        entropy=entropy_sender,
+                                                        message=messages,
+                                                        agent_type = "sender"
                                                         )
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
@@ -355,9 +352,10 @@ class ReconstructionGame(nn.Module):
         reward = th.log(p_x) + (log_prob_sender.detach() * mask_eos.detach()).sum(dim=1) - th.log(prob_lm).detach()
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward.detach(),
-                                                        sender_log_prob=log_prob_sender,
-                                                        sender_entropy=entropy_sender,
-                                                        message=messages)
+                                                        log_prob=log_prob_sender,
+                                                        entropy=entropy_sender,
+                                                        message=messages,
+                                                        agent_type = "sender")
 
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
@@ -406,14 +404,122 @@ class ReconstructionGame(nn.Module):
         reward = th.log(p_x) + (log_prob_sender.sum(dim=1).detach() - log_probs_imitation.sum(dim=1).detach())
 
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                        sender_log_prob=log_prob_sender,
-                                                        sender_entropy=entropy_sender,
-                                                        message=messages)
+                                                        log_prob=log_prob_sender,
+                                                        entropy=entropy_sender,
+                                                        message=messages,
+                                                        agent_type = "sender")
 
         agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         return reward
 
+class ReconstructionReinforceGame(nn.Module):
+
+    def __init__(self,
+                 population: object,
+                 voc_size: int,
+                 max_len: int,
+                 noise_level: float = 0.):
+
+        super(ReconstructionReinforceGame, self).__init__()
+        self.population = population
+        self.voc_size = voc_size
+        self.max_len = max_len
+
+    def communication_instance(self,
+                               inputs: th.Tensor,
+                               sender_id: th.Tensor,
+                               receiver_id: th.Tensor,
+                               compute_metrics: bool = False,
+                               reduce: bool = True):
+
+        """
+        :param noise_threshold: 0 -> no noise
+        :param compute_metrics:
+        :param receiver_id:
+        :param sender_id:
+        :param inputs:
+        :param x: tuple (sender_id,receiver_id,batch)
+        :return: (loss_sender,loss_receiver) [batch_size,batch_size]
+        """
+
+        agent_sender = self.population.agents[sender_id]
+        agent_receiver = self.population.agents[receiver_id]
+
+        # Agent Sender sends message based on input
+        inputs_embedding = agent_sender.encode_object(inputs)
+        messages, log_prob_sender, entropy_sender = agent_sender.send(inputs_embedding)
+
+
+        # Agent receiver encodes message and predict the reconstructed object
+        message_embedding = agent_receiver.receive(messages)
+        output_receiver = agent_receiver.reconstruct_from_message_embedding(message_embedding)
+        candidates, log_prob_receiver, entropy_receiver = agent_receiver.sample_candidates(output_receiver,
+                                                                                           sampling_mode="sample")
+
+        task = "communication"
+
+        # Common reward
+        reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
+                                                            receiver_output=candidates).detach()
+        # Loss sender
+        loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
+                                                        log_prob=log_prob_sender,
+                                                        entropy=entropy_sender,
+                                                        message=messages,
+                                                        agent_type="sender"
+                                                        )
+
+        if reduce: loss = loss.mean()
+
+        agent_sender.tasks[task]["loss_value"] = loss
+
+        # Loss receiver
+
+        loss = agent_receiver.tasks[task]["loss"].compute(reward=reward,
+                                                          log_prob=log_prob_receiver,
+                                                          entropy=entropy_receiver,
+                                                          agent_type="receiver"
+                                                          ) # reward is used for a RL loss
+
+        if reduce: loss = loss.mean()
+
+        agent_receiver.tasks[task]["loss_value"] = loss
+
+        # Compute additional metrics
+        metrics = {}
+
+        if compute_metrics:
+            # accuracy
+            if reduce:
+                metrics["accuracy"] = accuracy(inputs, output_receiver, game_mode="reconstruction").mean()
+            else:
+                metrics["accuracy"] = accuracy(inputs, output_receiver,
+                                               game_mode="reconstruction",
+                                               reduce_attributes=False)
+            # accuracy tot
+            metrics["accuracy_tot"] = accuracy(inputs, output_receiver, game_mode="reconstruction",
+                                               all_attributes_equal=True).mean()
+            # Sender entropy
+            metrics["sender_entropy"] = entropy_sender.mean().item()
+            # Sender log prob
+            metrics["sender_log_prob"] = log_prob_sender.detach()
+            # Raw messages
+            metrics["messages"] = messages
+            # Average message length
+            metrics["message_length"] = find_lengths(messages).float().mean().item()
+            # Receiver entropy
+            entropy_receiver = - output_receiver.detach() * th.exp(output_receiver.detach())
+            entropy_receiver = entropy_receiver.sum(2).mean(1)
+            metrics["entropy_receiver"] = entropy_receiver.mean()
+
+        return metrics
+
+    def forward(self, batch, compute_metrics: bool = False, reduce: bool = True):
+
+        metrics = self.communication_instance(*batch, compute_metrics=compute_metrics, reduce=reduce)
+
+        return metrics
 
 class ReferentialGame(nn.Module):
 
@@ -459,9 +565,10 @@ class ReferentialGame(nn.Module):
         #reward = accuracy.detach()
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                               sender_log_prob=log_prob_sender,
-                                                               sender_entropy=entropy_sender,
-                                                               message=messages
+                                                               log_prob=log_prob_sender,
+                                                               entropy=entropy_sender,
+                                                               message=messages,
+                                                               agent_type = "sender"
                                                                )
 
         if reduce: loss_sender = loss_sender.mean()
@@ -537,9 +644,10 @@ class VisualReconstructionGame(nn.Module):
         reward = - loss_receiver.detach()
 
         loss_sender = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                               sender_log_prob=log_prob_sender,
-                                                               sender_entropy=entropy_sender,
-                                                               message=messages)
+                                                               log_prob=log_prob_sender,
+                                                               entropy=entropy_sender,
+                                                               message=messages,
+                                                               agent_type = "sender")
 
         if reduce: loss_sender = loss_sender.mean()
 
@@ -626,9 +734,10 @@ class ReconstructionImitationGame(nn.Module):
                                                                 receiver_output=output_receiver,
                                                                 log_imitation=log_imitation).detach()
             loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
-                                                            sender_log_prob=log_prob_sender,
-                                                            sender_entropy=entropy_sender,
-                                                            message=messages)
+                                                            log_prob=log_prob_sender,
+                                                            entropy=entropy_sender,
+                                                            message=messages,
+                                                            agent_type="sender")
             agent_sender.tasks[task]["loss_value"] = loss.mean()
 
         for task in agent_receiver.tasks:
@@ -717,6 +826,11 @@ def build_game(game_params: dict,
                                   voc_size=game_params["channel"]["voc_size"],
                                   max_len=game_params["channel"]["max_len"],
                                   noise_level=noise_level)
+    elif game_params["game_type"] == "reconstruction_reinforce":
+        assert population is not None, "Specify a population to play the game"
+        game = ReconstructionReinforceGame(population=population,
+                                  voc_size=game_params["channel"]["voc_size"],
+                                  max_len=game_params["channel"]["max_len"])
     elif game_params["game_type"] == "reconstruction_imitation":
         assert population is not None, "Specify a population to play the game"
         game = ReconstructionImitationGame(population=population)

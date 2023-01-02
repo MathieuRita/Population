@@ -132,25 +132,22 @@ class ReinforceLoss:
 
     def compute(self,
                 reward: th.Tensor,
-                sender_log_prob: th.Tensor = None,
-                sender_entropy: th.Tensor = None,
+                log_prob: th.Tensor,
+                entropy: th.Tensor,
                 message: th.Tensor = None,
-                inputs: th.Tensor = None,
-                receiver_output: th.Tensor = None,
-                receiver_entropy : th.Tensor = None,
                 agent_type : str ="sender"
                 ):
 
         if agent_type=="sender":
             return self.compute_sender(reward=reward,
-                                       sender_log_prob = sender_log_prob,
-                                       sender_entropy = sender_entropy,
+                                       sender_log_prob = log_prob,
+                                       sender_entropy = entropy,
                                        message = message)
 
         if agent_type=="receiver":
             return self.compute_receiver(reward=reward,
-                                         receiver_output = receiver_output,
-                                         receiver_entropy = receiver_entropy)
+                                         receiver_log_prob = log_prob,
+                                         receiver_entropy = entropy)
 
 
     def compute_sender(self,
@@ -200,7 +197,7 @@ class ReinforceLoss:
 
     def compute_receiver(self,
                        reward: th.Tensor,
-                       receiver_output: th.Tensor,
+                       receiver_log_prob: th.Tensor,
                        receiver_entropy: th.Tensor):
 
         """
@@ -216,11 +213,6 @@ class ReinforceLoss:
         :param message:
         :return:
         """
-
-        # Log prob and entropy computation
-        receiver_log_prob = receiver_output.max(2).values.sum(1)
-        receiver_entropy = - receiver_output * th.exp(receiver_output)
-        receiver_entropy = receiver_entropy.sum(2).mean(1)
 
         # Policy gradient loss
         reward = self.baseline_fn(reward=reward)
@@ -243,7 +235,6 @@ class CrossEntropyLoss:
     def compute(self,
                 inputs,
                 receiver_output,
-                receiver_entropy : th.Tensor = None,
                 agent_type : str = "receiver"):
         return cross_entropy(inputs, receiver_output, multi_attribute=self.multi_attribute)  # [batch_size]
 
