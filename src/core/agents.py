@@ -73,12 +73,12 @@ class Agent(object):
         """
         # Sample candidate objects
         batch_size,n_att,n_val = output_receiver.size(0),output_receiver.size(1),output_receiver.size(2)
-        output_receiver = output_receiver.resize((batch_size*n_att,n_val))
+        output_receiver = output_receiver.reshape((batch_size*n_att,n_val))
 
         distr = Categorical(logits= output_receiver)
 
         entropy_receiver = distr.entropy()
-        entropy_receiver = entropy_receiver.resize((batch_size,n_att)).sum(1)
+        entropy_receiver = entropy_receiver.reshape((batch_size,n_att)).sum(1)
 
         if sampling_mode=="sample":
             candidates = distr.sample()
