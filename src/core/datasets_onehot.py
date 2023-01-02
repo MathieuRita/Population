@@ -623,7 +623,7 @@ def build_one_hot_dataloader(game_type: str,
                              mode: str = "train",
                              target_messages: th.Tensor = None,  # If pretraining mode
                              ) -> th.utils.data.DataLoader:
-    if game_type == "reconstruction":
+    if game_type == "reconstruction" or game_type == "reconstruction_reinforce":
 
         if "broadcasting" in training_params and mode != "val":
             broadcasting = training_params["broadcasting"]
