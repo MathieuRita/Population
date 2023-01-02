@@ -85,9 +85,9 @@ class Agent(object):
         elif sampling_mode=="greedy":
             candidates = distr.argmax(dim=1)
 
-        candidates = candidates.resize((batch_size,n_att)).sum(1)
+        candidates = candidates.reshape((batch_size,n_att)).sum(1)
         log_prob_receiver = distr.log_prob(candidates)
-        log_prob_receiver = log_prob_receiver.resize((batch_size,n_att)).sum(1)
+        log_prob_receiver = log_prob_receiver.reshape((batch_size,n_att)).sum(1)
 
         return candidates, log_prob_receiver, entropy_receiver
 
