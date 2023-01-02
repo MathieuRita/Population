@@ -56,7 +56,7 @@ def cross_entropy_imitation(sender_log_prob: th.Tensor = None, target_messages: 
 def accuracy(inputs,
              receiver_output,
              game_mode: str,
-             sample: bool = False,
+             output_transformation: str = "greedy_reduction",
              all_attributes_equal: bool = False,
              reduce_attributes : bool = True,
              idx_correct_object: int = 0) -> th.Tensor():
@@ -65,10 +65,10 @@ def accuracy(inputs,
         inputs = inputs.argmax(dim=2)  # [batch_size,n_attributes]
 
         # Receiver candidates
-        if sample:
-            raise NotImplementedError
-        else:
+        if output_transformation=="greedy_reduction":
             receiver_output = receiver_output.argmax(dim=2)
+        elif output_transformation=="sampling_reduction":
+            raise NotImplementedError
 
         # Accuracy
         acc = (inputs == receiver_output)  # [batch_size,n_attributes]
@@ -111,9 +111,10 @@ class ReinforceLoss:
             self.reward_fn = lambda inputs, receiver_output, log_imitation=None: \
                 -1 * cross_entropy(inputs, receiver_output)
         elif reward_type == "accuracy_reconstruction":
-            self.reward_fn = lambda inputs, receiver_output, log_imitation=None: accuracy(inputs,
-                                                                                          receiver_output,
-                                                                                          game_mode="reconstruction")
+            self.reward_fn = lambda inputs, receiver_output, output_transformation="greedy_reduction", log_imitation=None: accuracy(inputs,
+                                                                 receiver_output,
+                                                                 game_mode="reconstruction",
+                                                                 output_transformation=output_transformation)
         elif reward_type == "referential_log":
             self.reward_fn = lambda inputs, receiver_output, log_imitation=None: get_log_prob_given_index(receiver_output)
         elif reward_type == "accuracy_referential":

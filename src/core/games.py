@@ -461,7 +461,8 @@ class ReconstructionReinforceGame(nn.Module):
 
         # Common reward
         reward = agent_sender.tasks[task]["loss"].reward_fn(inputs=inputs,
-                                                            receiver_output=candidates).detach()
+                                                            receiver_output=candidates,
+                                                            output_transformation="identity").detach()
         # Loss sender
         loss = agent_sender.tasks[task]["loss"].compute(reward=reward,
                                                         log_prob=log_prob_sender,

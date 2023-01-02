@@ -86,10 +86,8 @@ class Agent(object):
             candidates = distr.argmax(dim=1)
 
         log_prob_receiver = distr.log_prob(candidates)
-        candidates = candidates.reshape((batch_size, n_att)).sum(1)
+        candidates = candidates.reshape((batch_size, n_att))
         log_prob_receiver = log_prob_receiver.reshape((batch_size, n_att)).sum(1)
-
-        print(candidates)
 
         return candidates, log_prob_receiver, entropy_receiver
 
