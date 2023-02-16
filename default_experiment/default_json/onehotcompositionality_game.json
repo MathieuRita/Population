@@ -1,17 +1,17 @@
 {
 "game_name": "one_hot_compositionality",
 "game_type" : "reconstruction",
-"dataset" : {"n_elements":256,
-	     "split_proportion":1},
+"dataset" : {"n_elements":5000,
+	     "split_proportion":0.8},
 "objects":
 		{
 		"object_type":"one_hot",
-		"n_attributes":4,
-		"n_values":4
+		"n_attributes":6,
+		"n_values":10
 		},
 "channel":
 		{
-		"voc_size":5,
+		"voc_size":10,
 		"max_len":10
 		}
 }

@@ -161,8 +161,8 @@ def fill_missing_training_params(training_params):
         "The number of epochs n_epochs in not indicated in the training params"
     assert "device" in training_params, \
         "The device in not indicated in the training params"
-    assert "split_train_val" in training_params, \
-        "The train/val ratio split_train_val in not indicated in the training params"
+    #assert "split_train_val" in training_params, \
+    #    "The train/val ratio split_train_val in not indicated in the training params"
     assert "batch_size" in training_params, \
         "The batch_size batch_size in not indicated in the training params"
     assert "train_batches_per_epoch" in training_params, \

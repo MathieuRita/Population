@@ -1,0 +1,20 @@
+{
+	"n_epochs":10000,	
+	"device":"cuda",
+	"split_train_val":0.8,
+	"batch_size":3000,
+	"MI_batch_size":0,
+	"train_batches_per_epoch":100,
+	"val_batches_per_epoch":2,
+	"test_batches_per_epoch":2,
+	"seed":1,
+	"broadcasting":0,
+	"train_communication_freq":1,
+	"validation_freq":1,
+	"reset_agents_freq":1,
+	"evaluator_freq":40,
+	"save_models_freq":1000,
+	"metrics_to_measure":{"topographic_similarity":40,
+			    "language_similarity":40,
+			    "writing":40}
+}

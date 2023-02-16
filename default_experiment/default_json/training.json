@@ -1,16 +1,17 @@
 {
-	"n_epochs":3,	
-	"device":"cpu",
-	"split_train_val":1,
-	"batch_size":1024,
-	"batches_per_epoch":10,
+	"trainer_type":"population",
+	"n_epochs":100,	
+	"device":"cuda",
+	"batch_size":2048,
+	"train_batches_per_epoch":10,
+        "val_batches_per_epoch":10,
+        "test_batches_per_epoch":10,
 	"seed":1999,
-	"validation_freq":1000,
+	"train_communication_freq":1,
+	"validation_freq":1,
 	"evaluator_freq":1,
-	"metrics_to_measure":{"reward_decomposition":1,
-			    "language_similarity":0,
-			    "similarity_to_init_languages":0,
-			    "divergence_to_untrained_speakers":1,
-			    "accuracy_with_untrained_speakers":1,
-			    "accuracy_with_untrained_listeners":1}
+	"save_models_freq":1000,
+	"metrics_to_measure":{"topographic_similarity":10,
+			    "language_similarity":10}
 }
+
