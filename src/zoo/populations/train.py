@@ -172,6 +172,7 @@ def main(params):
                                             population.agent_names[1]))
 
     trainer = build_trainer(game=game,
+                            trainer_type=training_params["trainer_type"],
                             evaluator=evaluator,
                             train_loader=train_loader,
                             mi_loader=mi_loader,

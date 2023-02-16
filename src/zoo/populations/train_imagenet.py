@@ -141,6 +141,7 @@ def main(params):
                                 n_epochs=training_params["n_epochs"])
 
     trainer = build_trainer(game=game,
+                            trainer_type = training_params["trainer_type"],
                             evaluator=evaluator,
                             train_loader=train_loader,
                             mi_loader=mi_loader,

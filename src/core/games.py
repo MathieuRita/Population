@@ -818,34 +818,53 @@ def build_game(game_params: dict,
                population: object = None,
                agent: object = None):
     if game_params["game_type"] == "reconstruction":
+
         assert population is not None, "Specify a population to play the game"
+
         if "noise_level" in game_params["channel"]:
             noise_level = game_params["channel"]["noise_level"]
         else:
             noise_level = 0.
+
         game = ReconstructionGame(population=population,
                                   voc_size=game_params["channel"]["voc_size"],
                                   max_len=game_params["channel"]["max_len"],
                                   noise_level=noise_level)
+
     elif game_params["game_type"] == "reconstruction_reinforce":
+
         assert population is not None, "Specify a population to play the game"
+
         game = ReconstructionReinforceGame(population=population,
                                   voc_size=game_params["channel"]["voc_size"],
                                   max_len=game_params["channel"]["max_len"])
+
     elif game_params["game_type"] == "reconstruction_imitation":
+
         assert population is not None, "Specify a population to play the game"
+
         game = ReconstructionImitationGame(population=population)
+
     elif game_params["game_type"] == "referential":
+
         assert population is not None, "Specify a population to play the game"
         assert game_params["n_distractors"] is not None, "Specify a number of distractors to play the game"
+
         game = ReferentialGame(population=population,
                                n_distractors=game_params["n_distractors"])
+
     elif game_params["game_type"] == "visual_reconstruction":
+
         assert population is not None, "Specify a population to play the game"
+
         game = VisualReconstructionGame(population=population)
+
     elif game_params["game_type"] == "speaker_pretraining":
+
         assert agent is not None, "Specify a Speaker agent to be pretrained"
+
         game = PretrainingGame(agent=agent)
+
     else:
         raise "Specify a known game type"
 

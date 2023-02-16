@@ -71,11 +71,11 @@ def main(params):
 
     # Build Trainer
     trainer = build_trainer(game=game,
+                            trainer_type=training_params["trainer_type"],
                             train_loader=train_loader,
                             val_loader = None,
                             device=training_params["device"],
                             compute_metrics=True,
-                            pretraining=True,
                             game_params=None,
                             agent_repertory=None,
                             evaluator=None)

@@ -105,14 +105,14 @@ class TrainerPopulation(object):
                                list(agent.object_projector.parameters())
 
             agent.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                      lr=0.0005)
+                                                                      lr=agent.tasks["communication"]["lr"])
             
         for agent_id in self.population.sender_names:
             agent = self.population.agents[agent_id]
             model_parameters = list(agent.sender.parameters()) + list(agent.object_encoder.parameters())
 
             agent.tasks["communication"]["optimizer"] = th.optim.Adam(model_parameters,
-                                                                      lr=0.0005)
+                                                                      lr=agent.tasks["communication"]["lr"])
 
     def reset_agents(self):
 
@@ -1273,6 +1273,7 @@ class TrainerCustom(TrainerPopulation):
 
 
 def build_trainer(game,
+                  trainer_type : str,
                   evaluator,
                   train_loader: th.utils.data.DataLoader,
                   game_params: dict,
@@ -1283,11 +1284,11 @@ def build_trainer(game,
                   imitation_loader: th.utils.data.DataLoader = None,
                   logger: th.utils.tensorboard.SummaryWriter = None,
                   compute_metrics: bool = False,
-                  pretraining: bool = False,
                   metrics_save_dir: str = "",
                   models_save_dir : str = "",
                   device: str = "cpu"):
-    if not pretraining:
+
+    if trainer_type == "population":
         trainer = TrainerCustom(game=game,
                                 evaluator=evaluator,
                                 train_loader=train_loader,
@@ -1301,10 +1302,26 @@ def build_trainer(game,
                                 metrics_save_dir=metrics_save_dir,
                                 models_save_dir=models_save_dir,
                                 device=device)
-    else:
+    elif trainer_type=="custom":
+        trainer = TrainerCustom(game=game,
+                                evaluator=evaluator,
+                                train_loader=train_loader,
+                                mi_loader=mi_loader,
+                                imitation_loader=imitation_loader,
+                                val_loader=val_loader,
+                                test_loader=test_loader,
+                                game_params=game_params,
+                                agent_repertory=agent_repertory,
+                                logger=logger,
+                                metrics_save_dir=metrics_save_dir,
+                                models_save_dir=models_save_dir,
+                                device=device)
+    elif trainer_type=="pretraining":
         trainer = PretrainingTrainer(game=game,
                                      train_loader=train_loader,
                                      compute_metrics=compute_metrics,
                                      device=device)
+    else:
+        raise "Specify a know Trainer"
 
     return trainer
