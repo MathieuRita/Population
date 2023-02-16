@@ -14,16 +14,15 @@
 
 			"tasks":{"communication":{"optimizer":"adam",
 		  			   "loss":{"type":"REINFORCE",
-					        	   "reward":"accuracy_reconstruction",
+					        	   "reward":"log",
 						   "baseline":"normalization_batch",
-						   "entropy_reg_coef":0.001},
-		  			   "p_step":1,
+						   "entropy_reg_coef":0.1},
+		  			   "p_step":0.05,
 		  			   "lr":0.0005
 		  			   }
 				},
 
 			"weights":{"communication":1,"MI":0},
-                        "optimal_listener":"optimal_listener",
 		  	"dataset": {"distribution":"uniform"}
 		  
 		  },
@@ -41,10 +40,7 @@
 		    "prob_reset":0,
 
                     "tasks":{"communication":{"optimizer":"adam",
-                                           "loss":{"type":"REINFORCE",
-                                                           "reward":"accuracy_reconstruction",
-                                                   "baseline":"normalization_batch",
-                                                   "entropy_reg_coef":0.001},
+                                           "loss":{"type":"cross_entropy"},
                                            "p_step":1,
                                            "lr":0.0005
                                            }

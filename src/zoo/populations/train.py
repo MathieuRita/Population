@@ -79,7 +79,7 @@ def main(params):
 
     population_split = split_data_into_population(dataset_size=full_dataset.size(0),
                                                   n_elements=game_params["dataset"]["n_elements"],
-                                                  split_proportion=training_params["split_train_val"],
+                                                  split_proportion=game_params["dataset"]["split_proportion"],
                                                   agent_names=population.agent_names,
                                                   population_dataset_type=population_params['dataset_type'],
                                                   seed=training_params["seed"])
@@ -102,23 +102,26 @@ def main(params):
                                             task="communication",
                                             mode="train", )
 
-    val_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
-                                          dataset=full_dataset,
-                                          agent_names=population.agent_names,
-                                          population_split=population_split,
-                                          population_probs=population.pairs_prob,
-                                          imitation_probs=population.imitation_probs,
-                                          training_params=training_params,
-                                          mode="val")
+    if game_params["dataset"]["split_proportion"]!=1:
+        val_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                              dataset=full_dataset,
+                                              agent_names=population.agent_names,
+                                              population_split=population_split,
+                                              population_probs=population.pairs_prob,
+                                              imitation_probs=population.imitation_probs,
+                                              training_params=training_params,
+                                              mode="val")
 
-    test_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
-                                          dataset=full_dataset,
-                                          agent_names=population.agent_names,
-                                          population_split=population_split,
-                                          population_probs=population.pairs_prob,
-                                          imitation_probs=population.imitation_probs,
-                                          training_params=training_params,
-                                          mode="test")
+        test_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
+                                               dataset=full_dataset,
+                                               agent_names=population.agent_names,
+                                               population_split=population_split,
+                                               population_probs=population.pairs_prob,
+                                               imitation_probs=population.imitation_probs,
+                                               training_params=training_params,
+                                               mode="test")
+    else:
+        val_loader,test_loader = None, None
 
     # Mutual information task
     mi_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
@@ -131,7 +134,7 @@ def main(params):
                                          mode="train")
 
     # Imitation loaders
-    if sum(population_params['is_imitator'])>0.:
+    if 'is_imitator' in population_params and sum(population_params['is_imitator'])>0.:
         imitation_loader = build_one_hot_dataloader(game_type=game_params["game_type"],
                                                     dataset=full_dataset,
                                                     agent_names=population.agent_names,

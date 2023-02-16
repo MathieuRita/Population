@@ -623,7 +623,7 @@ def build_one_hot_dataloader(game_type: str,
                              mode: str = "train",
                              target_messages: th.Tensor = None,  # If pretraining mode
                              ) -> th.utils.data.DataLoader:
-    if game_type == "reconstruction" or game_type == "reconstruction_reinforce":
+    if game_type in ["reconstruction","reconstruction_reinforce"]:
 
         if "broadcasting" in training_params and mode != "val":
             broadcasting = training_params["broadcasting"]
@@ -632,20 +632,17 @@ def build_one_hot_dataloader(game_type: str,
 
         if task == "communication":
 
-            if mode == "val" and training_params["split_train_val"] == 1:
-                loader = None
-            else:
-                loader = ReconstructionDataLoader(data=dataset,
-                                                  agent_names=agent_names,
-                                                  population_split=population_split,
-                                                  population_probs=population_probs,
-                                                  batch_size=training_params["batch_size"],
-                                                  batches_per_epoch=training_params[
+            loader = ReconstructionDataLoader(data=dataset,
+                                              agent_names=agent_names,
+                                              population_split=population_split,
+                                              population_probs=population_probs,
+                                              batch_size=training_params["batch_size"],
+                                              batches_per_epoch=training_params[
                                                       "{}_batches_per_epoch".format(mode)],
-                                                  task=task,
-                                                  mode=mode,
-                                                  broadcasting=broadcasting,
-                                                  seed=training_params["seed"])
+                                              task=task,
+                                              mode=mode,
+                                              broadcasting=broadcasting,
+                                              seed=training_params["seed"])
 
         elif task == "imitation":
             loader = ReconstructionDataLoader(data=dataset,

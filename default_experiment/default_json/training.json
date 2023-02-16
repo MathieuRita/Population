@@ -1,9 +1,9 @@
 {
 	"trainer_type":"population",
-	"n_epochs":100,	
+	"n_epochs":2000,	
 	"device":"cuda",
 	"batch_size":2048,
-	"train_batches_per_epoch":10,
+	"train_batches_per_epoch":200,
         "val_batches_per_epoch":10,
         "test_batches_per_epoch":10,
 	"seed":1999,
